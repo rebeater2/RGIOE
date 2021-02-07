@@ -52,12 +52,12 @@ public:
     NavEpoch nav;
     double dt;
     Mat3d eye3;
-private:
+public:
     Vec3d _acce_pre;
     Vec3d _gyro_pre;
-
     Vec3d omega_en_n;
     Vec3d omega_ie_n;
+private:
     Vec3d pos_mid, vn_mid;
     double t_pre;
     MatXd phi;

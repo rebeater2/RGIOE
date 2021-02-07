@@ -14,7 +14,7 @@ void KalmanFilter::Predict(MatXd &PHI, MatXd &Q) {
     xd = PHI * xd;
     P = PHI * P * PHI.transpose() + Q;
 }
-
+/*全维卡尔曼更新：基本上用不着 */
 void KalmanFilter::Update(MatXd &H, VecXd &z, MatXd &R) {
     MatXd K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
     xd = xd + K * (z - H * xd);
@@ -27,9 +27,15 @@ void KalmanFilter::Update(MatXd &H, VecXd &z, MatXd &R) {
  * @param z
  * @param R
  */
+ /*3维卡尔曼更新*/
 void KalmanFilter::Update(Mat3Xd &H, Vec3d &z, Mat3d &R) {
-
     MatX3d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
+    xd = xd + K * (z - H * xd);
+    MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
+    P = temp * P * temp.transpose() + K * R * K.transpose();
+}
+void KalmanFilter::Update(Mat2Xd &H, Vec2d &z, Mat2d &R) {
+    MatX2d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
     xd = xd + K * (z - H * xd);
     MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
     P = temp * P * temp.transpose() + K * R * K.transpose();

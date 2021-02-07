@@ -11,7 +11,7 @@
  * @param ini_nav
  * @param opt
  */
-DataFusion::DataFusion(NavEpoch &ini_nav, Option &opt) : Ins(ini_nav, opt.d_rate), KalmanFilter(),opt(opt) {
+DataFusion::DataFusion(NavEpoch &ini_nav, Option &opt) : Ins(ini_nav, opt.d_rate), KalmanFilter(), opt(opt) {
     /*initial P & Q0 */
     P.setZero();
     P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
@@ -39,7 +39,13 @@ DataFusion::DataFusion(NavEpoch &ini_nav, Option &opt) : Ins(ini_nav, opt.d_rate
     Q0(13, 13) = 2 * opt.imuPara.ab_std[1] * opt.imuPara.ab_std[1] / opt.imuPara.at_corr;
     Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
     logi << "Q0=\n" << Q0.diagonal().transpose();
+
     lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
+    lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
+    _time_update_idx = 0;
+    temp = Vec3d{opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]};
+    Cbv = convert::euler_to_dcm(temp);
+    otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
     logi << "initial finished";
 }
 
@@ -52,10 +58,17 @@ int DataFusion::TimeUpdate(ImuData &imu) {
     ForwardMechanization(imu);
     MatXd phi = TransferMatrix(opt.imuPara);
 //    LOG_EVERY_N(INFO,10)<<dt;
-    LOG_IF(WARNING, fabs(dt - 1.0/opt.d_rate)>0.001 ) << "dt error" << dt;
+    LOG_IF(WARNING, fabs(dt - 1.0 / opt.d_rate) > 0.001) << "dt error" << dt;
     MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
     Predict(phi, Q);
+    if(opt.nhc_enable){
+        _time_update_idx++;
+        if (_time_update_idx % (2*opt.d_rate) == 0) {
+            MeasureNHC();
+            _feed_back();
+        }
+    }
     return 0;
 }
 
@@ -75,13 +88,17 @@ int DataFusion::MeasureUpdatePos(Vec3d &pos, Mat3d &Rk) {
 }
 
 int DataFusion::MeasureUpdatePos(GnssData &gnssData) {
+    if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
+        /*outage mode*/
+        return -1;
+    }
     Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
     Mat3d Rk = Mat3d::Zero();
     Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0];
     Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1];
     Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2];
     MeasureUpdatePos(pos, Rk);
-    return 0;
+    return 1;
 }
 
 
@@ -119,15 +136,12 @@ int DataFusion::_feed_back() {
     nav.atti = convert::dcm_to_euler(nav.Cbn);
     nav.gb += Vec3d{xd[9], xd[10], xd[11]};
     nav.ab += Vec3d{xd[12], xd[13], xd[14]};
-
-//    LOG_EVERY_N(INFO,10)<<nav.gb.transpose();
-//    LOG_EVERY_N(INFO,10)<<nav.ab.transpose();
     return 0;
 }
 
 
 Mat3Xd DataFusion::_pos_h() {
-     Mat3Xd mat_h = Mat3Xd::Zero();
+    Mat3Xd mat_h = Mat3Xd::Zero();
     mat_h.block<3, 3>(0, 0) = eye3;
     Vec3d temp = nav.Cbn * lb_gnss;
     mat_h.block<3, 3>(0, 6) = convert::skew(temp);
@@ -140,30 +154,16 @@ Mat3Xd DataFusion::_pos_h() {
  * @return
  */
 Vec3d DataFusion::_pos_z(Eigen::Vector3d &pos) {
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"gnss pos "<<pos.transpose();
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"ins pos "<<nav.pos.transpose();
-//    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"pos "<<pos.transpose();
     Vec3d re_ins = convert::lla_to_xyz(nav.pos);
     Vec3d re_gnss = convert::lla_to_xyz(pos);
     LatLon gnss = {pos[0], pos[1]};
     Mat3d cne = convert::lla_to_cne(gnss);
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re_ins "<<re_ins.transpose();
-
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re_gnss "<<re_gnss.transpose();
-//    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"cne "<<cne*cne.transpose();
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"lb_gnss "<<lb_gnss.transpose();
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<" nav.Cbn * lb_gnss "<< (nav.Cbn * lb_gnss).transpose();
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re_ins - re_gnss "<<(re_ins - re_gnss).transpose();
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re_ins - re_gnss "<<(nav.Cne.transpose()* (re_ins - re_gnss)).transpose();
-
-//    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re "<<pos.transpose();
-     Vec3d z = nav.Cne.transpose()* (re_ins - re_gnss) + nav.Cbn * lb_gnss;
-    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"z "<<z.transpose();
+    Vec3d z = nav.Cne.transpose() * (re_ins - re_gnss) + nav.Cbn * lb_gnss;
     return z;
 }
 
 NavOutput DataFusion::Output() {
-    static NavOutput out;
+    NavOutput out;
     out.gpst = nav.gpst;
     for (int i = 0; i < 3; i++) {
         out.pos[i] = nav.pos[i];
@@ -175,3 +175,61 @@ NavOutput DataFusion::Output() {
     return out;
 }
 
+int DataFusion::MeasureNHC() {
+    Mat3d Cnv = Cbv * nav.Cbn.transpose();
+    Vec3d w_ib = _gyro_pre / dt;
+    Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
+    Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
+    Mat3Xd H3 = Mat3Xd::Zero();
+    H3.block<3, 3>(0, 3) = Cnv;
+    H3.block<3, 3>(0, 6) = -Cnv * convert::skew(nav.vn);
+    H3.block<3, 3>(0, 9) = -Cbv * convert::skew(lb_wheel);
+    Mat2d R = Vec2d{opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
+    R = R * R;
+    Vec2d z = v_v.segment(1, 2);
+
+//    LOG_FIRST_N(INFO, 1) << "R=\n" << R;
+//    LOG_FIRST_N(INFO, 1) << "z=\n" << z;
+//    LOG_FIRST_N(INFO, 1) << "H=\n" << H3;
+    Mat2Xd H = H3.block<2, STATE_CNT>(1, 0);
+    Update(H, z, R);
+    return 0;
+}
+
+int DataFusion::MeasureZeroVelocity() {
+
+    return 0;
+}
+
+Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
+    /**/
+    if ((start > stop and stop > 0) or outage < 0 or step < outage) {
+        loge << "Outage parameter is invalid";
+        flag_enable = false;
+        return;
+    }
+    flag_enable = true;
+    if (stop < 0) stop = start + 4000;
+    for (int i = start; i < stop; i += step) {
+        starts.push_back(i);
+    }
+    for (int &s:starts)
+        logi << "outage time" << s;
+}
+
+bool Outage::IsOutage(double gpst) {
+    if (!flag_enable) {
+        return false;
+    }
+    for (auto &s:starts) {
+        if (gpst <= s + outage) {
+            return s <= gpst;
+        }
+    }
+    return false;
+}
+
+Outage::Outage() {
+    flag_enable = false;
+    outage = 0;
+}

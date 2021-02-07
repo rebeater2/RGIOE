@@ -44,6 +44,9 @@ nhc-std:
 zupt-enable: 0
 
 #--------------------------------------------------------------------------------#
+imu-format: 1
+# IMU_FORMAT_IMD = 0
+# IMU_FORMAT_IMUTXT = 1
 gnss-format: 0  #
 # GNSS_TXT_POS_7 = 0,
 # GNSS_BIN_POS_7 = 1,

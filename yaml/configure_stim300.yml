@@ -1,0 +1,75 @@
+imu-path: /media/rebeater/Data/WorkSpace/raw_data/20210114/Rover/IMU/stim300.bin.imd
+imu-parameter-cfg: /media/rebeater/Data/WorkSpace/raw_data/20210114/Rover/IMU/imu_stim300.parameter.yml
+gnss-path: /media/rebeater/Data/WorkSpace/raw_data/20210114/Reference/dgps.txt
+output-path: /media/rebeater/Data/WorkSpace/raw_data/20210114/Rover/Output/ub482_stim300.rslt
+start-time: 378815
+end-time: -1
+imu-data-rate: 1000
+#--------------------------------------------------------------------------------#
+alignment-mode: 0 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
+alignment-epoch:
+  - 2140 #　GPS week
+  - 378815.0000 # second of week
+  - 40.0876202296  # latitude
+  -  116.2411937620   # longitude
+  - 33.123  # height
+  - -2.488 # v_n (m/s)
+  - -6.419 # v_e m/s
+  - 0.098 # v_d
+  -  -0.56753340 # roll (deg)
+  - 4.13367016    # pitch (deg)
+  - 247.77730322  # yaw (deg)
+init-pos-std:
+  - 0.004 # m
+  - 0.001 # m
+  - 0.005 # m
+init-vel-std:
+  - 0 # m/s
+  - 0 # m/s
+  - 0 # m/s
+init-atti-std:
+  - 0.027  # deg
+  - 0.027  # deg
+  - 0.03  # deg for SPP is so 不靠谱
+alignment-moving-vel: 3 # m/s threshold velocity for moving align
+nhc-enable: true
+nhc-hz: 20
+install-angle:
+  - 0
+  - 4.9159
+  - -0.44
+nhc-std:
+  - 0.1
+  - 0.1
+zupt-enable: true
+zupta-enable: true
+
+#--------------------------------------------------------------------------------#
+imu-format: 0
+# IMU_FORMAT_IMD = 0
+# IMU_FORMAT_IMUTXT = 1
+gnss-format: 4  #
+# GNSS_TXT_POS_7 = 0,
+# GNSS_BIN_POS_7 = 1,
+# GNSS_TXT_POS_14 = 2,
+# GNSS_BIN_POS_14 = 3,
+# RTKLIB_TXT_POS = 4,
+# GNSS_TXT_POS_VEL = 5,
+# GNSS_TXT_GGA = 6,
+# RESERVED = 67,
+gnss-data-rate: 1
+antenna-level-arm:
+  - 1.5 #　forward
+  - 0.2 # right
+  - -0.86 # down
+#--------------------------------------------------------------------------------#
+odo-enable: true # 0: disable odometer 1: enable odometer
+odo-wheel-radius: 0 # 车轮半径
+odo-level-arm: [-0.5,1,0.5]
+#--------------------------------------------------------------------------------#
+outage-enable: false
+outage-start: 379915
+outage-stop: -1
+outage-time: 50
+outage-step: 100
+#--------------------------------------------------------------------------------#

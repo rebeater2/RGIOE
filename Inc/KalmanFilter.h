@@ -32,7 +32,7 @@ public:
 
     void Update(MatXd &H, VecXd &Z, MatXd &R);
     void Update(Mat3Xd &H, Vec3d &Z, Mat3d &R);
-
+    void Update(Mat2Xd &H, Vec2d &z, Mat2d &R);
     void Reset();
 
     KalmanFilter(VecXd xd, MatXd P) : xd(std::move(xd)), P(std::move(P)) {}
