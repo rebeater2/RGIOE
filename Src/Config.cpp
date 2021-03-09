@@ -17,16 +17,34 @@ Config::Config(const string &yml_path) {
 
 Option Config::getOption() {
     Option opt{};
-    opt.lb_gnss[0] = root_node["antenna-level-arm"][0].as<double>();
-    opt.lb_gnss[1] = root_node["antenna-level-arm"][1].as<double>();
-    opt.lb_gnss[2] = root_node["antenna-level-arm"][2].as<double>();
+    opt.imu_format = (ImuFileFormat) root_node["imu-format"].as<int>();
+    opt.gnss_format = (GnssFileFormat) root_node["gnss-format"].as<int>();
+//    opt.gnss_format = root_node["gnss-format"].as<int>();
     opt.imuPara = getImuPara(imu_para_filepath);
     opt.d_rate = root_node["imu-data-rate"].as<int>();
     for (int i = 0; i < 3; i++) {
         opt.pos_std[i] = root_node["init-pos-std"][i].as<double>();
         opt.vel_std[i] = root_node["init-vel-std"][i].as<double>();
-        opt.atti_std[i] = root_node["init-atti-std"][i].as<double>()*_deg;
+        opt.atti_std[i] = root_node["init-atti-std"][i].as<double>() * _deg;
+        opt.angle_bv[i] = root_node["install-angle"][i].as<double>() *_deg;
+        opt.lb_wheel[i] = root_node["odo-level-arm"][i].as<double>();
+        opt.lb_gnss[i] = root_node["antenna-level-arm"][i].as<double>();
     }
+
+    opt.nhc_enable = root_node["nhc-enable"].as<bool>();
+    opt.nhc_std[0] = root_node["nhc-std"][0].as<double>();
+    opt.nhc_std[1] = root_node["nhc-std"][1].as<double>();
+
+    opt.zupt_enable = root_node["zupt-enable"].as<bool>();
+    opt.zupta_enable = root_node["zupta-enable"].as<bool>();
+
+    opt.outage_enable = root_node["outage-enable"].as<bool>();
+    opt.outage_start = root_node["outage-start"].as<int>();
+    opt.outage_stop = root_node["outage-stop"].as<int>();
+    opt.outage_time = root_node["outage-time"].as<int>();
+    opt.outage_step = root_node["outage-step"].as<int>();
+
+
     return opt;
 }
 
@@ -57,16 +75,17 @@ NavOutput Config::getInitNav() {
     static NavOutput nav;
     nav.gpst = root_node["alignment-epoch"][1].as<double>();
 
-    nav.pos[0] = root_node["alignment-epoch"][2].as<double>()*_deg;
-    nav.pos[1] = root_node["alignment-epoch"][3].as<double>()*_deg;
+    nav.pos[0] = root_node["alignment-epoch"][2].as<double>() * _deg;
+    nav.pos[1] = root_node["alignment-epoch"][3].as<double>() * _deg;
     nav.pos[2] = root_node["alignment-epoch"][4].as<double>();
 
     nav.vn[0] = root_node["alignment-epoch"][5].as<double>();
     nav.vn[1] = root_node["alignment-epoch"][6].as<double>();
     nav.vn[2] = root_node["alignment-epoch"][7].as<double>();
 
-    nav.atti[0] = root_node["alignment-epoch"][8].as<double>()*_deg;
-    nav.atti[1] = root_node["alignment-epoch"][9].as<double>()*_deg;
-    nav.atti[2] = root_node["alignment-epoch"][10].as<double>()*_deg;
+    nav.atti[0] = root_node["alignment-epoch"][8].as<double>() * _deg;
+    nav.atti[1] = root_node["alignment-epoch"][9].as<double>() * _deg;
+    nav.atti[2] = root_node["alignment-epoch"][10].as<double>() * _deg;
+
     return nav;
 }

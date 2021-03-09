@@ -16,7 +16,9 @@ add_executable(LooselyCouple2020 main.cpp
         Src/convert.cpp
         Src/wgs84.cpp)
 target_link_libraries(LooselyCouple2020 Eigen3::Eigen)
+
 add_compile_options(-O3)
+
 add_executable(test_ins
         Src/ins_core.cpp
         Src/wgs84.cpp
@@ -40,24 +42,24 @@ add_definitions(-DGLOG_OUTPUT)
 add_definitions(-DEIGEN_USE_LAPACK)
 #add_definitions(-DEIGEN_USE_MKL_ALL)
 
-add_executable(test_dataFusion
+add_executable(dataFusion
         test_dataFusion.cpp
         Src/KalmanFilter.cpp
         Src/DataFusion.cpp
         Src/ins_core.cpp
         Src/wgs84.cpp
         Src/convert.cpp
-        Src/f_io.cpp
+        Src/FileIO.cpp
         Src/navigation_log.cpp
         Src/Config.cpp
         )
 include_directories(/home/rebeater/Downloads/cblas/CBLAS/include)
-target_link_libraries(test_dataFusion
+target_link_libraries(dataFusion
         Eigen3::Eigen
-        yaml-cpp
         yaml-cpp
         glog
         lapack
+        pthread
         )
 #add_link_options(-lgfortran -lm)
 

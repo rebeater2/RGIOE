@@ -17,7 +17,9 @@
 #include<Eigen/Dense>
 
 typedef Eigen::Vector3d Vec3d;
+typedef Eigen::Vector2d Vec2d;
 typedef Eigen::Matrix3d Mat3d;
+typedef Eigen::Matrix2d Mat2d;
 typedef Eigen::Quaternion<double> Quad;
 #ifndef STATE_CNT
 #define STATE_CNT 15
@@ -25,5 +27,7 @@ typedef Eigen::Quaternion<double> Quad;
 typedef Eigen::Matrix<double, STATE_CNT, STATE_CNT> MatXd;
 typedef Eigen::Matrix<double, STATE_CNT, 1> VecXd;
 typedef Eigen::Matrix<double, 3, STATE_CNT> Mat3Xd;
+typedef Eigen::Matrix<double, 2, STATE_CNT> Mat2Xd;
 typedef Eigen::Matrix<double, STATE_CNT, 3> MatX3d;
+typedef Eigen::Matrix<double, STATE_CNT, 2> MatX2d;
 #endif //LOOSELYCOUPLE2020_CPP_MATRIX_LIB_H

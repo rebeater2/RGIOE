@@ -2,13 +2,14 @@
 // Created by rebeater on 2020/12/17.
 //
 #include <fstream>
-#include <f_io.h>
+#include <FileIO.h>
 #include <Config.h>
 #include "DataFusion.h"
 #include "navigation_log.h"
 #include "nav_struct.h"
+#include <Timer.h>
 
-
+#define MULTI_THREAD
 
 
 int main(int argc, char *argv[]) {
@@ -19,39 +20,69 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     Config cfg(argv[1]);
-    logi <<"imu path:"<< cfg.imu_filepath;
+    logi << "imu path:" << cfg.imu_filepath;
     Option opt = cfg.getOption();
-    logi <<"gnss path"<< opt.lb_gnss[0];
+    logi << "gnss path" << opt.lb_gnss[0];
+    /*Use Given Initial State*/
     auto nav_ = cfg.getInitNav();
     auto nav = makeNavEpoch(nav_, opt);/* TODO 目前没有实现动态对准 */
     ImuData imu;
     GnssData gnss;
+
+    /*初始化dataFusion类*/
     DataFusion df(nav, opt);
+
     logi << opt.imuPara;
     logi << "init nav:" << nav;
-
-
+    /*移动文件指针到指定的开始时间*/
     ifstream f_imu(cfg.imu_filepath);
-    do { f_imu >> imu; } while (imu.gpst < cfg.start_time and f_imu.good());
-
+    do { readImu(f_imu, &imu, opt.imu_format); } while (imu.gpst < cfg.start_time and f_imu.good());
     ifstream f_gnss(cfg.gnss_filepath);
-    do { f_gnss >> gnss; } while (gnss.gpst < cfg.start_time and f_gnss.good());
-    f_gnss >> gnss;
+    string buffer;
+    /*跳过GPS文件的开头4行*/
+    for (int i = 0; i < 4; i++) getline(f_gnss, buffer);
+    do {
+        readGnss(f_gnss, &gnss, opt.gnss_format);
+    } while (gnss.gpst < cfg.start_time and f_gnss.good());
+    readGnss(f_gnss, &gnss, opt.gnss_format);
 
+#ifdef MULTI_THREAD
+    NavWriter writer(cfg.output_filepath);
+#else
     ofstream f_nav(cfg.output_filepath);
-
-    while (true) {
-        f_imu >> imu;
+#endif
+    Timer timer;
+    /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
+    while ((cfg.end_time <= 0) || (cfg.end_time > 0 && imu.gpst < cfg.end_time)) {
+        readImu(f_imu, &imu, opt.imu_format);
         if (!f_imu.good())break;
         df.TimeUpdate(imu);
         if (fabs(gnss.gpst - imu.gpst) < 1.0 / cfg.d_rate) {
-            df.MeasureUpdatePos(gnss);
+            if (df.MeasureUpdatePos(gnss) < 0) {
+                LOG_EVERY_N(INFO, 1) << "in outage mode" << gnss.gpst;
+            };
             LOG_EVERY_N(INFO, 100) << "measure update: " << gnss.gpst << " imu.gpst " << imu.gpst;
-            f_gnss >> gnss;
+            readGnss(f_gnss, &gnss, opt.gnss_format);
             if (!f_gnss.good())break;
         }
+#ifdef MULTI_THREAD
+        NavOutput out = df.Output();
+        writer.update(out);
+#else
         f_nav << df.Output() << endl;
+#endif
     }
+#ifdef MULTI_THREAD
+    logi << "resolve finished, waiting for writing file";
+    logi << "time used:" << timer.elapsed() / 1000.0 << "s";
+    writer.stop();
+    logi << "write finished\n";
+#else
+    f_nav.close();
+#endif
+    f_imu.close();
+    f_gnss.close();
+    logi << "time used:" << timer.elapsed() / 1000.0 << "s";
     logi << df.Output() << endl;
 
     return 0;

@@ -1,0 +1,67 @@
+imu-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_imu.imu
+imu-parameter-cfg: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/imu_A15_parameter.yml
+gnss-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/gnss_rtk.gps
+output-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_v2_rslt_cppV2.nav
+start-time: 456300
+end-time: 459600
+imu-data-rate: 200
+#--------------------------------------------------------------------------------#
+alignment-mode: 0 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
+alignment-epoch:
+  - 0 #　GPS week
+  - 456300.0000 # second of week
+  - 30.4447873696  # latitude
+  -  114.4718632476   # longitude
+  - 20.910  # height
+  - 0 # v_n (m/s)
+  - 0 # v_e
+  - 0 # v_d
+  -  0.85252308 # roll (deg)
+  - -2.03396435    # pitch (deg)
+  - 185.69625052  # yaw (deg)
+init-pos-std:
+  - 0.004 # m
+  - 0.001 # m
+  - 0.005 # m
+init-vel-std:
+  - 0 # m/s
+  - 0 # m/s
+  - 0 # m/s
+init-atti-std:
+  - 0.027  # deg
+  - 0.027  # deg
+  - 0.03  # deg for SPP is so 不靠谱
+alignment-moving-vel: 3 # m/s threshold velocity for moving align
+nhc-enable: 1
+nhc-hz: 20
+install-angle:
+  - 0.1
+  - 0.3
+  - 0.1
+nhc-std:
+  - 0.5
+  - 0.5
+zupt-enable: 0
+
+#--------------------------------------------------------------------------------#
+imu-format: 1
+# IMU_FORMAT_IMD = 0
+# IMU_FORMAT_IMUTXT = 1
+gnss-format: 0  #
+# GNSS_TXT_POS_7 = 0,
+# GNSS_BIN_POS_7 = 1,
+# GNSS_TXT_POS_14 = 2,
+# GNSS_BIN_POS_14 = 3,
+# RTKLIB_TXT_POS = 4,
+# GNSS_TXT_POS_VEL = 5,
+# RESERVED = 6,
+gnss-data-rate: 1
+antenna-level-arm:
+  - 0.136 #　forward
+  - -0.301 # right
+  - -0.184 # down
+#--------------------------------------------------------------------------------#
+odo-enable: 0 # 0: disable odometer 1: enable odometer
+odo-wheel-radius: 0 # 车轮半径
+odo-level-arm: [0,0,0]
+#--------------------------------------------------------------------------------#
