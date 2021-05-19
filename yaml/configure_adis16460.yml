@@ -1,24 +1,29 @@
 imu-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/adis16460.imd
 imu-parameter-cfg: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/imu_m39_parameter.yml
-gnss-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/GNSS/taidou.txt.gga
-output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/Output/taidou_adis16460.rslt
-start-time: 378815
+gnss-path: /media/rebeater/hd_data2/workspace/share/论文用到的数据/实验结果/不同场景/sc1taidou_pred_z.csv.nav
+output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/Output/sc1taidou_pred_z.lc.nav
+start-time: 380927
 end-time: -1
 imu-data-rate: 200
 #--------------------------------------------------------------------------------#
+#  2140 381907.000    40.0876550826   116.2413337824     34.258      0.000     -0.000      0.001   -0.19873683    5.48488946   74.71748561
+#   2140 381908.000    40.0876550737   116.2413337707     34.257     -0.000     -0.001      0.001   -0.20138760    5.48732884   74.71390867
+ # 2140 380927.000    40.0923345070   116.2277691800     35.082      3.011      7.944      0.008    0.12209828    4.60662493   68.88996231
+
+#  2140 380927.0000 40.092327548794 116.227772529528 33.4308 0.80000 1.00000 17.00000 0.00000 0.00000 0.00000
 alignment-mode: 0 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
 alignment-epoch:
   - 2140 #　GPS week
-  - 378815.0000 # second of week
-  - 40.0876202296  # latitude
-  -  116.2411937620   # longitude
-  - 33.123  # height
-  - -2.488 # v_n (m/s)
-  - -6.419 # v_e m/s
-  - 0.098 # v_d
-  -  -0.56753340 # roll (deg)
-  - 4.13367016    # pitch (deg)
-  - 247.77730322  # yaw (deg)
+  - 380927.0000 # second of week
+  - 40.0923345070  # latitude
+  - 116.2277691800   # longitude
+  - 35.082   # height
+  - 3.011 # v_n (m/s)
+  - 7.944 # v_e m/s
+  - 0.008 # v_d
+  - 0.12209828 # roll (deg)
+  - 4.60662493    # pitch (deg)
+  -  68.88996231   # yaw (deg)
 init-pos-std:
   - 0.004 # m
   - 0.001 # m
@@ -70,7 +75,7 @@ odo-level-arm:
   - 1
   - 0.5
 #--------------------------------------------------------------------------------#
-outage-enable: true
+outage-enable: false
 outage-start: 379216
 outage-stop: -1
 outage-time: 30

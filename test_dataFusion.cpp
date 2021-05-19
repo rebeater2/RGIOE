@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
     GnssData gnss;
 
     /*初始化dataFusion类*/
-    DataFusion df(nav, opt);
+
+    DataFusion::Instance().Initialize(nav, opt);
 
     logi << opt.imuPara;
     logi << "init nav:" << nav;
@@ -56,9 +57,9 @@ int main(int argc, char *argv[]) {
     while ((cfg.end_time <= 0) || (cfg.end_time > 0 && imu.gpst < cfg.end_time)) {
         readImu(f_imu, &imu, opt.imu_format);
         if (!f_imu.good())break;
-        df.TimeUpdate(imu);
+        DataFusion::Instance().TimeUpdate(imu);
         if (fabs(gnss.gpst - imu.gpst) < 1.0 / cfg.d_rate) {
-            if (df.MeasureUpdatePos(gnss) < 0) {
+            if (DataFusion::Instance().MeasureUpdatePos(gnss) < 0) {
                 LOG_EVERY_N(INFO, 1) << "in outage mode" << gnss.gpst;
             };
             LOG_EVERY_N(INFO, 100) << "measure update: " << gnss.gpst << " imu.gpst " << imu.gpst;
@@ -66,7 +67,7 @@ int main(int argc, char *argv[]) {
             if (!f_gnss.good())break;
         }
 #ifdef MULTI_THREAD
-        NavOutput out = df.Output();
+        NavOutput out = DataFusion::Instance().Output();
         writer.update(out);
 #else
         f_nav << df.Output() << endl;
@@ -83,7 +84,7 @@ int main(int argc, char *argv[]) {
     f_imu.close();
     f_gnss.close();
     logi << "time used:" << timer.elapsed() / 1000.0 << "s";
-    logi << df.Output() << endl;
+    logi << DataFusion::Instance().Output() << endl;
 
     return 0;
 }

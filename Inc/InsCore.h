@@ -2,8 +2,8 @@
 // Created by rebeater on 2020/11/9.
 //
 
-#ifndef LOOSELYCOUPLE2020_CPP_INS_CORE_H
-#define LOOSELYCOUPLE2020_CPP_INS_CORE_H
+#ifndef LOOSELYCOUPLE2020_CPP_INSCORE_H
+#define LOOSELYCOUPLE2020_CPP_INSCORE_H
 
 #include "nav_struct.h"
 #include "matrix_lib.h"
@@ -47,6 +47,7 @@ std::ostream &operator<<(std::ostream &os, NavEpoch &nav);
 NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt);
 /*机械编排主类*/
+#include <Singleton.h>
 class Ins {
 public:
     NavEpoch nav;
@@ -70,18 +71,19 @@ private:
 
     Vec3d _mid_pos();
 
+
 public:
-    Ins(NavEpoch &nav,int d_rate);
-    Ins(NavEpoch &nav,ImuData &imu);
+   Ins();
+   ~Ins();
+//    Ins& operator = (const Ins& rhs)=default;
+public:
+    void InitializePva(NavEpoch &nav,int d_rate);
+    void InitializePva(NavEpoch &nav,ImuData &imu);
 //    Ins(NavEpoch &nav,Option &opt);
     int ForwardMechanization(ImuData &imuData);
-
-
     MatXd TransferMatrix(ImuPara &para);
-
-
     void CompensateIMU(Vec3d &imu, Vec3d &bias, Vec3d &scale) const;
 };
 
 
-#endif //LOOSELYCOUPLE2020_CPP_INS_CORE_H
+#endif //LOOSELYCOUPLE2020_CPP_INSCORE_H

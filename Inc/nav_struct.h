@@ -8,6 +8,9 @@
 
 #ifndef LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H
 #define LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H
+
+#include <stdint.h>
+
 #define _PI 3.1415926535897932
 #define _hour 3600
 #define _minute 60
@@ -39,7 +42,6 @@ typedef struct {
     int week;
 } GnssData;
 typedef struct {
-
     double arw;
     double vrw;
     double ab_ini[3];
@@ -71,10 +73,10 @@ typedef struct {
     int d_rate;
     ImuFileFormat imu_format;
     GnssFileFormat gnss_format;
-    bool nhc_enable;
-    bool zupt_enable;
-    bool zupta_enable;
-    bool outage_enable;
+    uint8_t nhc_enable;
+    uint8_t zupt_enable;
+    uint8_t zupta_enable;
+    uint8_t outage_enable;
     int outage_start;
     int outage_stop;
     int outage_time;
@@ -103,5 +105,8 @@ typedef struct {
     double latitude;
     double longitude;
 } LatLon;
-
+typedef struct {
+    float acce_bias[3];
+    float gyro_bias[3];
+}Bias;
 #endif //LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H

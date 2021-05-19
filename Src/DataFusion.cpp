@@ -5,14 +5,34 @@
 #include "DataFusion.h"
 #include "navigation_log.h"
 #include <iomanip>
-//DataFusion(NavEpoch &ini_nav,Option opt):ins(ini_nav,opt.d_rate),KalmanFilter()
+
+
+DataFusion::DataFusion() : Ins(), KalmanFilter() {
+    P.setZero();
+    Q0.setZero();
+    opt = {0, ImuFileFormat::IMU_FORMAT_IMUTXT, GnssFileFormat::GNSS_TXT_POS_7,
+           0, 0, 0,
+           0, 0, 0, 0, 0,
+           {0, 0, 0},
+           {0, 0, 0},
+           {0, 0, 0},
+           {0, 0, 0},
+           {0, 0, 0},
+           {0, 0, 0},
+           {0,0},
+           {0,0}};
+    _time_update_idx = 0;
+}
+
 /**
  * 初始化P,Q矩阵
  * @param ini_nav
  * @param opt
  */
-DataFusion::DataFusion(NavEpoch &ini_nav, Option &opt) : Ins(ini_nav, opt.d_rate), KalmanFilter(), opt(opt) {
+void DataFusion::Initialize(NavEpoch &ini_nav, Option &opt) {
     /*initial P & Q0 */
+    InitializePva(ini_nav, opt.d_rate);
+    this->opt = opt;
     P.setZero();
     P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
     P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -45,7 +65,9 @@ DataFusion::DataFusion(NavEpoch &ini_nav, Option &opt) : Ins(ini_nav, opt.d_rate
     _time_update_idx = 0;
     temp = Vec3d{opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]};
     Cbv = convert::euler_to_dcm(temp);
+#ifdef USE_OUTAGE
     otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
+#endif
     logi << "initial finished";
 }
 
@@ -62,11 +84,11 @@ int DataFusion::TimeUpdate(ImuData &imu) {
     MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
     Predict(phi, Q);
-    if(opt.nhc_enable){
+    if (opt.nhc_enable) {
         _time_update_idx++;
-        if (_time_update_idx % (2*opt.d_rate) == 0) {
+        if (_time_update_idx % (2 * opt.d_rate) == 0) {
             MeasureNHC();
-            _feed_back();
+            _feedBack();
         }
     }
     return 0;
@@ -79,19 +101,21 @@ int DataFusion::TimeUpdate(ImuData &imu) {
  * @return 1
  */
 int DataFusion::MeasureUpdatePos(Vec3d &pos, Mat3d &Rk) {
-    Mat3Xd H = _pos_h();
-    Vec3d z = _pos_z(pos);
+    Mat3Xd H = _posH();
+    Vec3d z = _posZ(pos);
     Update(H, z, Rk);
-    _feed_back();
+    _feedBack();
     Reset();
     return 0;
 }
 
 int DataFusion::MeasureUpdatePos(GnssData &gnssData) {
+#ifdef USE_OUTAGE
     if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
         /*outage mode*/
         return -1;
     }
+#endif
     Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
     Mat3d Rk = Mat3d::Zero();
     Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0];
@@ -106,8 +130,7 @@ int DataFusion::MeasureUpdatePos(GnssData &gnssData) {
  * feed back Modified Error Models
  * @return
  */
-int DataFusion::_feed_back() {
-    /* TODO */
+int DataFusion::_feedBack() {
     double lat = nav.pos[0];
     double h = nav.pos[2];
     double rn = wgs84.RN(lat);
@@ -127,7 +150,6 @@ int DataFusion::_feed_back() {
     nav.pos[1] = ll.longitude;
     nav.pos[2] = nav.pos[2] + xd[2];
     Mat3d Ccn = eye3 + convert::skew(d_atti);
-//    LOG_FIRST_N(INFO,10)<<xd.block<3, 1>(3, 0).transpose();
     nav.vn = Ccn * (nav.vn - Vec3d{xd[3], xd[4], xd[5]});
     Vec3d phi = Vec3d{xd[6], xd[7], xd[8]} + d_atti;
     Quad Qpn = convert::rv_to_quaternion(phi);
@@ -140,7 +162,7 @@ int DataFusion::_feed_back() {
 }
 
 
-Mat3Xd DataFusion::_pos_h() {
+Mat3Xd DataFusion::_posH() {
     Mat3Xd mat_h = Mat3Xd::Zero();
     mat_h.block<3, 3>(0, 0) = eye3;
     Vec3d temp = nav.Cbn * lb_gnss;
@@ -153,7 +175,7 @@ Mat3Xd DataFusion::_pos_h() {
  * @param pos
  * @return
  */
-Vec3d DataFusion::_pos_z(Eigen::Vector3d &pos) {
+Vec3d DataFusion::_posZ(Eigen::Vector3d &pos) {
     Vec3d re_ins = convert::lla_to_xyz(nav.pos);
     Vec3d re_gnss = convert::lla_to_xyz(pos);
     LatLon gnss = {pos[0], pos[1]};
@@ -197,10 +219,12 @@ int DataFusion::MeasureNHC() {
 }
 
 int DataFusion::MeasureZeroVelocity() {
-
+    /*零速观测*/
     return 0;
 }
 
+
+#ifdef USE_OUTAGE
 Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
     /**/
     if ((start > stop and stop > 0) or outage < 0 or step < outage) {
@@ -217,6 +241,9 @@ Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
         logi << "outage time" << s;
 }
 
+/*!
+ * 判断当前时间是否处于中断模式
+ * */
 bool Outage::IsOutage(double gpst) {
     if (!flag_enable) {
         return false;
@@ -233,3 +260,4 @@ Outage::Outage() {
     flag_enable = false;
     outage = 0;
 }
+#endif

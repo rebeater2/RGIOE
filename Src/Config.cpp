@@ -31,20 +31,19 @@ Option Config::getOption() {
         opt.lb_gnss[i] = root_node["antenna-level-arm"][i].as<double>();
     }
 
-    opt.nhc_enable = root_node["nhc-enable"].as<bool>();
+    opt.nhc_enable = root_node["nhc-enable"].as<int>();
     opt.nhc_std[0] = root_node["nhc-std"][0].as<double>();
     opt.nhc_std[1] = root_node["nhc-std"][1].as<double>();
 
-    opt.zupt_enable = root_node["zupt-enable"].as<bool>();
-    opt.zupta_enable = root_node["zupta-enable"].as<bool>();
+    opt.zupt_enable = root_node["zupt-enable"].as<int>();
+    opt.zupta_enable = root_node["zupta-enable"].as<int>();
 
     opt.outage_enable = root_node["outage-enable"].as<bool>();
     opt.outage_start = root_node["outage-start"].as<int>();
     opt.outage_stop = root_node["outage-stop"].as<int>();
     opt.outage_time = root_node["outage-time"].as<int>();
     opt.outage_step = root_node["outage-step"].as<int>();
-
-
+    opt.d_rate = root_node["imu-data-rate"].as<int>();
     return opt;
 }
 

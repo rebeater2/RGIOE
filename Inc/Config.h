@@ -30,5 +30,4 @@ public:
     ImuPara getImuPara(const string &imu_para_path) const;
 
 };
-
 #endif //LOOSELYCOUPLE2020_CPP_CONFIG_H

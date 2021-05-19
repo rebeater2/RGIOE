@@ -2,7 +2,7 @@
 // Created by rebeater on 2020/11/10.
 //
 
-#include <ins_core.h>
+#include <InsCore.h>
 #include <iostream>
 #include <fstream>
 
@@ -20,11 +20,11 @@ int main() {
     while(imu.gpst<91620.005){
         f_imu.read((char *) &imu, sizeof(ImuData));
     }
-    Ins ins(nav,imu);
+    Ins ins;
+    ins.InitializePva(nav,imu);
     while (!f_imu.eof()) {
         f_imu.read((char *) &imu, sizeof(ImuData));
         ins.ForwardMechanization(imu);
-
 //        f_nav << ins.nav<<endl;
     }
     cout<<ins.nav<<endl;

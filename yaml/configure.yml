@@ -42,7 +42,7 @@ nhc-std:
   - 0.5
   - 0.5
 zupt-enable: 0
-
+zupta-enable: 0
 #--------------------------------------------------------------------------------#
 imu-format: 1
 # IMU_FORMAT_IMD = 0
@@ -65,3 +65,9 @@ odo-enable: 0 # 0: disable odometer 1: enable odometer
 odo-wheel-radius: 0 # 车轮半径
 odo-level-arm: [0,0,0]
 #--------------------------------------------------------------------------------#
+#--------------------------------------------------------------------------------#
+outage-enable: false
+outage-start: 379216
+outage-stop: -1
+outage-time: 30
+outage-step: 100

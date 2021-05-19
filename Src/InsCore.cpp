@@ -5,7 +5,7 @@
 * @date: 2020/11/10
 * @version: 1.0.0
 **/
-#include <ins_core.h>
+#include <InsCore.h>
 #include <wgs84.h>
 #include <iomanip>
 
@@ -152,14 +152,23 @@ void Ins::CompensateIMU(Vec3d &imu, Vec3d &bias, Vec3d &scale) const {
     imu = (eye3 - scale_mat) * (imu - bias * dt);
 }
 
-Ins::Ins(NavEpoch &nav, int d_rate) {
+ Ins::Ins(){
+     eye3 = Eigen::Matrix3d::Identity(3, 3);
+     int d_rate = 100;
+     dt = 1.0 / d_rate;
+     this->nav = NavEpoch{0,{0,0,0}};
+     t_pre = 0;
+}
+Ins::~Ins(){
+}
+void Ins::InitializePva(NavEpoch &nav, int d_rate) {
     eye3 = Eigen::Matrix3d::Identity(3, 3);
     dt = 1.0 / d_rate;
     t_pre = nav.gpst;
     this->nav = nav;
 }
 
-Ins::Ins(NavEpoch &nav, ImuData &imu) {
+void Ins::InitializePva(NavEpoch &nav, ImuData &imu) {
     eye3 = Eigen::Matrix3d::Identity(3, 3);
     dt = 0.005;
     t_pre = nav.gpst;
