@@ -69,7 +69,8 @@ std::ostream &operator<<(std::ostream &os, NavEpoch &nav) {
 int Ins::_velocity_update(Vec3d &acce, Vec3d &gyro) {
     omega_en_n = wgs84.omega_en_n(vn_mid, pos_mid);
     omega_ie_n = wgs84.omega_ie_n(pos_mid[0]);
-    Vec3d gn = {0, 0, wgs84.g(pos_mid[0], pos_mid[2])};
+
+    Vec3d gn = {0, 0, wgs84.g};
     Vec3d v_g_cor = (gn - (2 * omega_ie_n + omega_en_n).cross(nav.vn)) * dt;
     Vec3d zeta_mid = (omega_en_n + omega_ie_n) * dt;
     Vec3d vf_kb_k1 = acce + 0.5 * gyro.cross(acce) + (_gyro_pre.cross(acce) + _acce_pre.cross(gyro)) / 12.0;
@@ -122,8 +123,13 @@ int Ins::_atti_update(Vec3d &gyro) {
  * @return
  */
 int Ins::ForwardMechanization(ImuData &imuData) {
+#ifdef USE_INCREMENT
     Vec3d acce{imuData.acce[0],imuData.acce[1],imuData.acce[2]};
     Vec3d gyro{imuData.gyro[0],imuData.gyro[1],imuData.gyro[2]};
+#else
+    Vec3d acce{imuData.acce[0] * dt * wgs84.g, imuData.acce[1] * dt * wgs84.g, imuData.acce[2] * wgs84.g * dt};
+    Vec3d gyro{imuData.gyro[0] * dt, imuData.gyro[1] * dt, imuData.gyro[2] * dt};
+#endif
 //    dt = 0.005;//imuData.gpst - t_pre;
     t_pre = imuData.gpst;
     CompensateIMU(acce, nav.ab, nav.as);
@@ -152,20 +158,23 @@ void Ins::CompensateIMU(Vec3d &imu, Vec3d &bias, Vec3d &scale) const {
     imu = (eye3 - scale_mat) * (imu - bias * dt);
 }
 
- Ins::Ins(){
-     eye3 = Eigen::Matrix3d::Identity(3, 3);
-     int d_rate = 100;
-     dt = 1.0 / d_rate;
-     this->nav = NavEpoch{0,{0,0,0}};
-     t_pre = 0;
+Ins::Ins() {
+    eye3 = Eigen::Matrix3d::Identity(3, 3);
+    int d_rate = 100;
+    dt = 1.0 / d_rate;
+    this->nav = NavEpoch{0, {0, 0, 0}};
+    t_pre = 0;
 }
-Ins::~Ins(){
+
+Ins::~Ins() {
 }
+
 void Ins::InitializePva(NavEpoch &nav, int d_rate) {
     eye3 = Eigen::Matrix3d::Identity(3, 3);
     dt = 1.0 / d_rate;
     t_pre = nav.gpst;
     this->nav = nav;
+    wgs84.Update(nav.pos[0], nav.pos[2]);
 }
 
 void Ins::InitializePva(NavEpoch &nav, ImuData &imu) {
@@ -186,11 +195,12 @@ Vec3d Ins::_mid_pos() {
     Quad q_ne_mid = q_ee_mid * nav.Qne * q_nn_mid;
     LatLon lat_lon_mid = convert::qne_to_lla(q_ne_mid);
     pos_mid = {lat_lon_mid.latitude, lat_lon_mid.longitude, h_mid};
+    wgs84.Update(pos_mid[0], pos_mid[2]);
     return pos_mid;
 }
 
 MatXd Ins::TransferMatrix(ImuPara &para) {
-    double g = wgs84.g(nav.pos[0], nav.pos[2]);
+    double g = wgs84.g;
     double rm = wgs84.RM(nav.pos[0]);
     double rn = wgs84.RN(nav.pos[0]);
     phi.setZero();

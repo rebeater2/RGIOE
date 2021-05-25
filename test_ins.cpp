@@ -25,7 +25,7 @@ int main() {
     while (!f_imu.eof()) {
         f_imu.read((char *) &imu, sizeof(ImuData));
         ins.ForwardMechanization(imu);
-//        f_nav << ins.nav<<endl;
+        f_nav << ins.nav<<'\n';
     }
     cout<<ins.nav<<endl;
     f_imu.close();

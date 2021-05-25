@@ -15,21 +15,20 @@
 
 
 #include "nav_struct.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define USE_YAML
-#ifdef USE_YAML
-    void loadYamlConfig(char *yaml_path,char *imu_path,char *gnss_path,char *out_path,Option *opt);
+
+
+#if USE_YAML == 1
+void loadYamlConfig(char *yaml_path,char *imu_path,char *gnss_path,char *out_path,Option *opt,NavOutput *nav);
 #endif
-
-
 int kalmanOutput(NavOutput *nav_output);
-double kalmanAlignPos(GnssData *gnss,ImuData *imu);
+double kalmanAlignPos(GnssData *gnss, ImuData *imu);
 void kalmanSetGNSS(GnssData *gnss);
 void kalmanUpdate(ImuData *imu);
-void kalmanInitialize(NavOutput *nav,Option *opt);
-
+void kalmanInitialize(NavOutput *nav, Option *opt);
 #ifdef __cplusplus
 };
 #endif

@@ -9,7 +9,7 @@
 #include "nav_struct.h"
 #include <Timer.h>
 
-#define MULTI_THREAD
+#define MULTI_THREAD 1
 
 
 int main(int argc, char *argv[]) {
@@ -30,9 +30,7 @@ int main(int argc, char *argv[]) {
     GnssData gnss;
 
     /*初始化dataFusion类*/
-
     DataFusion::Instance().Initialize(nav, opt);
-
     logi << opt.imuPara;
     logi << "init nav:" << nav;
     /*移动文件指针到指定的开始时间*/
@@ -46,8 +44,7 @@ int main(int argc, char *argv[]) {
         readGnss(f_gnss, &gnss, opt.gnss_format);
     } while (gnss.gpst < cfg.start_time and f_gnss.good());
     readGnss(f_gnss, &gnss, opt.gnss_format);
-
-#ifdef MULTI_THREAD
+#if MULTI_THREAD == 1
     NavWriter writer(cfg.output_filepath);
 #else
     ofstream f_nav(cfg.output_filepath);
@@ -66,14 +63,14 @@ int main(int argc, char *argv[]) {
             readGnss(f_gnss, &gnss, opt.gnss_format);
             if (!f_gnss.good())break;
         }
-#ifdef MULTI_THREAD
+#if MULTI_THREAD == 1
         NavOutput out = DataFusion::Instance().Output();
         writer.update(out);
 #else
-        f_nav << df.Output() << endl;
+        f_nav << DataFusion::Instance().Output() << '\n';
 #endif
     }
-#ifdef MULTI_THREAD
+#if MULTI_THREAD == 1
     logi << "resolve finished, waiting for writing file";
     logi << "time used:" << timer.elapsed() / 1000.0 << "s";
     writer.stop();

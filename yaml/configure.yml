@@ -1,4 +1,4 @@
-imu-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_imu.imu
+imu-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_imu.bin
 imu-parameter-cfg: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/imu_A15_parameter.yml
 gnss-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/gnss_rtk.gps
 output-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_v2_rslt_cppV2.nav
@@ -32,7 +32,7 @@ init-atti-std:
   - 0.027  # deg
   - 0.03  # deg for SPP is so 不靠谱
 alignment-moving-vel: 3 # m/s threshold velocity for moving align
-nhc-enable: 1
+nhc-enable: true
 nhc-hz: 20
 install-angle:
   - 0.1
@@ -41,8 +41,8 @@ install-angle:
 nhc-std:
   - 0.5
   - 0.5
-zupt-enable: 0
-zupta-enable: 0
+zupt-enable: true
+zupta-enable: true
 #--------------------------------------------------------------------------------#
 imu-format: 1
 # IMU_FORMAT_IMD = 0

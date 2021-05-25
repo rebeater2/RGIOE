@@ -8,8 +8,8 @@
 
 ostream &operator<<(ostream &os, ImuData &imu) {
     os << imu.gpst << "   ";
-    os << std::fixed << left << setprecision(6) << imu.acce[0] << "   " << imu.acce[1] << "   " << imu.acce[2] << "   ";
-    os << std::fixed << left << setprecision(6) << imu.gyro[0] << "   " << imu.gyro[1] << "   " << imu.gyro[2] << "   ";
+    os << std::fixed << left << setprecision(8) << imu.gyro[0] << "   " << imu.gyro[1] << "   " << imu.gyro[2] << "   ";
+    os << std::fixed << left << setprecision(8) << imu.acce[0] << "   " << imu.acce[1] << "   " << imu.acce[2] << "   ";
     return os;
 };
 

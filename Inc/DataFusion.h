@@ -10,7 +10,7 @@
 #include "InsCore.h"
 #include "Singleton.h"
 //#define OUTAGE_SUPPORT
-#ifdef USE_OUTAGE
+#if USE_OUTAGE == 1
 #include <vector>
 class Outage {
 private:
@@ -33,7 +33,7 @@ private:
     Vec3d lb_wheel;
     Mat3d Cbv;
     Option opt;
-#ifdef USE_OUTAGE
+#if USE_OUTAGE == 1
     Outage otg;
 #endif
 private:

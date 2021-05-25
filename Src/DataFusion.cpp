@@ -19,8 +19,8 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
            {0, 0, 0},
            {0, 0, 0},
            {0, 0, 0},
-           {0,0},
-           {0,0}};
+           {0, 0},
+           {0, 0}};
     _time_update_idx = 0;
 }
 
@@ -65,7 +65,7 @@ void DataFusion::Initialize(NavEpoch &ini_nav, Option &opt) {
     _time_update_idx = 0;
     temp = Vec3d{opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]};
     Cbv = convert::euler_to_dcm(temp);
-#ifdef USE_OUTAGE
+#if USE_OUTAGE == 1
     otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
 #endif
     logi << "initial finished";
@@ -80,7 +80,7 @@ int DataFusion::TimeUpdate(ImuData &imu) {
     ForwardMechanization(imu);
     MatXd phi = TransferMatrix(opt.imuPara);
 //    LOG_EVERY_N(INFO,10)<<dt;
-    LOG_IF(WARNING, fabs(dt - 1.0 / opt.d_rate) > 0.001) << "dt error" << dt;
+//    LOG_IF(WARNING, fabs(dt - 1.0 / opt.d_rate) > 0.001) << "dt error" << dt;
     MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
     Predict(phi, Q);
@@ -110,7 +110,7 @@ int DataFusion::MeasureUpdatePos(Vec3d &pos, Mat3d &Rk) {
 }
 
 int DataFusion::MeasureUpdatePos(GnssData &gnssData) {
-#ifdef USE_OUTAGE
+#if USE_OUTAGE == 1
     if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
         /*outage mode*/
         return -1;
@@ -185,7 +185,7 @@ Vec3d DataFusion::_posZ(Eigen::Vector3d &pos) {
 }
 
 NavOutput DataFusion::Output() {
-    NavOutput out;
+    static NavOutput out;
     out.gpst = nav.gpst;
     for (int i = 0; i < 3; i++) {
         out.pos[i] = nav.pos[i];
@@ -224,7 +224,7 @@ int DataFusion::MeasureZeroVelocity() {
 }
 
 
-#ifdef USE_OUTAGE
+#if USE_OUTAGE == 1
 Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
     /**/
     if ((start > stop and stop > 0) or outage < 0 or step < outage) {

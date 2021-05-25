@@ -1,29 +1,29 @@
 imu-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/adis16460.imd
 imu-parameter-cfg: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/imu_m39_parameter.yml
-gnss-path: /media/rebeater/hd_data2/workspace/share/论文用到的数据/实验结果/不同场景/sc1taidou_pred_z.csv.nav
-output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/Output/sc1taidou_pred_z.lc.nav
-start-time: 380927
+gnss-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/GNSS/ub482.txt.gga
+output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/Output/ub482_adis16460.lc.nav
+start-time: 378819
 end-time: -1
 imu-data-rate: 200
 #--------------------------------------------------------------------------------#
 #  2140 381907.000    40.0876550826   116.2413337824     34.258      0.000     -0.000      0.001   -0.19873683    5.48488946   74.71748561
 #   2140 381908.000    40.0876550737   116.2413337707     34.257     -0.000     -0.001      0.001   -0.20138760    5.48732884   74.71390867
  # 2140 380927.000    40.0923345070   116.2277691800     35.082      3.011      7.944      0.008    0.12209828    4.60662493   68.88996231
-
+#  2140 378819.000    40.0875433430   116.2408255479     33.465     -3.010     -8.750      0.108   -0.16404256    3.78730506  250.90865325
 #  2140 380927.0000 40.092327548794 116.227772529528 33.4308 0.80000 1.00000 17.00000 0.00000 0.00000 0.00000
 alignment-mode: 0 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
 alignment-epoch:
   - 2140 #　GPS week
-  - 380927.0000 # second of week
-  - 40.0923345070  # latitude
-  - 116.2277691800   # longitude
-  - 35.082   # height
-  - 3.011 # v_n (m/s)
-  - 7.944 # v_e m/s
-  - 0.008 # v_d
-  - 0.12209828 # roll (deg)
-  - 4.60662493    # pitch (deg)
-  -  68.88996231   # yaw (deg)
+  - 378819.0000 # second of week
+  - 40.0875433430  # latitude
+  - 116.2408255479   # longitude
+  - 33.465   # height
+  - -3.010  # v_n (m/s)
+  -  -8.750  # v_e m/s
+  - 0.108 # v_d
+  - -0.164042568 # roll (deg)
+  -  3.78730506    # pitch (deg)
+  -   250.90865325    # yaw (deg)
 init-pos-std:
   - 0.004 # m
   - 0.001 # m

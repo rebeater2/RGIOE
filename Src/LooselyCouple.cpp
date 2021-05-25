@@ -54,13 +54,19 @@ int kalmanOutput(NavOutput *nav_output) {
     bias->acce_bias[2] = (float) (kf.sins.db.k / _mGal);*/
     return 1;
 }
-#ifdef USE_YAML
+
+#if USE_YAML == 1
+
 #include "Config.h"
-void loadYamlConfig(char *yaml_path,char *imu_path,char *gnss_path,char *out_path,Option *opt){
+
+void loadYamlConfig(char *yaml_path, char *imu_path, char *gnss_path, char *out_path, Option *opt, NavOutput *nav) {
     Config cfg = Config(yaml_path);
     strcpy(imu_path, cfg.imu_filepath.c_str());
-    strcpy(gnss_path,cfg.gnss_filepath.c_str());
-    strcpy(out_path,cfg.output_filepath.c_str());
+    strcpy(gnss_path, cfg.gnss_filepath.c_str());
+    strcpy(out_path, cfg.output_filepath.c_str());
     *opt = cfg.getOption();
+    if (nav != NULL) {
+        *nav = cfg.getInitNav();
+    }
 };
 #endif
