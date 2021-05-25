@@ -100,7 +100,21 @@ double AlignMoving::Update(GnssData &gnss) {
         nav.vn[0] = distance.dn;
         nav.vn[1] = distance.de;
         nav.vn[2] = distance.dd;
-        nav.atti[2] = atan2(distance.de, distance.dn);;
+        nav.atti[2] = atan2(distance.de, distance.dn);
+        nav.Qbn = convert::euler_to_quaternion(nav.atti);
+        nav.Cbn = convert::euler_to_dcm(nav.atti);
+        LatLon ll = LatLon{nav.pos[0], nav.pos[1]};
+        nav.Qne = convert::lla_to_qne(ll);
+        nav.Cne = convert::lla_to_cne(ll);
+
+        for (int i = 0; i < 3; i++) {
+            nav.pos_std[i] = gnss.pos_std[i];
+            nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
+            nav.att_std[i] = (gnss.pos_std[i] + gnss_pre.pos_std[i]) / distance.d;
+            nav.gb[i] = smooth.getSmoothedIMU().gyro[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
+            nav.ab[i] = 0;
+        }
+
         flag_yaw_finished = true;
     }
     gnss_pre = gnss;
@@ -109,4 +123,49 @@ double AlignMoving::Update(GnssData &gnss) {
 
 AlignMoving::AlignMoving(double vel_threshold) : vel_threshold(vel_threshold) {
     gnss_pre = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+}
+
+AlignBase::AlignBase() {
+    nav.gpst = 0;
+    auto zero = Eigen::Vector3d::Zero();
+    nav.pos = zero;/*n-frame position(lat,lon,alt) :d/d/m*/
+    nav.vn = zero;/*n-frame velocity North East Down :m/a*/
+    nav.atti = zero;/*attitude forward right down :rad*/
+
+    nav.dvn = zero;/*n-frame velocity change :m/a*/
+    nav.vf_kb = zero;
+
+    nav.Qbn = convert::euler_to_quaternion(nav.atti);
+    nav.Cbn = convert::euler_to_dcm(nav.atti);
+    LatLon ll = LatLon{nav.pos[0], nav.pos[1]};
+    nav.Qne = convert::lla_to_qne(ll);
+    nav.Cne = convert::lla_to_cne(ll);
+
+    nav.gb = zero;/*gyroscope bias*/
+    nav.ab = zero;/*accelerator bias*/
+    nav.gs = zero;/*gyroscope sale factor error*/
+    nav.as = zero;/*accelerator scale factor error*/
+
+    nav.pos_std = zero;
+    nav.vel_std = zero;
+    nav.att_std = zero;
+    flag_level_finished = false;
+    flag_yaw_finished = false;
+}
+
+NavOutput AlignBase::getNav() {
+    static NavOutput out;
+    out.gpst = nav.gpst;
+    for (int i = 0; i < 3; i++) {
+        out.pos[i] = nav.pos[i];
+        out.vn[i] = nav.vn[i];
+        out.atti[i] = nav.atti[i];
+        out.gb[i] = nav.gb[i];
+        out.ab[i] = nav.ab[i];
+    }
+    return out;
+}
+
+NavEpoch &AlignBase::getNavEpoch() {
+    return nav;
 }

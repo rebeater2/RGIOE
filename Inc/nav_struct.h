@@ -69,10 +69,16 @@ typedef enum {
     GNSS_TXT_GGA = 6,
     RESERVED = 6,
 } GnssFileFormat;
+typedef  enum  {
+    ALIGN_USE_GIVEN = 0,
+    ALIGN_MOVING = 1,
+    ALIGN_STATIONARY = 2
+}AlignMode;
 typedef struct {
     int d_rate;
     ImuFileFormat imu_format;
     GnssFileFormat gnss_format;
+    AlignMode alignmode;
     uint8_t nhc_enable;
     uint8_t zupt_enable;
     uint8_t zupta_enable;

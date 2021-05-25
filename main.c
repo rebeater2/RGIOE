@@ -4,17 +4,6 @@
 #include "LooselyCouple.h"
 
 /**/
-Option default_option = {0, IMU_FORMAT_IMUTXT, GNSS_TXT_POS_7,
-                         0, 0, 0,
-                         0, 0, 0, 0, 0,
-                         {0, 0, 0},
-                         {0, 0, 0},
-                         {0, 0, 0},
-                         {0, 0, 0},
-                         {0, 0, 0},
-                         {0, 0, 0},
-                         {0, 0},
-                         {0, 0}};
 
 char *str(NavOutput *out) {
     static char buff[1024];

@@ -35,6 +35,6 @@ int main(int argc, char *argv[]) {
         /*  auto newimu = imu_smooth.getSmoothedIMU();
           f_imu_out<<newimu<<imu_smooth.getStd()<<" "<<(int)imu_smooth.isStatic()<<'\n';*/
     }
-    cout <<align_moving.alignFinished()<<":"<< align_moving.getNav();
+    cout<<align_moving.getNav();
 
 }

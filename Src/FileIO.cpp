@@ -5,6 +5,7 @@
 #include "FileIO.h"
 #include <iomanip>
 #include <fstream>
+#include <navigation_log.h>
 
 ostream &operator<<(ostream &os, ImuData &imu) {
     os << imu.gpst << "   ";
@@ -53,7 +54,6 @@ ostream &operator<<(ostream &os, ImuPara imuPara) {
     return os;
 }
 NavWriter::NavWriter(std::string &file_path) : file_path(file_path) {
-        flag_stop = false;
         this->start();
 }
 
@@ -65,17 +65,21 @@ NavWriter::~NavWriter() {
 void NavWriter::start() {
     thread th(&NavWriter::th_write_nav, this);
     th_write = std::move(th);
-    flag_stop = false;
+
 }
 
 void NavWriter::update(NavOutput &out) {
+
     mtx_nav.lock();
+
     nav_msgs.emplace(std::make_shared<NavOutput>(out));
     mtx_nav.unlock();
 }
 
 void NavWriter::stop() {
+    mtx_nav.lock();
     flag_stop = true;
+    mtx_nav.unlock();
     th_write.join();
 }
 
@@ -90,9 +94,11 @@ void NavWriter::th_write_nav() {
             mtx_nav.unlock();
             f_nav << *p_nav << "\n";/* */
         }
+        mtx_nav.lock();
         if (flag_stop) {
             break;
         }
+        mtx_nav.unlock();
     }
     f_nav.close();
 }

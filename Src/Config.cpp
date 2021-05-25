@@ -12,7 +12,7 @@ Config::Config(const string &yml_path) {
     output_filepath = root_node["output-path"].as<string>();
     start_time = root_node["start-time"].as<double>();
     end_time = root_node["end-time"].as<double>();
-    d_rate = root_node["imu-data-rate"].as<int>();
+
 }
 
 Option Config::getOption() {
@@ -26,11 +26,11 @@ Option Config::getOption() {
         opt.pos_std[i] = root_node["init-pos-std"][i].as<double>();
         opt.vel_std[i] = root_node["init-vel-std"][i].as<double>();
         opt.atti_std[i] = root_node["init-atti-std"][i].as<double>() * _deg;
-        opt.angle_bv[i] = root_node["install-angle"][i].as<double>() *_deg;
+        opt.angle_bv[i] = root_node["install-angle"][i].as<double>() * _deg;
         opt.lb_wheel[i] = root_node["odo-level-arm"][i].as<double>();
         opt.lb_gnss[i] = root_node["antenna-level-arm"][i].as<double>();
     }
-
+    opt.alignmode = (AlignMode) root_node["alignment-mode"].as<int>();
     opt.nhc_enable = root_node["nhc-enable"].as<bool>();
     opt.nhc_std[0] = root_node["nhc-std"][0].as<double>();
     opt.nhc_std[1] = root_node["nhc-std"][1].as<double>();

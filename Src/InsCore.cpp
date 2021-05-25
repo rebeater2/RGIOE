@@ -221,3 +221,16 @@ MatXd Ins::TransferMatrix(ImuPara &para) {
     phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
     return phi;
 }
+
+NavOutput Ins::Output() const{
+  static  NavOutput out;
+    out.gpst = nav.gpst;
+    for (int i = 0; i < 3; i++) {
+        out.pos[i] = nav.pos[i];
+        out.vn[i] = nav.vn[i];
+        out.atti[i] = nav.atti[i];
+        out.gb[i] = nav.gb[i];
+        out.ab[i] = nav.ab[i];
+    }
+    return out;
+}

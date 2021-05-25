@@ -10,7 +10,7 @@
 DataFusion::DataFusion() : Ins(), KalmanFilter() {
     P.setZero();
     Q0.setZero();
-    opt = {0, ImuFileFormat::IMU_FORMAT_IMUTXT, GnssFileFormat::GNSS_TXT_POS_7,
+    opt = {0, ImuFileFormat::IMU_FORMAT_IMUTXT, GnssFileFormat::GNSS_TXT_POS_7, AlignMode::ALIGN_USE_GIVEN,
            0, 0, 0,
            0, 0, 0, 0, 0,
            {0, 0, 0},
@@ -184,18 +184,6 @@ Vec3d DataFusion::_posZ(Eigen::Vector3d &pos) {
     return z;
 }
 
-NavOutput DataFusion::Output() {
-    static NavOutput out;
-    out.gpst = nav.gpst;
-    for (int i = 0; i < 3; i++) {
-        out.pos[i] = nav.pos[i];
-        out.vn[i] = nav.vn[i];
-        out.atti[i] = nav.atti[i];
-        out.gb[i] = nav.gb[i];
-        out.ab[i] = nav.ab[i];
-    }
-    return out;
-}
 
 int DataFusion::MeasureNHC() {
     Mat3d Cnv = Cbv * nav.Cbn.transpose();

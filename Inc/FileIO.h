@@ -37,12 +37,14 @@ ostream &operator<<(ostream &os, ImuPara imuPara);
 
 class NavWriter {
     /*多线程读写*/
+
     queue<std::shared_ptr<NavOutput>> nav_msgs;
-    bool flag_stop;
+
     std::thread th_write;
     std::mutex mtx_nav;
     string file_path;
 private:
+    bool flag_stop = false;
     void th_write_nav();
     void start();
 

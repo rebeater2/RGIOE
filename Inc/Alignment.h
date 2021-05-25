@@ -7,11 +7,7 @@
 
 #include "nav_struct.h"
 
-enum AlignMode {
-    ALIGN_USE_GIVEN = 0,
-    ALIGN_MOVING = 1,
-    ALIGN_STATIONARY = 2
-};
+
 
 /**
  * AlignBase align;
@@ -22,7 +18,7 @@ enum AlignMode {
  *
  */
 #include "matrix_lib.h"
-
+#include "InsCore.h"
 class IMUSmooth {
 private:
     ImuData imu_ave;/*均值*/
@@ -48,26 +44,18 @@ public:
 
 class AlignBase {
 
-protected:
-    NavOutput nav;
-protected:
+public:
+    NavEpoch nav;
     bool flag_level_finished;
     bool flag_yaw_finished;
 public:
-    AlignBase() {
-        flag_level_finished = false;
-        flag_yaw_finished = false;
-        nav = {0,
-               0, 0, 0,
-               0, 0, 0,
-               0, 0, 0,
-               0, 0, 0,
-               0, 0, 0};
-    }
+    AlignBase() ;
 
-    NavOutput &getNav() { return nav; }
+    NavOutput getNav();
 
-    bool alignFinished() { return flag_level_finished and flag_yaw_finished; }
+    NavEpoch &getNavEpoch();
+
+    bool alignFinished() const { return flag_level_finished and flag_yaw_finished; }
 
     virtual double Update(GnssData &gnss) { return 0.0; };
 
@@ -77,11 +65,11 @@ public:
 class AlignMoving : public AlignBase {
 private:
     Mat3d Cnb;
-    GnssData gnss_pre;
+    GnssData gnss_pre{};
     double vel_threshold;
     IMUSmooth smooth;
 public:
-    AlignMoving(double vel_threshold);
+    explicit AlignMoving(double vel_threshold);
 
     double Update(GnssData &gnss) override;
 

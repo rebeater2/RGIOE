@@ -26,7 +26,7 @@ public:
     bool IsOutage(double gpst);
 };
 #endif
-class DataFusion : private KalmanFilter,Ins, public Singleton<DataFusion> {
+class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion> {
 private:
     MatXd Q0;
     Vec3d lb_gnss;
@@ -65,7 +65,7 @@ public:
 
     int MeasureUpdatePos(GnssData &gnssData);
 
-    NavOutput Output();
+
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_DATAFUSION_H

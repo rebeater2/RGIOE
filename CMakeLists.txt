@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.17)
 project(LooselyCouple2020_cpp)
 
 set(CMAKE_CXX_STANDARD 14)
-
+set(CMAKE_BUILD_TYPE "release")
 
 find_package(Eigen3 REQUIRED)
 
@@ -55,6 +55,7 @@ add_executable(dataFusion
         Src/FileIO.cpp
         Src/navigation_log.cpp
         Src/Config.cpp
+        Src/Alignment.cpp
         )
 #include_directories(/home/rebeater/Downloads/cblas/CBLAS/include)
 target_link_libraries(dataFusion
@@ -79,7 +80,7 @@ add_executable(dataFusion_C
         )
 include_directories(Lib/eigen-3.3.9)
 add_definitions(-DUSE_YAML=1)
-add_definitions(-DUSE_OUTAGE=1)
+add_definitions(-DUSE_OUTAGE=0)
 #set_property(SOURCE Lib/eigen-3.3.9 PROPERTY LANGUAGE CXX)
 target_link_libraries(dataFusion_C
         #        /home/rebeater/CLionProjects/LooselyCouple2020_cpp/cmake-build-debug/libLooselyCouple.a

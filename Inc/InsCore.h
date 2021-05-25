@@ -11,7 +11,6 @@
 #include "convert.h"
 
 
-
 /**
  * 维持导航状态的结构体
  */
@@ -45,9 +44,11 @@ typedef struct {
 std::ostream &operator<<(std::ostream &os, NavEpoch &nav);
 
 NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
+
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt);
 /*机械编排主类*/
 #include <Singleton.h>
+
 class Ins {
 public:
     NavEpoch nav;
@@ -73,16 +74,23 @@ private:
 
 
 public:
-   Ins();
-   ~Ins();
+    Ins();
+
+    ~Ins();
 //    Ins& operator = (const Ins& rhs)=default;
 public:
-    void InitializePva(NavEpoch &nav,int d_rate);
-    void InitializePva(NavEpoch &nav,ImuData &imu);
+    void InitializePva(NavEpoch &nav, int d_rate);
+
+    void InitializePva(NavEpoch &nav, ImuData &imu);
+
 //    Ins(NavEpoch &nav,Option &opt);
     int ForwardMechanization(ImuData &imuData);
+
     MatXd TransferMatrix(ImuPara &para);
+
     void CompensateIMU(Vec3d &imu, Vec3d &bias, Vec3d &scale) const;
+
+    NavOutput Output() const;
 };
 
 

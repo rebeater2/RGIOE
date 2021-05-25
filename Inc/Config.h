@@ -21,7 +21,6 @@ public:
     string output_filepath;
     double start_time;
     double end_time;
-    double d_rate;
 
 public:
     explicit Config(const string& yml_path);
