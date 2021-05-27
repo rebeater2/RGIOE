@@ -93,7 +93,7 @@ typedef struct {
     double vel_std[3];
     double atti_std[3];
     double angle_bv[3];/*安装角*/
-    double nhc_std[2];/*安装角*/
+    double nhc_std[2];
 
     ImuPara imuPara;
 } Option;

@@ -6,6 +6,9 @@
 #include "navigation_log.h"
 #include <iomanip>
 
+#define FLAG_POSITION 0b111U
+#define FLAG_VELOCITY 0b111000U
+#define FLAG_YAW 0b100000000U
 
 DataFusion::DataFusion() : Ins(), KalmanFilter() {
     P.setZero();
@@ -22,6 +25,7 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
            {0, 0},
            {0, 0}};
     _time_update_idx = 0;
+    update_flag = 0x00;
 }
 
 /**
@@ -77,6 +81,11 @@ void DataFusion::Initialize(NavEpoch &ini_nav, Option &opt) {
  * @return : 1 success 0 fail in time check
  */
 int DataFusion::TimeUpdate(ImuData &imu) {
+    if (update_flag) {
+        _feedBack();
+        Reset();
+        update_flag = 0x00;
+    }
     ForwardMechanization(imu);
     MatXd phi = TransferMatrix(opt.imuPara);
 //    LOG_EVERY_N(INFO,10)<<dt;
@@ -84,13 +93,14 @@ int DataFusion::TimeUpdate(ImuData &imu) {
     MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
     Predict(phi, Q);
-    if (opt.nhc_enable) {
+
+/*    if (opt.nhc_enable) {
         _time_update_idx++;
         if (_time_update_idx % (2 * opt.d_rate) == 0) {
             MeasureNHC();
             _feedBack();
         }
-    }
+    }*/
     return 0;
 }
 
@@ -104,12 +114,12 @@ int DataFusion::MeasureUpdatePos(Vec3d &pos, Mat3d &Rk) {
     Mat3Xd H = _posH();
     Vec3d z = _posZ(pos);
     Update(H, z, Rk);
-    _feedBack();
-    Reset();
+    update_flag |= FLAG_POSITION;
+
     return 0;
 }
 
-int DataFusion::MeasureUpdatePos(GnssData &gnssData) {
+int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 #if USE_OUTAGE == 1
     if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
         /*outage mode*/
@@ -124,7 +134,28 @@ int DataFusion::MeasureUpdatePos(GnssData &gnssData) {
     MeasureUpdatePos(pos, Rk);
     return 1;
 }
+int DataFusion::MeasureUpdateVel(const Vec3d &vel)  {
+    Mat3d mat_h = Mat3d::Zero();
+    mat_h.block<3,3>(1,3);
+    Mat3d Cnv = Cbv * nav.Cbn.transpose();
+    Vec3d w_ib = _gyro_pre / dt;
+    Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
+    Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
+    Mat3Xd H3 = Mat3Xd::Zero();
+    H3.block<3, 3>(0, 3) = Cnv;
+    H3.block<3, 3>(0, 6) = -Cnv * convert::skew(nav.vn);
+    H3.block<3, 3>(0, 9) = -Cbv * convert::skew(lb_wheel);
+    Vec3d z = v_v - vel;
+    Mat3d R = Vec3d{0.1,0.1,0.1}.asDiagonal();
+    Update(H3,z,R);
+    update_flag |= FLAG_VELOCITY;
+    return 0;
+}
 
+int DataFusion::MeasureUpdateVel(const double &vel) {
+    auto v = Vec3d{vel,0,0};
+    return MeasureUpdateVel(v);
+}
 
 /**
  * feed back Modified Error Models
@@ -162,7 +193,7 @@ int DataFusion::_feedBack() {
 }
 
 
-Mat3Xd DataFusion::_posH() {
+Mat3Xd DataFusion::_posH() const {
     Mat3Xd mat_h = Mat3Xd::Zero();
     mat_h.block<3, 3>(0, 0) = eye3;
     Vec3d temp = nav.Cbn * lb_gnss;
@@ -170,6 +201,21 @@ Mat3Xd DataFusion::_posH() {
     return mat_h;
 }
 
+
+
+Mat3Xd DataFusion::_velH() const {
+    Mat3d mat_h = Mat3d::Zero();
+    mat_h.block<3,3>(1,3);
+    Mat3d Cnv = Cbv * nav.Cbn.transpose();
+    Vec3d w_ib = _gyro_pre / dt;
+    Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
+    Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
+    Mat3Xd H3 = Mat3Xd::Zero();
+    H3.block<3, 3>(0, 3) = Cnv;
+    H3.block<3, 3>(0, 6) = -Cnv * convert::skew(nav.vn);
+    H3.block<3, 3>(0, 9) = -Cbv * convert::skew(lb_wheel);
+    return H3;
+}
 /**
  * pos measurement
  * @param pos

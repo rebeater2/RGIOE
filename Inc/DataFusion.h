@@ -33,11 +33,13 @@ private:
     Vec3d lb_wheel;
     Mat3d Cbv;
     Option opt;
+    uint32_t update_flag;
 #if USE_OUTAGE == 1
     Outage otg;
 #endif
 private:
-    Mat3Xd _posH();
+    Mat3Xd _posH()const;
+    Mat3Xd _velH() const;
 
     Vec3d _posZ(Vec3d &pos);
 
@@ -63,7 +65,10 @@ public:
 
     int MeasureUpdatePos(Vec3d &pos, Mat3d &Rk);
 
-    int MeasureUpdatePos(GnssData &gnssData);
+    int MeasureUpdatePos(const GnssData &gnssData);
+
+    int MeasureUpdateVel(const Vec3d &vel);
+    int MeasureUpdateVel(const double &vel);
 
 
 };

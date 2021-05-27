@@ -78,8 +78,9 @@ void AlignMoving::Update(ImuData &imu) {
         nav.atti[0] = asin(aveimu.acce[1] * 200 / g) * (aveimu.acce[2] > 0 ? 1 : -1);
         nav.atti[1] = asin(aveimu.acce[0] * 200 / g) * (aveimu.acce[2] > 0 ? -1 : 1);
 #else
-        nav.atti[0] = asin(aveimu.acce[1] / g) * (aveimu.acce[2] > 0 ? 1 : -1);
-        nav.atti[1] = asin(aveimu.acce[0] / g) * (aveimu.acce[2] > 0 ? -1 : 1);
+        /*用于加速度单位是1的场景*/
+        nav.atti[0] = asin(aveimu.acce[1]) * (aveimu.acce[2] > 0 ? 1 : -1);
+        nav.atti[1] = asin(aveimu.acce[0]) * (aveimu.acce[2] > 0 ? -1 : 1);
 #endif
         flag_level_finished = true;
     }

@@ -45,7 +45,7 @@ Quad convert::rv_to_quaternion(Vec3d &rotation_vector) {
     }
 }
 
-Mat3d convert::skew(Vec3d &v) {
+Mat3d convert::skew(const Vec3d &v) {
     Mat3d m;
     m.setZero();
     m(0, 1) = -v[2];

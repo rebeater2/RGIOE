@@ -36,7 +36,7 @@ public:
 
     static Vec3d gyro_to_rv(Vec3d &gyro, Vec3d &gyro_pre);
 
-    static Mat3d skew(Vec3d &v);
+    static Mat3d skew(const Vec3d &v);
 };
 
 
