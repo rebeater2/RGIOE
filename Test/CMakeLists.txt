@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.17 )
-PROJECT(test)
+PROJECT(LooselyCouple2020_cpp)
 
 MESSAGE(${CMAKE_HOME_DIRECTORY}/Src/)
 file(GLOB_RECURSE SOURCE
@@ -13,12 +13,14 @@ add_executable(test_ins
         ../Src/convert.cpp
         ../Src/wgs84.cpp
          test_ins.cpp)
+find_package(Eigen3 REQUIRED)
 target_link_libraries(test_ins Eigen3::Eigen)
 
 add_executable(test_kalman
         ./test_kalman.cpp
         ../Src/KalmanFilter.cpp
         )
+target_link_libraries(test_kalman Eigen3::Eigen glog)
 
 add_executable(dataFusion
         ./test_dataFusion.cpp
@@ -29,6 +31,7 @@ target_link_libraries(dataFusion
         glog
         lapack
         pthread
+        Eigen3::Eigen
         )
 
 add_executable(dataFusion_C
@@ -44,6 +47,7 @@ target_link_libraries(dataFusion_C
         glog
         lapack
         pthread
+        Eigen3::Eigen
         )
 
 add_executable(test_align
@@ -55,4 +59,5 @@ target_link_libraries(test_align
         glog
         lapack
         pthread
+        Eigen3::Eigen
         )

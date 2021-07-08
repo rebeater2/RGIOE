@@ -4,11 +4,13 @@ project(LooselyCouple2020_cpp)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE "release")
+#set(CMAKE_C_COMPILER gcc)
+#set(CMAKE_CXX_COMPILER clang++)
 
 find_package(Eigen3 REQUIRED)
 
 include_directories(
-        Inc Lib/eigen-3.3.9
+        Inc
 )
 
 file(GLOB_RECURSE SOURCE
@@ -16,7 +18,7 @@ file(GLOB_RECURSE SOURCE
         )
 
 
-add_compile_options(-O3)
+#add_compile_options(-O3)
 #
 
 #target_link_libraries(test_kalman Eigen3::Eigen)
@@ -30,7 +32,7 @@ find_package(lapack REQUIRED)
 
 add_definitions(-DGLOG_OUTPUT)
 add_definitions(-DUSE_YAML)
-add_definitions(-DUSE_INCREMENT=1)
+add_definitions(-DUSE_INCREMENT=0)
 
 
 #add_definitions(-DEIGEN_USE_LAPACK)
@@ -53,6 +55,7 @@ target_link_libraries(LooselyCouple
         glog
         lapack
         pthread
+
         )
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Lib)
 #set(CUSTOM_OUTDIR Lib/)
@@ -61,5 +64,6 @@ set_target_properties(LooselyCouple PROPERTIES
         )
 add_subdirectory(Test)
 add_subdirectory(App)
+add_subdirectory(Tools)
 #add_link_options(-lgfortran -lm)
 

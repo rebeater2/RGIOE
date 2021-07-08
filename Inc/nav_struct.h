@@ -10,7 +10,7 @@
 #define LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H
 
 #include <stdint.h>
-
+#include "Define.h"
 #define _PI 3.1415926535897932
 #define _hour 3600
 #define _minute 60
@@ -67,13 +67,29 @@ typedef enum {
     RTKLIB_TXT_POS = 4,
     GNSS_TXT_POS_VEL = 5,
     GNSS_TXT_GGA = 6,
-    RESERVED = 6,
+    RESERVED = 7,
 } GnssFileFormat;
 typedef  enum  {
     ALIGN_USE_GIVEN = 0,
     ALIGN_MOVING = 1,
     ALIGN_STATIONARY = 2
 }AlignMode;
+typedef struct {
+  double gpst;
+  double pressure_pa; /* 气压计 pa */
+  double angular_vel;/*摄氏度 deg C*/
+  double velocity;/* 速度 里程计数据*/
+}AuxiliaryData;
+enum GnssMode {
+  UNVALID = -1,
+  SPP = 1,
+  RTK_FLOAT = 5,
+  RTK_FIX = 4,
+  PPP = 3,
+  SBAS = 4,
+  RTK_DGPS = 2,
+
+};
 typedef struct {
     int d_rate;
     ImuFileFormat imu_format;
@@ -94,16 +110,21 @@ typedef struct {
     double atti_std[3];
     double angle_bv[3];/*安装角*/
     double nhc_std[2];
-
+	float kd_std;
+	float kd_init;
     ImuPara imuPara;
 } Option;
 typedef struct {
     double gpst;
     double pos[3];
-    double vn[3];
-    double atti[3];
-    double gb[3];
-    double ab[3];
+    float vn[3];
+    float atti[3];
+    float gb[3];
+    float ab[3];
+#if KD_IN_KALMAN_FILTER == 1
+    float kd;
+#endif
+    uint16_t info;
 
 } NavOutput;
 

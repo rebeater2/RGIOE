@@ -14,21 +14,21 @@
 
 DataFusion *df = nullptr;/*point to DataFusion::Instance()*/
 
-void kalmanInitialize(NavOutput *nav, Option *opt) {
+void kalmanInitialize(const NavOutput *nav,const  Option *opt) {
     df = &DataFusion::Instance();
     NavEpoch nav_epoch = makeNavEpoch(*nav, *opt);
     df->Initialize(nav_epoch, *opt);
 }
 
-void kalmanUpdate(ImuData *imu) {
+void kalmanUpdate(const ImuData *imu) {
     df->TimeUpdate(*imu);
 }
 
-void kalmanSetGNSS(GnssData *gnss) {
+void kalmanSetGNSS(const GnssData *gnss) {
     df->MeasureUpdatePos(*gnss);
 }
 
-double kalmanAlignPos(GnssData *gnss, ImuData *imu) {
+double kalmanAlignPos(const GnssData *gnss, const ImuData *imu) {
     return 1.;
 };
 

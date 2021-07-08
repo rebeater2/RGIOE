@@ -1,17 +1,18 @@
-imu-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/adis16460.imd
-imu-parameter-cfg: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/imu_m39_parameter.yml
-gnss-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/GNSS/ub482.txt.gga
-output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/Output/ub482_adis16460.lc.nav
-start-time: 377800
+imu-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/ADI_210625_452483.adi.imutxt
+imu-parameter-cfg: /home/rebeater/CLionProjects/psins/yaml/imu_adis16460_parameter.yml
+gnss-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/GNSS_210625_452483.gps.gpstxt
+odo-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/VEL_210625_452483.vel.veltxt
+output-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/RSLT_210625_452483.post.lcv2.nav
+start-time: 452738
 end-time: -1
-imu-data-rate: 200
+imu-data-rate: 128
 #--------------------------------------------------------------------------------#
 #  2140 381907.000    40.0876550826   116.2413337824     34.258      0.000     -0.000      0.001   -0.19873683    5.48488946   74.71748561
 #   2140 381908.000    40.0876550737   116.2413337707     34.257     -0.000     -0.001      0.001   -0.20138760    5.48732884   74.71390867
  # 2140 380927.000    40.0923345070   116.2277691800     35.082      3.011      7.944      0.008    0.12209828    4.60662493   68.88996231
 #  2140 378819.000    40.0875433430   116.2408255479     33.465     -3.010     -8.750      0.108   -0.16404256    3.78730506  250.90865325
 #  2140 380927.0000 40.092327548794 116.227772529528 33.4308 0.80000 1.00000 17.00000 0.00000 0.00000 0.00000
-alignment-mode: 0 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
+alignment-mode: 1 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
 alignment-epoch:
   - 2140 #　GPS week
   - 378819.0000 # second of week
@@ -25,24 +26,24 @@ alignment-epoch:
   -  3.78730506    # pitch (deg)
   -   250.90865325    # yaw (deg)
 init-pos-std:
-  - 0.004 # m
-  - 0.001 # m
-  - 0.005 # m
+  - 4 # m
+  - 1 # m
+  - 5 # m
 init-vel-std:
-  - 0 # m/s
-  - 0 # m/s
-  - 0 # m/s
+  - 0.4 # m/s
+  - 0.5 # m/s
+  - 0.6 # m/s
 init-atti-std:
-  - 0.027  # deg
-  - 0.027  # deg
-  - 0.03  # deg for SPP is so 不靠谱
+  - 4  # deg
+  - 2  # deg
+  - 5  # deg for SPP is so 不靠谱
 alignment-moving-vel: 3 # m/s threshold velocity for moving align
 nhc-enable: false
 nhc-hz: 20
 install-angle:
   - 0
-  - 4.0150
-  - -0.44
+  - -1.55
+  - -0.395
 nhc-std:
   - 0.5
   - 0.5
@@ -50,10 +51,10 @@ zupt-enable: true
 zupta-enable: true
 
 #--------------------------------------------------------------------------------#
-imu-format: 0
+imu-format: 1
 # IMU_FORMAT_IMD = 0
 # IMU_FORMAT_IMUTXT = 1
-gnss-format: 6  #
+gnss-format: 7  #
 # GNSS_TXT_POS_7 = 0,
 # GNSS_BIN_POS_7 = 1,
 # GNSS_TXT_POS_14 = 2,
@@ -61,19 +62,21 @@ gnss-format: 6  #
 # RTKLIB_TXT_POS = 4,
 # GNSS_TXT_POS_VEL = 5,
 # GNSS_TXT_GGA = 6,
-# RESERVED = 67,
+# RESERVED = 7,
 gnss-data-rate: 1
 antenna-level-arm:
-  - 1.5 #　forward
-  - 0.2 # right
-  - -0.86 # down
+  - 0.2 #　forward
+  - 0.0 # right
+  - -0.3 # down
 #--------------------------------------------------------------------------------#
-odo-enable: 0 # 0: disable odometer 1: enable odometer
+odo-kd-std: 0.1
+odo-kd-init: 1.0 # 里程计初始比例因子
+odo-enable: 1 # 0: disable odometer 1: enable odometer
 odo-wheel-radius: 0 # 车轮半径
 odo-level-arm:
-  - -0.5
-  - 1
-  - 0.5
+  - -0
+  - 0
+  - 00
 #--------------------------------------------------------------------------------#
 outage-enable: false
 outage-start: 379216

@@ -25,10 +25,10 @@ extern "C" {
 void loadYamlConfig(char *yaml_path,char *imu_path,char *gnss_path,char *out_path,Option *opt,NavOutput *nav);
 #endif
 int kalmanOutput(NavOutput *nav_output);
-double kalmanAlignPos(GnssData *gnss, ImuData *imu);
-void kalmanSetGNSS(GnssData *gnss);
-void kalmanUpdate(ImuData *imu);
-void kalmanInitialize(NavOutput *nav, Option *opt);
+double kalmanAlignPos(const GnssData *gnss,const  ImuData *imu);
+void kalmanSetGNSS(const GnssData *gnss);
+void kalmanUpdate(const ImuData *imu);
+void kalmanInitialize(const NavOutput *nav,const  Option *opt);
 #ifdef __cplusplus
 };
 #endif

@@ -15,6 +15,7 @@
 #undef _GLIBCXX_USE_INT128
 #endif
 #include<Eigen/Dense>
+#include <Define.h>
 
 typedef Eigen::Vector3d Vec3d;
 typedef Eigen::Vector2d Vec2d;
@@ -25,7 +26,8 @@ typedef Eigen::Quaternion<double> Quad;
 #define STATE_CNT 15
 #endif
 typedef Eigen::Matrix<double, STATE_CNT, STATE_CNT> MatXd;
-typedef Eigen::Matrix<double, STATE_CNT, 1> VecXd;
+typedef Eigen::Matrix<double, STATE_CNT, 1> VecXd;/*列向量*/
+typedef Eigen::Matrix<double, 1, STATE_CNT> VecX1d;/*行向量*/
 typedef Eigen::Matrix<double, 3, STATE_CNT> Mat3Xd;
 typedef Eigen::Matrix<double, 2, STATE_CNT> Mat2Xd;
 typedef Eigen::Matrix<double, STATE_CNT, 3> MatX3d;

@@ -26,6 +26,8 @@ public:
     bool IsOutage(double gpst);
 };
 #endif
+
+extern char CopyRight[];
 class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion> {
 private:
     MatXd Q0;
@@ -41,7 +43,7 @@ private:
     Mat3Xd _posH()const;
     Mat3Xd _velH() const;
 
-    Vec3d _posZ(Vec3d &pos);
+    Vec3d _posZ(const Vec3d &pos);
 
     int _feedBack();
 
@@ -59,11 +61,11 @@ protected:
     DataFusion();
     friend Singleton<DataFusion>;
 public:
-    void Initialize(NavEpoch &ini_nav, Option &opt);
+    void Initialize(const NavEpoch &ini_nav,const Option &opt);
 
-    int TimeUpdate(ImuData &imu);
+    int TimeUpdate(const ImuData &imu);
 
-    int MeasureUpdatePos(Vec3d &pos, Mat3d &Rk);
+    int MeasureUpdatePos(const Vec3d &pos,const  Mat3d &Rk);
 
     int MeasureUpdatePos(const GnssData &gnssData);
 

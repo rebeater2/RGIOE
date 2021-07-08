@@ -14,21 +14,21 @@
 
 template<typename T>
 class Singleton {
-public:
-    static T &Instance() {
-        static T s_Instance;
-        return s_Instance;
-    }
+ public:
+  static T &Instance() {
+	static T s_Instance;
+	return s_Instance;
+  }
 
-protected:
-    Singleton(void) {}
+ protected:
+  Singleton(void) {}
 
-    ~Singleton(void) {}
+  ~Singleton(void) {}
 
-private:
-    Singleton(const Singleton &rhs) {}
+ private:
+  Singleton(const Singleton &rhs) {}
 
-    Singleton &operator=(const Singleton &rhs) {}
+  Singleton &operator=(const Singleton &rhs) {}
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_SINGLETON_H

@@ -23,7 +23,6 @@
 
 using namespace std;
 
-
 ostream &operator<<(ostream &os, ImuData &imu);
 
 ostream &operator<<(ostream &os, NavOutput output);
@@ -33,31 +32,30 @@ ifstream &operator>>(ifstream &is, ImuData &imu);
 ifstream &operator>>(ifstream &is, GnssData &gnss);
 
 ostream &operator<<(ostream &os, ImuPara imuPara);
-
+ostream &operator<<(ostream &os, GnssData &gnss);
+ istream &operator>>( istream &is,  AuxiliaryData &aux);
 
 class NavWriter {
-    /*多线程读写*/
+  /*多线程读写*/
+  queue<std::shared_ptr<NavOutput>> nav_msgs;
 
-    queue<std::shared_ptr<NavOutput>> nav_msgs;
+  std::thread th_write;
+  std::mutex mtx_nav;
+  string file_path;
+ private:
+  bool flag_stop = false;
+  void th_write_nav();
+  void start();
 
-    std::thread th_write;
-    std::mutex mtx_nav;
-    string file_path;
-private:
-    bool flag_stop = false;
-    void th_write_nav();
-    void start();
+ public:
+  explicit NavWriter(const string &filepath);
 
-public:
-    explicit NavWriter(string &filepath);
+  ~NavWriter();
 
-    ~NavWriter();
+  void stop();
 
-    void stop();
-
-    void update(NavOutput &out);
+  void update(const NavOutput &out);
 };
-
 
 Option loadOptionFromYml(char path[]);
 

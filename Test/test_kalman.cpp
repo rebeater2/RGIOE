@@ -25,7 +25,7 @@ int main() {
     cout<<"PHI=\n"<<PHI<<endl;
     VecXd x;
     MatXd p;
-    x<<-2.06140251, -3.67284068;
+     x << -2.06140251, -3.67284068;
     p.setZero();
     KalmanFilter kf(x,p);
 
@@ -39,8 +39,6 @@ int main() {
         kf.Update(H,zk,R);
         ofs_xk<<kf.xd[0]<<" "<<kf.xd[1]<<endl;
     }
-
-
     return 0;
 }
 
