@@ -21,9 +21,9 @@
 #include "InsCore.h"
 class IMUSmooth {
 private:
-    ImuData imu_ave;/*均值*/
-    ImuData imu_var;
-    ImuData imu_pre;/*用于计算短时过0*/
+    ImuData imu_ave{};/*均值*/
+    ImuData imu_var{};
+    ImuData imu_pre{};/*用于计算短时过0*/
     int up_cnt;
     int static_cnt;
     const int width = 30;/*平均数和std窗口*/
@@ -51,7 +51,7 @@ public:
 public:
     AlignBase() ;
 
-    NavOutput getNav();
+    NavOutput getPva()const;
 
     NavEpoch getNavEpoch() const;
 

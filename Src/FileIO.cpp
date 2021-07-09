@@ -5,14 +5,16 @@
 #include "FileIO.h"
 #include <iomanip>
 #include <fstream>
-#include <navigation_log.h>
+#include <utility>
 
-ostream &operator<<(ostream &os, ImuData &imu) {
-  os << imu.gpst << "   ";
-  os << std::fixed << left << setprecision(8) << imu.gyro[0] << "   " << imu.gyro[1] << "   " << imu.gyro[2] << "   ";
-  os << std::fixed << left << setprecision(8) << imu.acce[0] << "   " << imu.acce[1] << "   " << imu.acce[2] << "   ";
+ostream &operator<<(ostream &os, const ImuData &imu) {
+  os << imu.gpst << SEPERATE;
+  os << std::fixed << left << setprecision(8) << imu.gyro[0] << SEPERATE << imu.gyro[1] << SEPERATE << imu.gyro[2]
+	 << SEPERATE;
+  os << std::fixed << left << setprecision(8) << imu.acce[0] << SEPERATE << imu.acce[1] << SEPERATE << imu.acce[2]
+	 << SEPERATE;
   return os;
-};
+}
 
 ifstream &operator>>(ifstream &is, ImuData &imu) {
 
@@ -28,34 +30,35 @@ ifstream &operator>>(ifstream &is, ImuData &imu) {
   imu.acce[2] *= (-1.0);
 #endif
   return is;
-};
+}
 
 ifstream &operator>>(ifstream &is, GnssData &gnss) {
-  is >> gnss.week>>gnss.gpst;
+  is >> gnss.week >> gnss.gpst;
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
   is >> gnss.hdop >> gnss.ns >> gnss.mode;
   return is;
-};
+}
 
-ostream &operator<<(ostream &os, NavOutput output) {
-  os << 0 << "  " << setprecision(10) << output.gpst << "   ";
-  os << left << setprecision(15) << output.pos[0] / _deg << "   " << output.pos[1] / _deg << "   " << output.pos[2]
-	 << "   ";
-  os << left << setprecision(6) << output.vn[0] << "   " << output.vn[1] << "   " << output.vn[2] << "   ";
-  os << left << setprecision(6) << output.atti[0] / _deg << "   " << output.atti[1] / _deg << "   "
-	 << output.atti[2] / _deg << "   ";
-  os << left << setprecision(10) << output.gb[0] / _deg * _hour << "   " << output.gb[1] / _deg * _hour << "   "
-	 << output.gb[2] / _deg * _hour << "  ";
-  os << left << setprecision(10) << output.ab[0] / _deg * _hour << "   " << output.ab[1] / _deg * _hour << "   "
-	 << output.ab[2] / _deg * _hour<<' ';
-#if KD_IN_KALMAN_FILTER==1
-  os << output.kd;
+ostream &operator<<(ostream &os, const NavOutput &output) {
+  os << output.week << SEPERATE <<fixed<< setprecision(3) << output.gpst << SEPERATE;
+  os << fixed << setprecision(12) << output.pos[0] / _deg << SEPERATE << output.pos[1] / _deg << SEPERATE;
+  os << fixed << setprecision(3) << output.pos[2] << SEPERATE;
+  os << fixed << setprecision(3) << output.vn[0] << SEPERATE << output.vn[1] << SEPERATE << output.vn[2] << SEPERATE;
+  os << fixed << setprecision(3) << output.atti[0] / _deg << SEPERATE << output.atti[1] / _deg << SEPERATE
+	 << output.atti[2] / _deg << SEPERATE;
+  os << fixed << setprecision(2) << output.gb[0] / _deg * _hour << SEPERATE << output.gb[1] / _deg * _hour << SEPERATE
+	 << output.gb[2] / _deg * _hour << SEPERATE;
+  os << fixed << setprecision(2) << output.ab[0] / _deg * _hour << SEPERATE << output.ab[1] / _deg * _hour << SEPERATE
+	 << output.ab[2] / _deg * _hour << SEPERATE;
+  os << output.info.gnss_mode << SEPERATE << output.info.sensors << SEPERATE;
+#if KD_IN_KALMAN_FILTER == 1
+  os << fixed << setprecision(3) << output.kd << SEPERATE;
 #endif
   return os;
 }
 
-ostream &operator<<(ostream &os, ImuPara imuPara) {
+ostream &operator<<(ostream &os, const ImuPara imuPara) {
   os << "arw= " << setprecision(6) << imuPara.arw << endl;
   os << "arw= " << setprecision(6) << imuPara.vrw << endl;
   os << "gb_std= " << setprecision(6) << imuPara.gb_std[0] << "\t" << imuPara.gb_std[01] << imuPara.gb_std[2] << endl;
@@ -66,19 +69,21 @@ ostream &operator<<(ostream &os, ImuPara imuPara) {
   os << "at_corr= " << setprecision(6) << imuPara.gt_corr << endl;
   return os;
 }
- istream &operator>>( istream &is,  AuxiliaryData &aux){
-  is >> aux.gpst >>aux.velocity>>aux.angular_vel;
+istream &operator>>(istream &is, AuxiliaryData &aux) {
+  is >> aux.gpst >> aux.velocity >> aux.angular_vel;
   return is;
 }
-ostream & operator<<(ostream & os,GnssData &gnss){
-  os<<fixed<<setprecision(0) <<gnss.week<<" " <<setprecision(5) <<gnss.gpst<<" "
-	<<setprecision(12)<<gnss.lat<<" "<<gnss.lon<<" "<<setprecision(3)<<gnss.height<<" "
-	<<setprecision(3)<<gnss.pos_std[0]<<" "<<gnss.pos_std[1]<<" "<<gnss.pos_std[2]<<"  " <<gnss.hdop<<" "
-	<<fixed<<gnss.ns<<" "<< gnss.mode;
+ostream &operator<<(ostream &os, const GnssData &gnss) {
+  os << fixed << setprecision(0) << gnss.week << SEPERATE << setprecision(5) << gnss.gpst << SEPERATE
+	 << setprecision(12) << gnss.lat << SEPERATE << gnss.lon << SEPERATE << setprecision(3) << gnss.height << SEPERATE
+	 << setprecision(3) << gnss.pos_std[0] << SEPERATE << gnss.pos_std[1] << SEPERATE << gnss.pos_std[2] << SEPERATE
+	 << gnss.hdop
+	 << SEPERATE
+	 << fixed << gnss.ns << SEPERATE << gnss.mode;
   return os;
 }
 
-NavWriter::NavWriter(const std::string &file_path) : file_path(file_path) {
+NavWriter::NavWriter(std::string file_path) : file_path(std::move(file_path)) {
   this->start();
 }
 
@@ -139,7 +144,7 @@ int readImu(ifstream &os, ImuData *pimu, ImuFileFormat fmt) {
 	os >> (*pimu);
   }
   return os.good();
-};
+}
 
 int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
   static string buffer;
@@ -183,4 +188,4 @@ int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
 	 pgnss->pos_std[2] = 0.;
    }
    return os.good();*/
-};
+}

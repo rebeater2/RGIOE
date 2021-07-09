@@ -88,6 +88,7 @@ ImuPara Config::getImuPara() const {
 
 NavOutput Config::getInitNav() {
   static NavOutput nav;
+  nav.week = root_node["alignment-epoch"][0].as<int>();
   nav.gpst = root_node["alignment-epoch"][1].as<double>();
   nav.pos[0] = root_node["alignment-epoch"][2].as<double>();
   nav.pos[1] = root_node["alignment-epoch"][3].as<double>();
@@ -101,5 +102,6 @@ NavOutput Config::getInitNav() {
   nav.atti[1] = root_node["alignment-epoch"][9].as<double>() * _deg;
   nav.atti[2] = root_node["alignment-epoch"][10].as<double>() * _deg;
 
+  nav.info = {0x01,0};
   return nav;
 }

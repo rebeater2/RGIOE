@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE "release")
 #set(CMAKE_C_COMPILER gcc)
 #set(CMAKE_CXX_COMPILER clang++)
 
-find_package(Eigen3 REQUIRED)
+
 
 include_directories(
         Inc
@@ -23,17 +23,12 @@ file(GLOB_RECURSE SOURCE
 
 #target_link_libraries(test_kalman Eigen3::Eigen)
 
-
+find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(glog REQUIRED)
 find_package(lapack REQUIRED)
 
 #find_package(mklibs REQUIRED)
-
-add_definitions(-DGLOG_OUTPUT)
-add_definitions(-DUSE_YAML)
-add_definitions(-DUSE_INCREMENT=0)
-
 
 #add_definitions(-DEIGEN_USE_LAPACK)
 #add_definitions(-DEIGEN_USE_MKL_ALL)
@@ -55,7 +50,6 @@ target_link_libraries(LooselyCouple
         glog
         lapack
         pthread
-
         )
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Lib)
 #set(CUSTOM_OUTDIR Lib/)

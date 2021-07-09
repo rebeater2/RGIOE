@@ -53,17 +53,23 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
 	  Vec3d{opt.pos_std[0], opt.pos_std[1], opt.pos_std[2]},
 	  Vec3d{opt.vel_std[0], opt.vel_std[1], opt.vel_std[2]},
 	  Vec3d{opt.atti_std[0], opt.atti_std[1], opt.atti_std[2]},
+#if KD_IN_KALMAN_FILTER == 1
+	  opt.kd_init,
+#endif
+	  nav_.info.gnss_mode, nav_.info.sensors
   };
   return nav;
 }
 
 std::ostream &operator<<(std::ostream &os, NavEpoch &nav) {
-  os << 0 << "\t" << fixed << setprecision(10) << nav.gpst << setprecision(18) << "\t" << nav.pos[0] / _deg << " "
+  os << nav.week << "\t" << fixed << setprecision(10) << nav.gpst << setprecision(12) << "\t" << nav.pos[0] / _deg
+	 << " "
 	 << nav.pos[1] / _deg << " " << setprecision(8) << nav.pos[2] << "\t"
 	 << nav.vn[0] << " " << nav.vn[1] << " " << nav.vn[2] << "\t"
 	 << nav.atti[0] / _deg << " " << nav.atti[1] / _deg << " " << nav.atti[2] / _deg;
   os << "\n" << "bias:" << nav.gb[0] << ' ' << nav.gb[1] << ' ' << nav.gb[2] << ' ' << nav.ab[0] << " " << nav.ab[1]
-	 << ' ' << nav.ab[2];
+	 << ' ' << nav.ab[2] << '\n';
+  os << "mode" << nav.info.gnss_mode << " " << nav.info.sensors;
   return os;
 
 }
@@ -174,10 +180,9 @@ void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
   eye3 = Eigen::Matrix3d::Identity(3, 3);
   dt = 1.0 / d_rate;
   t_pre = nav.gpst;
-  this->nav = nav_;
+  nav = nav_;
   wgs84.Update(nav.pos[0], nav.pos[2]);
 
-  logi << "INS initial: dt=" << dt << " g=" << wgs84.g;
 }
 
 void Ins::InitializePva(const NavEpoch &nav_, const ImuData &imu) {
@@ -241,5 +246,7 @@ NavOutput Ins::Output() const {
 #if KD_IN_KALMAN_FILTER == 1
   out.kd = nav.kd;
 #endif
+  out.info = nav.info;
+  out.week = nav.week;
   return out;
 }

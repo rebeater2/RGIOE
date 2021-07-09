@@ -22,17 +22,17 @@
 #include "nav_struct.h"
 
 using namespace std;
+#define SEPERATE (' ')
+ostream &operator<<(ostream &os,const ImuData &imu);
 
-ostream &operator<<(ostream &os, ImuData &imu);
-
-ostream &operator<<(ostream &os, NavOutput output);
+ostream &operator<<(ostream &os,const NavOutput &output);
 
 ifstream &operator>>(ifstream &is, ImuData &imu);
 
 ifstream &operator>>(ifstream &is, GnssData &gnss);
 
-ostream &operator<<(ostream &os, ImuPara imuPara);
-ostream &operator<<(ostream &os, GnssData &gnss);
+ostream &operator<<(ostream &os,const ImuPara imuPara);
+ostream &operator<<(ostream &os,const GnssData &gnss);
  istream &operator>>( istream &is,  AuxiliaryData &aux);
 
 class NavWriter {
@@ -48,7 +48,7 @@ class NavWriter {
   void start();
 
  public:
-  explicit NavWriter(const string &filepath);
+  explicit NavWriter(string filepath);
 
   ~NavWriter();
 

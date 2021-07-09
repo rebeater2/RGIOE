@@ -3,7 +3,6 @@
 //
 
 #include <InsCore.h>
-#include <iostream>
 #include "Alignment.h"
 #include "matrix_lib.h"
 #include "convert.h"
@@ -69,7 +68,6 @@ bool IMUSmooth::isStatic() {
 void AlignMoving::Update(ImuData &imu) {
   /*必须在静止时刻对准*/
   smooth.Update(imu);
-  double g = wgs84.g;
   auto aveimu = smooth.getSmoothedIMU();
   nav.gpst = imu.gpst;
 //    if (smooth.isStatic()) {
@@ -84,7 +82,6 @@ void AlignMoving::Update(ImuData &imu) {
   flag_level_finished = true;
 //    }
 }
-#include "navigation_log.h"
 double AlignMoving::Update(GnssData &gnss) {
   wgs84.Update(gnss.lat, gnss.height);
   if (gnss_pre.mode == 0) {
@@ -93,7 +90,6 @@ double AlignMoving::Update(GnssData &gnss) {
   }
   auto distance = wgs84.distance(gnss, gnss_pre);
   if (vel_threshold < distance.d and distance.d < 1e3) {
-	logi << "big vel";
 	nav.gpst = gnss.gpst;
 	nav.pos[0] = gnss.lat * _deg;
 	nav.pos[1] = gnss.lon * _deg;
@@ -107,7 +103,6 @@ double AlignMoving::Update(GnssData &gnss) {
 	LatLon ll = LatLon{nav.pos[0], nav.pos[1]};
 	nav.Qne = convert::lla_to_qne(ll);
 	nav.Cne = convert::lla_to_cne(ll);
-
 	for (int i = 0; i < 3; i++) {
 	  nav.pos_std[i] = gnss.pos_std[i];
 	  nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
@@ -115,9 +110,11 @@ double AlignMoving::Update(GnssData &gnss) {
 	  nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
 	  nav.ab[i] = option.imuPara.ab_ini[i];
 	}
-
 	flag_yaw_finished = true;
   }
+  nav.info.gnss_mode = gnss.mode;
+  nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
+  nav.week = gnss.week;
   gnss_pre = gnss;
   return distance.d;
 }
@@ -156,19 +153,23 @@ AlignBase::AlignBase() {
   flag_level_finished = false;
   flag_yaw_finished = false;
 
+  nav.info.sensors = SensorType::SENSOR_IMU;
+  nav.info.gnss_mode = GnssMode::UNVALID;
 
+  nav.week = 0;
 }
 
-NavOutput AlignBase::getNav() {
+NavOutput AlignBase::getPva() const {
   static NavOutput out;
   out.gpst = nav.gpst;
   for (int i = 0; i < 3; i++) {
 	out.pos[i] = nav.pos[i];
-	out.vn[i] = nav.vn[i];
-	out.atti[i] = nav.atti[i];
-	out.gb[i] = nav.gb[i];
-	out.ab[i] = nav.ab[i];
+	out.vn[i] = (float)nav.vn[i];
+	out.atti[i] = (float)nav.atti[i];
+	out.gb[i] = (float)nav.gb[i];
+	out.ab[i] = (float)nav.ab[i];
   }
+  out.info = nav.info;
   return out;
 }
 

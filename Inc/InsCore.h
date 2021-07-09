@@ -40,6 +40,8 @@ typedef struct {
 #if KD_IN_KALMAN_FILTER == 1
   double kd;/*里程计比例因子*/
 #endif
+  SystemInfo info;
+  int week;
 
 } NavEpoch;
 
@@ -48,7 +50,7 @@ std::ostream &operator<<(std::ostream &os, NavEpoch &nav);
 NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
 
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt);
-/*机械编排主类*/
+/* 机械编排主类 */
 #include <Singleton.h>
 
 class Ins {
@@ -78,9 +80,8 @@ class Ins {
   Ins();
 
   ~Ins();
-//    Ins& operator = (const Ins& rhs)=default;
  public:
-  void InitializePva(const NavEpoch &nav, const int d_rate);
+  void InitializePva(const NavEpoch &nav, int d_rate);
 
   void InitializePva(const NavEpoch &nav, const ImuData &imu);
 

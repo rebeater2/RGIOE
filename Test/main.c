@@ -39,7 +39,6 @@ int main(int argc, char *argv[]) {
     printf("%s\n", str(&out));
     while (sz > 0 && imu.gpst < 459600) {
         sz = fread((uint8_t *) &imu, sizeof(imu), 1, f_imu);
-
         kalmanUpdate(&imu);
         kalmanOutput(&out);
         printf("%s\n", str(&out));

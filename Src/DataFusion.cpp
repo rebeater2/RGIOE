@@ -21,6 +21,7 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
   opt = default_option;
   _time_update_idx = 0;
   update_flag = 0x00;
+
 }
 
 /**
@@ -45,7 +46,6 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   P(15, 15) = kd_std;/*里程计比例因子*/
 #endif
   P = P * P;/*计算协方差矩阵*/
-  logi << "P=\n" << P.diagonal().transpose();
   Q0.setZero();
   Q0(3, 3) = opt.imuPara.vrw * opt.imuPara.vrw;
   Q0(4, 4) = opt.imuPara.vrw * opt.imuPara.vrw;
@@ -64,8 +64,6 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
 #if KD_IN_KALMAN_FILTER == 1
   Q0(15, 15) = 2 * kd_std * kd_std / opt.imuPara.gt_corr;
 #endif
-
-  logi << "Q0=\n" << Q0.diagonal().transpose();
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
   _time_update_idx = 0;
@@ -139,6 +137,7 @@ inline int isValid(const GnssData &gnss) {
   }
 }
 int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
+
 #if USE_OUTAGE == 1
   if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
 	  /*outage mode*/
@@ -146,17 +145,22 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
   }
 #endif
   if (isValid(gnssData) > 0) {
+	nav.info.sensors |= SensorType::SENSOR_GNSS;
+	nav.info.gnss_mode = gnssData.mode;
 	Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
 	Mat3d Rk = Mat3d::Zero();
 	Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0];
 	Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1];
 	Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2];
 	MeasureUpdatePos(pos, Rk);
+  } else {
+	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
+	nav.info.gnss_mode = GnssMode::UNVALID;
   }
-
   return 1;
 }
 int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
+  nav.info.sensors |= SensorType::SENSOR_ODO;
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
   Vec3d w_ib = _gyro_pre / dt;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);

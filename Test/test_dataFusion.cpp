@@ -52,18 +52,14 @@ int main(int argc, char *argv[]) {
   ifstream f_imu(cfg.imu_filepath);
   moveFilePoint(f_imu, imu, cfg.start_time);
   ifstream f_gnss(cfg.gnss_filepath);
-  moveFilePoint<GnssData>(f_gnss, gnss, cfg.start_time);
+  moveFilePoint(f_gnss, gnss, cfg.start_time);
   ifstream f_odo(cfg.odo_filepath);
   moveFilePoint(f_odo, aux, cfg.start_time);
-#if MULTI_THREAD == 1
   NavWriter writer(cfg.output_filepath);
-#else
-  ofstream f_nav(cfg.output_filepath);
-#endif
 
   /*初始对准*/
   NavEpoch nav;
-  if (opt.alignmode == ALIGN_MOVING) {
+  if (opt.alignmode == AlignMode::ALIGN_MOVING) {
 	AlignMoving align{1.5,opt};
 	do {
 	  readImu(f_imu, &imu, opt.imu_format);
@@ -77,17 +73,17 @@ int main(int argc, char *argv[]) {
 	  navExit("align failed");
 	  return -1;
 	}
-//	logi << "align finished:" << align.getNavEpoch();
 	nav = align.getNavEpoch();
-	logi<<nav;
   } else if (opt.alignmode == ALIGN_USE_GIVEN) {
 	auto nav_ = cfg.getInitNav();
 	nav = makeNavEpoch(nav_, opt);/* 这是UseGiven模式对准 */
+  }else{
+    loge<<"supported align mode"<<opt.alignmode;
   }
   Timer timer;
-
   DataFusion::Instance().Initialize(nav, opt);
   writer.update(DataFusion::Instance().Output());
+  logi<<"initial pva:"<<DataFusion::Instance().Output();
   /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   while ((cfg.end_time <= 0) || (cfg.end_time > 0 && imu.gpst < cfg.end_time)) {
 	readImu(f_imu, &imu, opt.imu_format);
@@ -104,22 +100,14 @@ int main(int argc, char *argv[]) {
 	  DataFusion::Instance().MeasureUpdateVel(aux.velocity);
 	  f_odo >> aux;
 	}
-#if MULTI_THREAD == 1
 	out = DataFusion::Instance().Output();
 	writer.update(out);
-#else
-	f_nav << DataFusion::Instance().Output() << '\n';
-#endif
   }
   logi << "epochs:"<<counter;
-#if MULTI_THREAD == 1
   logi << "resolve finished, waiting for writing file";
   logi << "time used:" << timer.elapsed() / 1000.0 << "s";
   writer.stop();
   logi << "write finished\n";
-#else
-  f_nav.close();
-#endif
   f_imu.close();
   f_gnss.close();
   logi << "time used:" << timer.elapsed() / 1000.0 << "s";

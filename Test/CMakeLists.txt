@@ -13,7 +13,6 @@ add_executable(test_ins
         ../Src/convert.cpp
         ../Src/wgs84.cpp
          test_ins.cpp)
-find_package(Eigen3 REQUIRED)
 target_link_libraries(test_ins Eigen3::Eigen)
 
 add_executable(test_kalman
@@ -22,11 +21,13 @@ add_executable(test_kalman
         )
 target_link_libraries(test_kalman Eigen3::Eigen glog)
 
+find_package(fmt REQUIRED)
 add_executable(dataFusion
         ./test_dataFusion.cpp
         ${SOURCE}
         )
 target_link_libraries(dataFusion
+        fmt
         yaml-cpp
         glog
         lapack
