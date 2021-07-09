@@ -5,7 +5,7 @@
 * @date: 2020/11/11 
 * @version: 1.0.0
 **/
-#include <wgs84.h>
+#include <WGS84.h>
 
 Vec3d WGS84::omega_en_n(Vec3d vn, Vec3d pos) {
     double h = pos.z(), lat = pos.x();

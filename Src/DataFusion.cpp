@@ -3,7 +3,7 @@
 //
 
 #include "DataFusion.h"
-#include "navigation_log.h"
+#include "NavLog.h"
 #include <iomanip>
 #include <Config.h>
 
@@ -68,7 +68,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
   _time_update_idx = 0;
   temp = Vec3d{opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]};
-  Cbv = convert::euler_to_dcm(temp);
+  Cbv = Convert::euler_to_dcm(temp);
 
 #if USE_OUTAGE == 1
   otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
@@ -166,8 +166,8 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
   Mat3Xd H3 = Mat3Xd::Zero();
   H3.block<3, 3>(0, 3) = Cnv;
-  H3.block<3, 3>(0, 6) = -Cnv * convert::skew(nav.vn);
-  H3.block<3, 3>(0, 9) = -Cbv * convert::skew(lb_wheel);
+  H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
+  H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
 #if KD_IN_KALMAN_FILTER == 1
   H3(0, 15) = 1;
   Vec3d z = v_v - nav.kd * vel;
@@ -203,19 +203,19 @@ int DataFusion::_feedBack() {
 						+xd[0] / (rm + h),
 						+xd[1] * tan(lat) / (rn + h)
   };;
-  Quad qnc = convert::rv_to_quaternion(_d_atti);
+  Quad qnc = Convert::rv_to_quaternion(_d_atti);
   nav.Qne = (nav.Qne * qnc).normalized();
-  LatLon ll = convert::qne_to_lla(nav.Qne);
+  LatLon ll = Convert::qne_to_lla(nav.Qne);
   nav.pos[0] = ll.latitude;
   nav.pos[1] = ll.longitude;
   nav.pos[2] = nav.pos[2] + xd[2];
-  Mat3d Ccn = eye3 + convert::skew(d_atti);
+  Mat3d Ccn = eye3 + Convert::skew(d_atti);
   nav.vn = Ccn * (nav.vn - Vec3d{xd[3], xd[4], xd[5]});
   Vec3d phi = Vec3d{xd[6], xd[7], xd[8]} + d_atti;
-  Quad Qpn = convert::rv_to_quaternion(phi);
+  Quad Qpn = Convert::rv_to_quaternion(phi);
   nav.Qbn = (Qpn * nav.Qbn).normalized();
-  nav.Cbn = convert::quaternion_to_dcm(nav.Qbn);
-  nav.atti = convert::dcm_to_euler(nav.Cbn);
+  nav.Cbn = Convert::quaternion_to_dcm(nav.Qbn);
+  nav.atti = Convert::dcm_to_euler(nav.Cbn);
   nav.gb += Vec3d{xd[9], xd[10], xd[11]};
   nav.ab += Vec3d{xd[12], xd[13], xd[14]};
 #if KD_IN_KALMAN_FILTER == 1
@@ -229,7 +229,7 @@ Mat3Xd DataFusion::_posH() const {
   Mat3Xd mat_h = Mat3Xd::Zero();
   mat_h.block<3, 3>(0, 0) = eye3;
   Vec3d temp = nav.Cbn * lb_gnss;
-  mat_h.block<3, 3>(0, 6) = convert::skew(temp);
+  mat_h.block<3, 3>(0, 6) = Convert::skew(temp);
   return mat_h;
 }
 
@@ -242,8 +242,8 @@ Mat3Xd DataFusion::_velH() const {
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
   Mat3Xd H3 = Mat3Xd::Zero();
   H3.block<3, 3>(0, 3) = Cnv;
-  H3.block<3, 3>(0, 6) = -Cnv * convert::skew(nav.vn);
-  H3.block<3, 3>(0, 9) = -Cbv * convert::skew(lb_wheel);
+  H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
+  H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
   return H3;
 }
 /**
@@ -252,9 +252,9 @@ Mat3Xd DataFusion::_velH() const {
  * @return
  */
 Vec3d DataFusion::_posZ(const Vec3d &pos) {
-  Vec3d re_ins = convert::lla_to_xyz(nav.pos);
-  Vec3d re_gnss = convert::lla_to_xyz(pos);
-  Mat3d cne = convert::lla_to_cne({pos[0], pos[1]});
+  Vec3d re_ins = Convert::lla_to_xyz(nav.pos);
+  Vec3d re_gnss = Convert::lla_to_xyz(pos);
+  Mat3d cne = Convert::lla_to_cne({pos[0], pos[1]});
   Vec3d z = nav.Cne.transpose() * (re_ins - re_gnss) + nav.Cbn * lb_gnss;
   return z;
 }
@@ -266,8 +266,8 @@ int DataFusion::MeasureNHC() {
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
   Mat3Xd H3 = Mat3Xd::Zero();
   H3.block<3, 3>(0, 3) = Cnv;
-  H3.block<3, 3>(0, 6) = -Cnv * convert::skew(nav.vn);
-  H3.block<3, 3>(0, 9) = -Cbv * convert::skew(lb_wheel);
+  H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
+  H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
   Mat2d R = Vec2d{opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
   R = R * R;
   Vec2d z = v_v.segment(1, 2);

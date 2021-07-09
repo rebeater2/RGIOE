@@ -11,9 +11,9 @@
 #define LOOSELYCOUPLE2020_CPP_CONVERT_H
 
 #include <matrix_lib.h>
-#include <nav_struct.h>
+#include <NavStruct.h>
 
-class convert {
+class Convert {
 private:
 //    const  ;
 

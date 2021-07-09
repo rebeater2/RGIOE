@@ -6,8 +6,8 @@
 #include <Eigen/Core>
 #include <unistd.h>
 #include <fstream>
-#include "convert.h"
-#include "navigation_log.h"
+#include "Convert.h"
+#include "NavLog.h"
 
 using namespace std;
 using namespace Eigen;
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
   double week, time, tx, ty, tz, vx, vy, vz, ax, ay, az, gb[3], ab[3], gs[3], as[3], qx, qy, qz, qw;
   ss >> week >> time >> tx >> ty >> tz >> vx >> vy >> vz >> ax >> ay >> az;
   Vec3d _pos{tx * _deg, ty * _deg, tz};
-  Vec3d pos0 = convert::lla_to_xyz(_pos);
+  Vec3d pos0 = Convert::lla_to_xyz(_pos);
   logi << tx << " " << ty << " " << tz << "\t" << pos0.transpose() << endl;
   Vec3d pos;
   while (!fin.eof()) {  //fin.eof()判断文件是否为空
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 	stringstream ss1{buffer};
 	ss1 >> week >> time >> tx >> ty >> tz >> vx >> vy >> vz >> ax >> ay >> az;
 	_pos = {tx * _deg, ty * _deg, tz};
-	pos = convert::lla_to_xyz(_pos);
+	pos = Convert::lla_to_xyz(_pos);
 	pos -= pos0;
 	Vec3d atti{az * _deg, ay * _deg, ax * _deg};
 	Eigen::Quaternion<double> q=Euler2Quaternion(atti);

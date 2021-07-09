@@ -1,7 +1,7 @@
 /**
 * @file: LooselyCouple2020_cpp nav_struct.cpp
 * @author: rebeater
-* @function: 存放全局结构体
+* @function: 存放全局结构体, C style
 * @date: 2020/11/10
 * @version: 1.0.0
 **/

@@ -5,7 +5,7 @@
 #ifndef LOOSELYCOUPLE2020_CPP_ALIGNMENT_H
 #define LOOSELYCOUPLE2020_CPP_ALIGNMENT_H
 
-#include "nav_struct.h"
+#include "NavStruct.h"
 
 
 

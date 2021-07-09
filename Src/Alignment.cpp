@@ -5,7 +5,7 @@
 #include <InsCore.h>
 #include "Alignment.h"
 #include "matrix_lib.h"
-#include "convert.h"
+#include "Convert.h"
 
 IMUSmooth::IMUSmooth() {
   imu_ave = {0, 0, 0, 0, 0, 0, 0};
@@ -99,11 +99,11 @@ double AlignMoving::Update(GnssData &gnss) {
 	nav.vn[1] = distance.de;
 	nav.vn[2] = distance.dd;
 	nav.atti[2] = atan2(distance.de, distance.dn);
-	nav.Qbn = convert::euler_to_quaternion(nav.atti);
-	nav.Cbn = convert::euler_to_dcm(nav.atti);
+	nav.Qbn = Convert::euler_to_quaternion(nav.atti);
+	nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	LatLon ll = LatLon{nav.pos[0], nav.pos[1]};
-	nav.Qne = convert::lla_to_qne(ll);
-	nav.Cne = convert::lla_to_cne(ll);
+	nav.Qne = Convert::lla_to_qne(ll);
+	nav.Cne = Convert::lla_to_cne(ll);
 	for (int i = 0; i < 3; i++) {
 	  nav.pos_std[i] = gnss.pos_std[i];
 	  nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
@@ -137,11 +137,11 @@ AlignBase::AlignBase() {
   nav.dvn = zero;/*n-frame velocity change :m/a*/
   nav.vf_kb = zero;
 
-  nav.Qbn = convert::euler_to_quaternion(nav.atti);
-  nav.Cbn = convert::euler_to_dcm(nav.atti);
+  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
+  nav.Cbn = Convert::euler_to_dcm(nav.atti);
   LatLon ll = LatLon{nav.pos[0], nav.pos[1]};
-  nav.Qne = convert::lla_to_qne(ll);
-  nav.Cne = convert::lla_to_cne(ll);
+  nav.Qne = Convert::lla_to_qne(ll);
+  nav.Cne = Convert::lla_to_cne(ll);
 
   nav.gb = zero;/*gyroscope bias*/
   nav.ab = zero;/*accelerator bias*/

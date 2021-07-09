@@ -7,14 +7,14 @@
 **/
 
 
-#include <wgs84.h>
-#include "convert.h"
+#include <WGS84.h>
+#include "Convert.h"
 /**
  * 等效旋转矢量转换为四元数
  * @param rotation_vector
  * @return
  */
-Quad convert::rv_to_quaternion(const Vec3d &rotation_vector) {
+Quad Convert::rv_to_quaternion(const Vec3d &rotation_vector) {
     double mag2 = rotation_vector.x() * rotation_vector.x();
     mag2 += rotation_vector.y() * rotation_vector.y();
     mag2 += rotation_vector.z() * rotation_vector.z();
@@ -43,7 +43,7 @@ Quad convert::rv_to_quaternion(const Vec3d &rotation_vector) {
     }
 }
 
-Mat3d convert::skew(const Vec3d &v) {
+Mat3d Convert::skew(const Vec3d &v) {
     Mat3d m;
     m.setZero();
     m(0, 1) = -v[2];
@@ -55,7 +55,7 @@ Mat3d convert::skew(const Vec3d &v) {
     return m;
 }
 
-Mat3d convert::rv_to_DCM(const Vec3d &rotation_vector) {
+Mat3d Convert::rv_to_DCM(const Vec3d &rotation_vector) {
     double norm = rotation_vector[0] * rotation_vector[0];
     norm += rotation_vector[1] * rotation_vector[1];
     norm += rotation_vector[2] * rotation_vector[2];
@@ -65,11 +65,11 @@ Mat3d convert::rv_to_DCM(const Vec3d &rotation_vector) {
     return eye3 + sin(s_qrt) / (s_qrt) * sk + (1 - cos(s_qrt)) / (norm) * sk * sk;
 }
 
-Mat3d convert::quaternion_to_dcm(const Quad &q) {
+Mat3d Convert::quaternion_to_dcm(const Quad &q) {
     return Mat3d(q);
 }
 
-LatLon convert::qne_to_lla(const Quad &q) {
+LatLon Convert::qne_to_lla(const Quad &q) {
     double a = atan(q.y() / q.w());
     double b = atan2(q.z(), q.w());
     double lat = -0.5 * _PI - 2 * a;
@@ -77,7 +77,7 @@ LatLon convert::qne_to_lla(const Quad &q) {
     return LatLon{lat, lon};
 }
 
-Vec3d convert::dcm_to_euler(const Mat3d &dcm) {
+Vec3d Convert::dcm_to_euler(const Mat3d &dcm) {
 
     double roll, pitch, heading;
     pitch = atan(-dcm(2, 0) / sqrt(dcm(2, 1) * dcm(2, 1) + dcm(2, 2) * dcm(2, 2)));
@@ -94,7 +94,7 @@ Vec3d convert::dcm_to_euler(const Mat3d &dcm) {
     return Vec3d{roll, pitch, heading};
 }
 
-Quad convert::euler_to_quaternion(const Vec3d &euler) {
+Quad Convert::euler_to_quaternion(const Vec3d &euler) {
     double roll = euler[0], pitch = euler[1], heading = euler[2];
     double q0 = cos(roll / 2) * cos(pitch / 2) * cos(heading / 2) + sin(roll / 2) * sin(pitch / 2) * sin(
             heading / 2);
@@ -108,7 +108,7 @@ Quad convert::euler_to_quaternion(const Vec3d &euler) {
 }
 
 
-Mat3d convert::euler_to_dcm(const Vec3d &euler) {
+Mat3d Convert::euler_to_dcm(const Vec3d &euler) {
     double phi = euler[0], theta = euler[1], psi = euler[2];
     Mat3d c;
     c(0, 0) = cos(theta) * cos(psi);
@@ -133,7 +133,7 @@ Mat3d convert::euler_to_dcm(const Vec3d &euler) {
         q3 =  cos(phi) *  sin(lamda)
         return Quaternion(q0, q1, q2, q3)
     */
-Quad convert::lla_to_qne(const LatLon &ll) {
+Quad Convert::lla_to_qne(const LatLon &ll) {
     double phi = -0.25 * _PI - 0.5 * ll.latitude;
     double lamda = 0.5 * ll.longitude;
     double q0 = cos(phi) * cos(lamda);
@@ -143,7 +143,7 @@ Quad convert::lla_to_qne(const LatLon &ll) {
     return Quad(q0, q1, q2, q3);
 }
 
-Mat3d convert::lla_to_cne(const LatLon &ll) {
+Mat3d Convert::lla_to_cne(const LatLon &ll) {
     Mat3d dcm;
     double lat = ll.latitude, lon = ll.longitude;
     dcm(0, 0) = -sin(lat) * cos(lon);
@@ -158,11 +158,11 @@ Mat3d convert::lla_to_cne(const LatLon &ll) {
     return dcm;
 }
 
-Vec3d convert::gyro_to_rv(const Vec3d &gyro,const  Vec3d &gyro_pre) {
+Vec3d Convert::gyro_to_rv(const Vec3d &gyro, const  Vec3d &gyro_pre) {
     return gyro + gyro_pre.cross(gyro) / 12.0;
 }
 
-Vec3d convert::lla_to_xyz(const Eigen::Vector3d &lla) {
+Vec3d Convert::lla_to_xyz(const Eigen::Vector3d &lla) {
     Vec3d re = Vec3d::Zero();
     double rn = wgs84.RN(lla[0]);
     re[0] = (rn + lla[2]) * cos(lla[0]) * cos(lla[1]);

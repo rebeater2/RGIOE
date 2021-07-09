@@ -14,7 +14,7 @@
 #define LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
 
 
-#include "nav_struct.h"
+#include "NavStruct.h"
 
 #ifdef __cplusplus
 extern "C" {

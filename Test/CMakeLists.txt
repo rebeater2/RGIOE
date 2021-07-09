@@ -9,9 +9,9 @@ file(GLOB_RECURSE SOURCE
 
 add_executable(test_ins
         ../Src/InsCore.cpp
-        ../Src/wgs84.cpp
-        ../Src/convert.cpp
-        ../Src/wgs84.cpp
+        ../Src/WGS84.cpp
+        ../Src/Convert.cpp
+        ../Src/WGS84.cpp
          test_ins.cpp)
 target_link_libraries(test_ins Eigen3::Eigen)
 

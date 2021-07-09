@@ -7,7 +7,7 @@
 
 #include<iostream>
 #include <yaml-cpp/yaml.h>
-#include "nav_struct.h"
+#include "NavStruct.h"
 
 using namespace std;
 extern Option default_option;

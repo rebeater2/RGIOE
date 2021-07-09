@@ -6,10 +6,10 @@
 #define LOOSELYCOUPLE2020_CPP_INSCORE_H
 
 #include "Define.h"
-#include "nav_struct.h"
+#include "NavStruct.h"
 #include "matrix_lib.h"
-#include "wgs84.h"
-#include "convert.h"
+#include "WGS84.h"
+#include "Convert.h"
 
 /**
  * 维持导航状态的结构体

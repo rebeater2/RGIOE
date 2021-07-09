@@ -8,7 +8,7 @@
 #ifndef LOOSELYCOUPLE2020_CPP_WGS84_H
 #define LOOSELYCOUPLE2020_CPP_WGS84_H
 
-#include <nav_struct.h>
+#include <NavStruct.h>
 #include <matrix_lib.h>
 
 struct deltaPos {

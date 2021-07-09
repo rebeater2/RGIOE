@@ -5,8 +5,8 @@
 #include <FileIO.h>
 #include <Config.h>
 #include "DataFusion.h"
-#include "navigation_log.h"
-#include "nav_struct.h"
+#include "NavLog.h"
+#include "NavStruct.h"
 #include <Timer.h>
 #include <Alignment.h>
 

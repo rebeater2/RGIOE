@@ -2,11 +2,11 @@
 // Created by rebeater on 2020/12/17.
 //
 #include "Define.h"
-#include "nav_struct.h"
+#include "NavStruct.h"
 #include <FileIO.h>
 #include <Config.h>
 #include "DataFusion.h"
-#include "navigation_log.h"
+#include "NavLog.h"
 #include <Timer.h>
 #include <Alignment.h>
 
@@ -30,7 +30,7 @@ void moveFilePoint(ifstream &is, T &t, double gpst) {
 }
 
 int main(int argc, char *argv[]) {
-  logInit(argv[0], "./");
+  logInit(argv[0], "../../log/");
   cout << CopyRight;
   if (argc < 2) {
 	loge << CopyRight << endl;

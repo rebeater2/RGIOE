@@ -19,7 +19,7 @@
 #include <thread>
 #include <fstream>
 
-#include "nav_struct.h"
+#include "NavStruct.h"
 
 using namespace std;
 #define SEPERATE (' ')

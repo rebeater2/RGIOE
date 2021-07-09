@@ -9,7 +9,7 @@
 
 
 #include "KalmanFilter.h"
-#include "navigation_log.h"
+#include "NavLog.h"
 void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
   xd = PHI * xd;
   P = PHI * P * PHI.transpose() + Q;

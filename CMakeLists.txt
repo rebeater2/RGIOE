@@ -34,19 +34,23 @@ find_package(lapack REQUIRED)
 #add_definitions(-DEIGEN_USE_MKL_ALL)
 #add_definitions(-DEIGEN_USE_MKL_ALL)
 
-
+add_compile_options(-fPIC)
+set(PROJECT_VERSION 1.00)
 add_library(LooselyCouple STATIC
         Src/LooselyCouple.cpp
         Src/KalmanFilter.cpp
         Src/DataFusion.cpp
         Src/InsCore.cpp
-        Src/wgs84.cpp
-        Src/convert.cpp
+        Src/WGS84.cpp
+        Src/Convert.cpp
         Src/FileIO.cpp
-        Src/navigation_log.cpp
+        Src/NavLog.cpp
         Src/Alignment.cpp
         Src/Config.cpp)
-
+set_target_properties(LooselyCouple PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION 1
+        PUBLIC_HEADER Inc/DataFusion.h)
 target_link_libraries(LooselyCouple
         yaml-cpp
         glog
