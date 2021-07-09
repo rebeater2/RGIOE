@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <fstream>
 #include <utility>
+#include <sstream>
 
 ostream &operator<<(ostream &os, const ImuData &imu) {
   os << imu.gpst << SEPERATE;
@@ -149,7 +150,7 @@ int readImu(ifstream &os, ImuData *pimu, ImuFileFormat fmt) {
 int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
   static string buffer;
 
-  switch (fmt) {
+/*  switch (fmt) {
 	case GNSS_TXT_GGA: {
 	  getline(os, buffer);
 	  stringstream ss(buffer);
@@ -169,10 +170,10 @@ int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
 	  break;
 	default:break;
   }
-  return os.good();
-  /* if (fmt == GNSS_TXT_GGA) {
+  return os.good();*/
+   if (fmt == GNSS_TXT_GGA) {
 	 getline(os, buffer);
-	 stringstream ss(buffer);
+	 stringstream ss{buffer};
 	 ss >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->hdop >> pgnss->mode
 		>> pgnss->ns;
 	 pgnss->pos_std[0] = 0.1;
@@ -187,5 +188,5 @@ int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
 	 pgnss->pos_std[1] = 0.;
 	 pgnss->pos_std[2] = 0.;
    }
-   return os.good();*/
+   return os.good();
 }

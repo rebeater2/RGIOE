@@ -83,11 +83,12 @@ void AlignMoving::Update(ImuData &imu) {
 //    }
 }
 double AlignMoving::Update(GnssData &gnss) {
-  wgs84.Update(gnss.lat, gnss.height);
+
   if (gnss_pre.mode == 0) {
 	gnss_pre = gnss;
 	return 0;
   }
+  wgs84.Update(gnss.lat, gnss.height);
   auto distance = wgs84.distance(gnss, gnss_pre);
   if (vel_threshold < distance.d and distance.d < 1e3) {
 	nav.gpst = gnss.gpst;
@@ -128,7 +129,7 @@ AlignMoving::AlignMoving(double vel_threshold, const Option &opt) : option(opt),
 
 AlignBase::AlignBase() {
   nav.gpst = 0;
-  auto zero = Eigen::Vector3d::Zero();
+  auto zero = Vec3d::Zero();
   nav.pos = zero;/*n-frame position(lat,lon,alt) :d/d/m*/
   nav.vn = zero;/*n-frame velocity North East Down :m/a*/
   nav.atti = zero;/*attitude forward right down :rad*/

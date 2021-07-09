@@ -44,12 +44,15 @@ add_library(LooselyCouple STATIC
         Src/convert.cpp
         Src/FileIO.cpp
         Src/navigation_log.cpp
+        Src/Alignment.cpp
         Src/Config.cpp)
+
 target_link_libraries(LooselyCouple
         yaml-cpp
         glog
         lapack
         pthread
+        Eigen3::Eigen
         )
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Lib)
 #set(CUSTOM_OUTDIR Lib/)

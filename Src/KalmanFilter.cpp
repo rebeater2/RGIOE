@@ -95,6 +95,7 @@ KalmanFilter::KalmanFilter() {
 SequencedKalmanFilter::SequencedKalmanFilter() {
   xd = VecXd::Zero();
   P = MatXd::Zero();
+  /*TODO*/
 }
 SequencedKalmanFilter::~SequencedKalmanFilter() {
 

@@ -137,7 +137,6 @@ inline int isValid(const GnssData &gnss) {
   }
 }
 int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
-
 #if USE_OUTAGE == 1
   if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
 	  /*outage mode*/
@@ -157,7 +156,7 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = GnssMode::UNVALID;
   }
-  return 1;
+  return 0;
 }
 int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   nav.info.sensors |= SensorType::SENSOR_ODO;

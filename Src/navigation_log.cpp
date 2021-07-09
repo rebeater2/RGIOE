@@ -4,7 +4,7 @@
 #include <navigation_log.h>
 
 void logInit(char *argv, const char *path) {
-#ifdef GLOG_OUTPUT
+#if GLOG_OUTPUT == 1
     google::InitGoogleLogging((const char *) argv);
     // Set whether log messages go to stderr instead of logfiles
 //    DECLARE_bool(logtostderr);

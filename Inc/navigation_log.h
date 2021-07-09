@@ -1,8 +1,8 @@
 #ifndef NAV_LOG_H__
 #define NAV_LOG_H__
 
-
-#ifdef GLOG_OUTPUT
+#include "Define.h"
+#if GLOG_OUTPUT == 1
 #include <glog/logging.h>
 using namespace google;
 #else
@@ -20,7 +20,7 @@ static char timebuff[100];
 
 void log(int level, const char *fmt, ...);
 
-#ifdef GLOG_OUTPUT
+#if GLOG_OUTPUT == 1
 #define logi (LOG(INFO))
 #define logw (LOG(WARNING))
 #define loge (LOG(ERROR))

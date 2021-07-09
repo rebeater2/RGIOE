@@ -2,8 +2,7 @@
 // Created by rebeater on 7/8/21.
 //
 
-#define KD_IN_KALMAN_FILTER 0 /* 是否将里程计比例因子加入卡尔曼滤波状态量*/
-
+#define KD_IN_KALMAN_FILTER 1 /* 是否将里程计比例因子加入卡尔曼滤波状态量*/
 
 #define GLOG_OUTPUT 1
 #define USE_YAML 1

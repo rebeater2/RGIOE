@@ -6,5 +6,15 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 add_executable(drIndoor drIndoor.cpp ${SOURCE})
-include_directories(${CMAKE_HOME_DIRECTORY}/Lib/eigen-3.3.9)
-target_link_libraries(drIndoor  yaml-cpp glog pthread)
+target_link_libraries(drIndoor  yaml-cpp glog pthread    Eigen3::Eigen)
+
+include_directories(${CMAKE_HOME_DIRECTORY}/Inc)
+add_executable(PostDataFusion PostDataFusion.cpp)
+
+target_link_libraries(PostDataFusion
+        ${CMAKE_HOME_DIRECTORY}/Lib/libLooselyCouple.a
+        yaml-cpp
+        glog
+        pthread
+        Eigen3::Eigen
+        )

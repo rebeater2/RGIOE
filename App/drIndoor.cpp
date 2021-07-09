@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     /*初始对准*/
     NavEpoch nav;
     if (opt.alignmode == ALIGN_MOVING) {
-        AlignMoving align{7};
+        AlignMoving align{7,opt};
         do {
             readImu(f_imu, &imu, opt.imu_format);
             align.Update(imu);
@@ -62,7 +62,6 @@ int main(int argc, char *argv[]) {
             loge << "align failed";
             return -1;
         }
-        logi << "align finished:" << align.getNavEpoch();
         nav = align.getNavEpoch();
     } else if (opt.alignmode == ALIGN_USE_GIVEN) {
         auto nav_ = cfg.getInitNav();
@@ -78,7 +77,7 @@ int main(int argc, char *argv[]) {
         if (fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
             if (DataFusion::Instance().MeasureUpdatePos(gnss) < 0) {
                 LOG_EVERY_N(INFO, 1) << "in outage mode" << gnss.gpst;
-            };
+            }
             LOG_EVERY_N(INFO, 100) << "measure update: " << gnss.gpst << " imu.gpst " << imu.gpst;
             readGnss(f_gnss, &gnss, opt.gnss_format);
             if (!f_gnss.good())break;

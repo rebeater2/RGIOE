@@ -8,8 +8,9 @@
 
 using namespace std;
 
+#include "Config.h"
 int main(int argc, char *argv[]) {
-    AlignMoving align_moving{1};
+    AlignMoving align_moving{1,default_option};
     ImuData imu;
     GnssData gnss;
     ifstream f_imu(R"(/media/rebeater/hd_data2/workspace/raw_data/car/20210114/Rover/IMU/adis16460.imd)", ios::binary);
@@ -35,6 +36,6 @@ int main(int argc, char *argv[]) {
         /*  auto newimu = imu_smooth.getSmoothedIMU();
           f_imu_out<<newimu<<imu_smooth.getStd()<<" "<<(int)imu_smooth.isStatic()<<'\n';*/
     }
-    cout<<align_moving.getNav();
+    cout<<align_moving.getPva();
 
 }
