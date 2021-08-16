@@ -1,7 +1,8 @@
 //
 // Created by rebeater on 2020/12/17.
 //
-
+#include "Define.h"
+#include "NavStruct.h"
 #include <FileIO.h>
 #include <Config.h>
 #include "DataFusion.h"
@@ -56,12 +57,13 @@ int main(int argc, char *argv[]) {
   /*初始对准*/
   NavEpoch nav;
   if (opt.alignmode == AlignMode::ALIGN_MOVING) {
+	logi << "Align moving mode, wait for GNSS";
 	AlignMoving align{1.5, opt};
 	do {
 	  readImu(f_imu, &imu, opt.imu_format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-		logi << "velocity = " << align.Update(gnss);
+		logi << gnss.gpst << "\tvelocity = " << align.Update(gnss);
 		f_gnss >> gnss;
 	  }
 	} while (!align.alignFinished() and f_imu.good() and f_gnss.good());
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]) {
 	if (!f_imu.good())break;
 	DataFusion::Instance().TimeUpdate(imu);
 	if (f_gnss.good() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	 DataFusion::Instance().MeasureUpdatePos(gnss);
+	  DataFusion::Instance().MeasureUpdatePos(gnss);
 	  f_gnss >> gnss;
 	}
 	if (f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
@@ -96,15 +98,18 @@ int main(int argc, char *argv[]) {
 	out = DataFusion::Instance().Output();
 	writer.update(out);
   }
-  logi << "epochs:" << counter;
-  logi << "resolve finished, waiting for writing file";
-  logi << "time used:" << timer.elapsed() / 1000.0 << "s";
+  /*show summary and reports:*/
+  double time_resolve = timer.elapsed()/1000.0;
   writer.stop();
-  logi << "write finished\n";
+  double time_writing = timer.elapsed()/1000.0;
   f_imu.close();
   f_gnss.close();
-  logi << "time used:" << timer.elapsed() / 1000.0 << "s";
-  logi <<"final PVA: "<< DataFusion::Instance().Output() << endl;
+  f_odo.close();
+  logi<<"\n Summary:\n"
+	  << "All epochs:" << counter<<'\n'
+	  <<"Time for Computing:" << time_resolve<< "s"<<'\n'
+	  <<"Time for File Writing:"<<time_writing<<'s'<<'\n'
+	  <<"Final PVA:"<<DataFusion::Instance().Output();
   return 0;
 }
 

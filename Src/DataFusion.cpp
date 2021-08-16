@@ -73,7 +73,6 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
 #if USE_OUTAGE == 1
   otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
 #endif
-  logi << "initial finished";
 }
 
 /**

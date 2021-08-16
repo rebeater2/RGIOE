@@ -2,6 +2,9 @@
 // Created by rebeater on 7/8/21.
 //
 
+/**
+ *this file contains Global Configure for this library,so this file should be includes before any others.
+ */
 #define KD_IN_KALMAN_FILTER 1 /* 是否将里程计比例因子加入卡尔曼滤波状态量*/
 
 #define GLOG_OUTPUT 1
