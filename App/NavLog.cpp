@@ -1,7 +1,7 @@
 //
 // Created by rebeater on 2020/8/12.
 //
-#include <NavLog.h>
+#include "NavLog.h"
 
 void logInit(char *argv, const char *path) {
 #if GLOG_OUTPUT == 1

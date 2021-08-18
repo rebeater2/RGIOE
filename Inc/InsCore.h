@@ -51,8 +51,6 @@ NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
 
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt);
 /* 机械编排主类 */
-#include <Singleton.h>
-
 class Ins {
  public:
   NavEpoch nav;

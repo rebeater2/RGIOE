@@ -1,7 +1,7 @@
 /**
 * @file: LooselyCouple2020_cpp convert.h
 * @author: rebeater
-* @function: TODO
+* @function: 各种类型转
 * @date: 2020/11/12 
 * @version: 1.0.0
 **/
@@ -11,7 +11,7 @@
 #define LOOSELYCOUPLE2020_CPP_CONVERT_H
 
 #include <matrix_lib.h>
-#include <NavStruct.h>
+#include "NavStruct.h"
 
 class Convert {
 private:

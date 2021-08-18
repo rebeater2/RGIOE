@@ -38,6 +38,7 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
   is >> gnss.hdop >> gnss.ns >> gnss.mode;
+  gnss.yaw = -1;
   return is;
 }
 
@@ -45,13 +46,18 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
   os << output.week << SEPERATE <<fixed<< setprecision(3) << output.gpst << SEPERATE;
   os << fixed << setprecision(12) << output.pos[0] / _deg << SEPERATE << output.pos[1] / _deg << SEPERATE;
   os << fixed << setprecision(3) << output.pos[2] << SEPERATE;
+
   os << fixed << setprecision(3) << output.vn[0] << SEPERATE << output.vn[1] << SEPERATE << output.vn[2] << SEPERATE;
+
   os << fixed << setprecision(3) << output.atti[0] / _deg << SEPERATE << output.atti[1] / _deg << SEPERATE
 	 << output.atti[2] / _deg << SEPERATE;
-  os << fixed << setprecision(2) << output.gb[0] / _deg * _hour << SEPERATE << output.gb[1] / _deg * _hour << SEPERATE
-	 << output.gb[2] / _deg * _hour << SEPERATE;
-  os << fixed << setprecision(2) << output.ab[0] / _deg * _hour << SEPERATE << output.ab[1] / _deg * _hour << SEPERATE
-	 << output.ab[2] / _deg * _hour << SEPERATE;
+
+  os << fixed << setprecision(2) << output.gb[0]  << SEPERATE << output.gb[1]  << SEPERATE
+	 << output.gb[2] << SEPERATE;
+
+  os << fixed << setprecision(2) << output.ab[0]  << SEPERATE << output.ab[1]  << SEPERATE
+	 << output.ab[2]  << SEPERATE;
+
   os << output.info.gnss_mode << SEPERATE << output.info.sensors << SEPERATE;
 #if KD_IN_KALMAN_FILTER == 1
   os << fixed << setprecision(3) << output.kd << SEPERATE;
@@ -71,7 +77,7 @@ ostream &operator<<(ostream &os, const ImuPara imuPara) {
   return os;
 }
 istream &operator>>(istream &is, AuxiliaryData &aux) {
-  is >> aux.gpst >> aux.velocity >> aux.angular_vel;
+  is >> aux.gpst >> aux.velocity >> aux.angular;
   return is;
 }
 ostream &operator<<(ostream &os, const GnssData &gnss) {

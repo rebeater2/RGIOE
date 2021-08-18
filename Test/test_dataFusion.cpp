@@ -3,11 +3,11 @@
 //
 #include "Define.h"
 #include "NavStruct.h"
-#include <FileIO.h>
-#include <Config.h>
+#include "../App/FileIO.h"
+#include "../App/Config.h"
 #include "DataFusion.h"
-#include "NavLog.h"
-#include <Timer.h>
+#include "../App/NavLog.h"
+#include "../App/Timer.h"
 #include <Alignment.h>
 
 void navExit(const std::string &info) {

@@ -7,7 +7,7 @@
 **/
 #include <WGS84.h>
 
-Vec3d WGS84::omega_en_n(Vec3d vn, Vec3d pos) {
+Vec3d WGS84::omega_en_n(Vec3d vn, Vec3d pos) const {
     double h = pos.z(), lat = pos.x();
     auto rm = RM(lat), rn = RN(lat);
     return Vec3d{
@@ -15,7 +15,7 @@ Vec3d WGS84::omega_en_n(Vec3d vn, Vec3d pos) {
     };
 }
 
-Vec3d WGS84::omega_ie_n(double lat) {
+Vec3d WGS84::omega_ie_n(double lat) const{
     return Vec3d{omega_e * cos(lat), 0.0, -omega_e * sin(lat)};
 }
 
@@ -41,16 +41,16 @@ deltaPos WGS84::distance(double lat1, double lon1, double lat2, double lon2) con
     auto dn = dN(lat1, lat2);
     auto de = dE(lat1, lon1, lon2);
     return {dn, de, 0, sqrt(dn * dn + de * de)};
-};
+}
 
 deltaPos WGS84::distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const {
     auto dn = dN(lat1, lat2);
     auto de = dE(lat1, lon1, lon2);
     auto dd = h1 - h2;
     return {dn, de, dd, sqrt(dn * dn + de * de + dd * dd)};
-};
+}
 
-deltaPos WGS84::distance(GnssData &pos1, GnssData &pos2) const {
+deltaPos WGS84::distance(const GnssData &pos1,const  GnssData &pos2) const {
     return distance(pos1.lat * _deg, pos1.lon * _deg, pos2.lat * _deg, pos2.lon * _deg,pos1.height,pos2.height);
 }
 

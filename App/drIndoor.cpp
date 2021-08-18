@@ -2,12 +2,12 @@
 // Created by rebeater on 2020/12/17.
 //
 #include <fstream>
-#include <FileIO.h>
-#include <Config.h>
+#include "FileIO.h"
+#include "Config.h"
 #include "DataFusion.h"
 #include "NavLog.h"
 #include "NavStruct.h"
-#include <Timer.h>
+#include "Timer.h"
 #include <Alignment.h>
 
 #define MULTI_THREAD 1

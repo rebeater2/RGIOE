@@ -7,7 +7,6 @@
 
 #include "KalmanFilter.h"
 #include "InsCore.h"
-#include "Singleton.h"
 //#define OUTAGE_SUPPORT
 #if USE_OUTAGE == 1
 #include <vector>
@@ -25,8 +24,26 @@ public:
 	bool IsOutage(double gpst);
 };
 #endif
-
+extern Option default_option;
 extern char CopyRight[];
+template<typename T>
+class Singleton {
+ public:
+  static T &Instance() {
+    static T s_Instance __attribute__((section (".ram_d1")));
+    return s_Instance;
+  }
+
+ protected:
+  Singleton() = default;
+
+  ~Singleton() = default;
+
+ private:
+  Singleton(const Singleton &rhs) = default;
+
+  Singleton &operator=(const Singleton &rhs) {}
+};
 class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion> {
  private:
   MatXd Q0;

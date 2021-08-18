@@ -9,7 +9,6 @@
 
 
 #include "KalmanFilter.h"
-#include "NavLog.h"
 void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
   xd = PHI * xd;
   P = PHI * P * PHI.transpose() + Q;
@@ -51,7 +50,8 @@ void KalmanFilter::Update(const Mat3Xd &H,const  Vec3d &z,const  Mat3d &R) {
 #if SEQUENCED == 1
   counter ++;
     MatX3d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
-    xd = xd + K * (z - H * xd);
+  /*  xd = xd + K * (z - H * xd);*/
+    xd =  K *z;
     MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
     P = temp * P * temp.transpose() + K * R * K.transpose();
 #else

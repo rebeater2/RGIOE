@@ -3,19 +3,37 @@
 //
 
 #include "Config.h"
+ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
+						-1500 * _mGal, 1000 * _mGal, -3000 * _mGal,
+						1000 * _deg / _hour, -200 * _deg / _hour, 283 * _deg / _hour,
+						0, 0, 0,
+						0, 0, 0,
+						400 * _mGal, 400 * _mGal, 400 * _mGal,
+						4.83 * _deg / _hour, 8 * _deg / _hour, 8 * _deg / _hour,
+						1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
+						1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
+						1 * _hour, 1 * _hour
+};
+NavPva default_pva{0, 0, 0, 0};
+Option default_option{
+  default_imupara, default_pva,IMU_FORMAT_IMUTXT,GNSS_TXT_POS_7,
+  128,
+  AlignMode::ALIGN_USE_GIVEN,
+  0, 0, 0, 0,
+  1, 0.3, 0.01, 0,
+  0.1, 0.3, -0.24,
+  0.2, 0.35,
+  0, 0, 0,
+  0, 0, 0,
+  0.5, 0.5, 0.9,
+  0.2, 0.2, 0.2,
+  0.3, 0.3, 0.3,
+  0.3, 0.2,
+#if KD_IN_KALMAN_FILTER == 1
+1.29, 0.3,
+#endif
+};
 
-Option default_option	{0, ImuFileFormat::IMU_FORMAT_IMUTXT, GnssFileFormat::GNSS_TXT_POS_7, AlignMode::ALIGN_USE_GIVEN,
-	 0, 0, 0,
-	 0, 0, 0, 0, 0,
-	 {0, 0, 0},
-	 {0, 0, 0},
-	 {0, 0, 0},
-	 {0, 0, 0},
-	 {0, 0, 0},
-	 {0, 0, 0},
-	 {0, 0},
-	 0, 0,
-	 {0, 0}};
 
 Config::Config(const string &yml_path) {
   root_node = YAML::LoadFile(yml_path);
@@ -44,7 +62,7 @@ Option Config::getOption() {
 	opt.lb_wheel[i] = root_node["odo-level-arm"][i].as<double>();
 	opt.lb_gnss[i] = root_node["antenna-level-arm"][i].as<double>();
   }
-  opt.alignmode = (AlignMode)root_node["alignment-mode"].as<int>();
+  opt.align_mode = (AlignMode)root_node["alignment-mode"].as<int>();
   opt.nhc_enable = root_node["nhc-enable"].as<bool>();
   opt.nhc_std[0] = root_node["nhc-std"][0].as<double>();
   opt.nhc_std[1] = root_node["nhc-std"][1].as<double>();
@@ -53,10 +71,12 @@ Option Config::getOption() {
   opt.zupta_enable = root_node["zupta-enable"].as<bool>();
 
   opt.outage_enable = root_node["outage-enable"].as<bool>();
+#if USE_OUTAGE == 1
   opt.outage_start = root_node["outage-start"].as<int>();
   opt.outage_stop = root_node["outage-stop"].as<int>();
   opt.outage_time = root_node["outage-time"].as<int>();
   opt.outage_step = root_node["outage-step"].as<int>();
+#endif
   opt.d_rate = root_node["imu-data-rate"].as<int>();
   opt.kd_std = root_node["odo-kd-std"].as<float>();
   opt.kd_init = root_node["odo-kd-init"].as<float>();

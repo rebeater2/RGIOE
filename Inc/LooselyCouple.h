@@ -5,33 +5,26 @@
 * Create on 5/9/21 1:18 PM
 * @version 1.0
 **/
-
-//
-// Created by rebeater on 5/9/21.
-//
-
 #ifndef LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
 #define LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
-
-
 #include "NavStruct.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
 #if USE_YAML == 1
 void loadYamlConfig(char *yaml_path,char *imu_path,char *gnss_path,char *out_path,Option *opt,NavOutput *nav);
 #endif
+int kalmanInitialize();
 int kalmanOutput(NavOutput *nav_output);
-double kalmanAlignPos(const GnssData *gnss,const  ImuData *imu);
+double kalmanAlignGnss(const GnssData *gnss);
+void getXd(double *xds);/*for debug*/
+/*接收前右下、非增量形式的惯导数据*/
+int kalmanAlignLevel(const ImuData *imu);
 void kalmanSetGNSS(const GnssData *gnss);
+void kalmanSetVel(const Velocity *vel);/*里程计速度更新*/
 void kalmanUpdate(const ImuData *imu);
-void kalmanInitialize(const NavOutput *nav,const  Option *opt);
 #ifdef __cplusplus
 };
 #endif
-
 
 #endif //LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H

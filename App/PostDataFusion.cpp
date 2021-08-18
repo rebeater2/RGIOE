@@ -3,11 +3,11 @@
 //
 #include "Define.h"
 #include "NavStruct.h"
-#include <FileIO.h>
-#include <Config.h>
+#include "FileIO.h"
+#include "Config.h"
 #include "DataFusion.h"
 #include "NavLog.h"
-#include <Timer.h>
+#include "Timer.h"
 #include <Alignment.h>
 
 void navExit(const std::string &info) {
@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
   }
   Config cfg(argv[1]);
   logi << "imu path:" << cfg.imu_filepath;
+  logi << "gnss path:" << cfg.gnss_filepath;
   Option opt = cfg.getOption();
 
   ImuData imu;
@@ -53,34 +54,37 @@ int main(int argc, char *argv[]) {
   ifstream f_odo(cfg.odo_filepath);
   moveFilePoint(f_odo, aux, cfg.start_time);
   NavWriter writer(cfg.output_filepath);
-
   /*初始对准*/
   NavEpoch nav;
-  if (opt.alignmode == AlignMode::ALIGN_MOVING) {
+  if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	logi << "Align moving mode, wait for GNSS";
 	AlignMoving align{1.5, opt};
 	do {
-	  readImu(f_imu, &imu, opt.imu_format);
+	  readImu(f_imu, &imu,opt.imu_format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
 		logi << gnss.gpst << "\tvelocity = " << align.Update(gnss);
-		f_gnss >> gnss;
+		f_gnss>>gnss;
 	  }
 	} while (!align.alignFinished() and f_imu.good() and f_gnss.good());
 	if (!align.alignFinished()) {
-	  navExit("align failed");
-	  return -1;
+//	  navExit("align failed");
+	  return 1;
 	}
 	nav = align.getNavEpoch();
-  } else if (opt.alignmode == ALIGN_USE_GIVEN) {
+  } else if (opt.align_mode == ALIGN_USE_GIVEN) {
 	auto nav_ = cfg.getInitNav();
 	nav = makeNavEpoch(nav_, opt);/* 这是UseGiven模式对准 */
   } else {
-	loge << "supported align mode" << opt.alignmode;
+	logf << "supported align mode" << opt.align_mode;
+	return 1;
   }
   Timer timer;
+  logi<<nav.gb.transpose();
+  logi<<nav.ab.transpose();
+  logi<<nav;
   DataFusion::Instance().Initialize(nav, opt);
-  writer.update(DataFusion::Instance().Output());
+//  writer.update(DataFusion::Instance().Output());
   logi << "initial PVA:" << DataFusion::Instance().Output();
   /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   while ((cfg.end_time <= 0) || (cfg.end_time > 0 && imu.gpst < cfg.end_time)) {
@@ -89,6 +93,7 @@ int main(int argc, char *argv[]) {
 	DataFusion::Instance().TimeUpdate(imu);
 	if (f_gnss.good() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdatePos(gnss);
+
 	  f_gnss >> gnss;
 	}
 	if (f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {

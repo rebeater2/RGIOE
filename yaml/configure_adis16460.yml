@@ -4,7 +4,7 @@ gnss-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/GNSS_21062
 odo-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/VEL_210625_452483.vel.veltxt
 output-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/RSLT_210625_452483.post.lcv2.nav
 start-time: 452738
-end-time: -1
+end-time: 453738
 imu-data-rate: 128
 #--------------------------------------------------------------------------------#
 alignment-mode: 1 # 0: useGiven 1: Moving 2: Stationary(not implement yet)

@@ -8,7 +8,7 @@
 #include <InsCore.h>
 #include <WGS84.h>
 #include <iomanip>
-#include <NavLog.h>
+//#include <NavLog.h>
 
 using namespace std;
 
@@ -38,7 +38,7 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
   Quad Qbn = Convert::euler_to_quaternion(atti);
   Mat3d Cbn = Convert::euler_to_dcm(atti);
   auto pos = Vec3d{nav_.pos[0], nav_.pos[1], nav_.pos[2]};
-  LatLon ll = LatLon{pos[0], pos[1]};
+  auto ll = LatLon{pos[0], pos[1]};
   Quad Qne = Convert::lla_to_qne(ll);
   Mat3d Cne = Convert::lla_to_cne(ll);
   NavEpoch nav{
@@ -56,7 +56,8 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
 #if KD_IN_KALMAN_FILTER == 1
 	  opt.kd_init,
 #endif
-	  nav_.info.gnss_mode, nav_.info.sensors
+	  nav_.info,
+	  nav_.week
   };
   return nav;
 }
@@ -240,8 +241,8 @@ NavOutput Ins::Output() const {
 	out.pos[i] = nav.pos[i];
 	out.vn[i] = (float)nav.vn[i];
 	out.atti[i] = (float)nav.atti[i];
-	out.gb[i] = (float)nav.gb[i];
-	out.ab[i] = (float)nav.ab[i];
+	out.gb[i] = (float)(nav.gb[i] / _deg * _hour);
+	out.ab[i] = (float)(nav.ab[i] / _mGal);
   }
 #if KD_IN_KALMAN_FILTER == 1
   out.kd = nav.kd;

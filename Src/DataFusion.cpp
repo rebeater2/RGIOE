@@ -3,17 +3,17 @@
 //
 
 #include "DataFusion.h"
-#include "NavLog.h"
+/*#include <NavLog.h>
 #include <iomanip>
-#include <Config.h>
+#include <Config.h>*/
 
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
 #define FLAG_YAW 0b100000000U
-#define VERSION 1.00
+#define VERSION 2.01
 char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.00)\n"
-				   "Copyright(c) 2019-2020, by Bao Linfeng, All rights reserved.\n"
-				   "Usage: dataFusion configure.yml\n";
+				   "Copyright(c) 2019-2021, by Bao Linfeng, All rights reserved.\n"
+				   "This Version is for Embedded and Real-time Application\n";
 
 DataFusion::DataFusion() : Ins(), KalmanFilter() {
   P.setZero();
@@ -21,7 +21,6 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
   opt = default_option;
   _time_update_idx = 0;
   update_flag = 0x00;
-
 }
 
 /**
@@ -31,8 +30,10 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
  */
 void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   /*initial P & Q0 */
+  xd.setZero();
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
+  nav = ini_nav;
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
   P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -67,9 +68,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
   _time_update_idx = 0;
-  temp = Vec3d{opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]};
-  Cbv = Convert::euler_to_dcm(temp);
-
+  Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]});
 #if USE_OUTAGE == 1
   otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
 #endif
@@ -83,23 +82,15 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
 int DataFusion::TimeUpdate(const ImuData &imu) {
   if (update_flag) {
 	_feedBack();
-	update_flag = 0x00;
+	Reset();
+	update_flag = 0;
   }
+
   ForwardMechanization(imu);
   MatXd phi = TransferMatrix(opt.imuPara);
-//    LOG_EVERY_N(INFO,10)<<dt;
-//    LOG_IF(WARNING, fabs(dt - 1.0 / opt.d_rate) > 0.001) << "dt error" << dt;
   MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
   Predict(phi, Q);
-
-/*    if (opt.nhc_enable) {
-        _time_update_idx++;
-        if (_time_update_idx % (2 * opt.d_rate) == 0) {
-            MeasureNHC();
-            _feedBack();
-        }
-    }*/
   return 0;
 }
 
@@ -112,16 +103,13 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
   Mat3Xd H = _posH();
   Vec3d z = _posZ(pos);
+  xd.setZero();
   Update(H, z, Rk);
   update_flag |= FLAG_POSITION;
-
   return 0;
 }
-inline int isValid(const GnssData &gnss) {
-  if (gnss.ns > 60) {/*同时收到60个卫星我认为是个bug*/
-	return 0;
-  }
-  if (gnss.ns < 15) {//低于5的抛弃
+inline int GnssCheck(const GnssData &gnss) {
+  if (gnss.ns > 60) {
 	return 0;
   }
   if (gnss.mode == SPP) {
@@ -142,7 +130,7 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	  return -1;
   }
 #endif
-  if (isValid(gnssData) > 0) {
+  if (GnssCheck(gnssData) > 0) {
 	nav.info.sensors |= SensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = gnssData.mode;
 	Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
@@ -153,7 +141,7 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	MeasureUpdatePos(pos, Rk);
   } else {
 	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
-	nav.info.gnss_mode = GnssMode::UNVALID;
+	nav.info.gnss_mode = GnssMode::INVALID;
   }
   return 0;
 }
@@ -162,7 +150,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
   Vec3d w_ib = _gyro_pre / dt;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
-  Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
+  Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));
   Mat3Xd H3 = Mat3Xd::Zero();
   H3.block<3, 3>(0, 3) = Cnv;
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
@@ -201,7 +189,7 @@ int DataFusion::_feedBack() {
   Vec3d _d_atti = Vec3d{-xd[1] / (rn + h),
 						+xd[0] / (rm + h),
 						+xd[1] * tan(lat) / (rn + h)
-  };;
+  };
   Quad qnc = Convert::rv_to_quaternion(_d_atti);
   nav.Qne = (nav.Qne * qnc).normalized();
   LatLon ll = Convert::qne_to_lla(nav.Qne);

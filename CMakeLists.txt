@@ -43,19 +43,13 @@ add_library(LooselyCouple STATIC
         Src/InsCore.cpp
         Src/WGS84.cpp
         Src/Convert.cpp
-        Src/FileIO.cpp
-        Src/NavLog.cpp
         Src/Alignment.cpp
-        Src/Config.cpp)
+)
 set_target_properties(LooselyCouple PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         PUBLIC_HEADER Inc/DataFusion.h)
 target_link_libraries(LooselyCouple
-        yaml-cpp
-        glog
-        lapack
-        pthread
         Eigen3::Eigen
         )
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Lib)
