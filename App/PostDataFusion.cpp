@@ -60,11 +60,11 @@ int main(int argc, char *argv[]) {
 	logi << "Align moving mode, wait for GNSS";
 	AlignMoving align{1.5, opt};
 	do {
-	  readImu(f_imu, &imu,cfg.imu_format);
+	  readImu(f_imu, &imu, cfg.imu_format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
 		logi << gnss.gpst << "\tvelocity = " << align.Update(gnss);
-		f_gnss>>gnss;
+		f_gnss >> gnss;
 	  }
 	} while (!align.alignFinished() and f_imu.good() and f_gnss.good());
 	if (!align.alignFinished()) {
@@ -100,17 +100,17 @@ int main(int argc, char *argv[]) {
 	writer.update(out);
   }
   /*show summary and reports:*/
-  double time_resolve = timer.elapsed()/1000.0;
+  double time_resolve = timer.elapsed() / 1000.0;
   writer.stop();
-  double time_writing = timer.elapsed()/1000.0;
+  double time_writing = timer.elapsed() / 1000.0;
   f_imu.close();
   f_gnss.close();
   f_odo.close();
-  logi<<"\nSummary:\n"
-	  << "All epochs:" << counter<<'\n'
-	  <<"Time for Computing:" << time_resolve<< "s"<<'\n'
-	  <<"Time for File Writing:"<<time_writing<<'s'<<'\n'
-	  <<"Final PVA:"<<DataFusion::Instance().Output();
+  logi << "\n\tSummary:\n"
+	   << "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
+	   << "\tTime for Computing:" << time_resolve << "s" << '\n'
+	   << "\tTime for File Writing:" << time_writing << 's' << '\n'
+	   << "\tFinal PVA:" << DataFusion::Instance().Output();
   return 0;
 }
 

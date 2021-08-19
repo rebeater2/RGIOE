@@ -21,7 +21,6 @@
 #define SEQUENCED 1
 #endif
 
-extern int counter;
 class KalmanFilter {
 //  using Vec3x = Eigen::Matrix<double, 1, 3>;
 //  Vec3x sf;

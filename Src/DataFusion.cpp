@@ -18,8 +18,41 @@ char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.00)\n"
 DataFusion::DataFusion() : Ins(), KalmanFilter() {
   P.setZero();
   Q0.setZero();
-  opt = default_option;
-  _time_update_idx = 0;
+  /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
+  opt = {
+	  {0 * _deg / _sqrt_h, 0 / _sqrt_h,
+	   0 * _mGal, 0 * _mGal, 0 * _mGal,
+	   0 * _deg / _hour, 0 * _deg / _hour, 0 * _deg / _hour,
+	   0, 0, 0,
+	   0, 0, 0,
+	   0 * _mGal, 0 * _mGal, 0 * _mGal,
+	   0 * _deg / _hour, 8 * _deg / _hour, 8 * _deg / _hour,
+	   0 * _ppm, 0 * _ppm, 0 * _ppm,
+	   0 * _ppm, 0 * _ppm, 0 * _ppm,
+	   0 * _hour, 0 * _hour
+	  },
+	  {0, 0, 0, 0, 0, 0, 0,
+	   0, 0, 0,
+	   0, 0, 0,
+	   0, 0, 0,
+	   0, 0, 0},
+	  0,
+	  AlignMode::ALIGN_USE_GIVEN,
+	  0, 0, 0, 0,
+	  1, 0.3, 0.01, 0,
+	  0.1, 0.3, -0.24,
+	  0.2, 0.35,
+	  0, 0, 0,
+	  0, 0, 0,
+	  0.5, 0.5, 0.9,
+	  0.2, 0.2, 0.2,
+	  0.3, 0.3, 0.3,
+	  0.3, 0.2,
+#if KD_IN_KALMAN_FILTER == 1
+	  1.29, 0.3,
+#endif
+  };
+  _timeUpdateIdx = 0;
   update_flag = 0x00;
 }
 
@@ -67,7 +100,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
 #endif
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
-  _time_update_idx = 0;
+  _timeUpdateIdx = 0;
   Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]});
 #if USE_OUTAGE == 1
   otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
@@ -91,6 +124,7 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
   MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
   Predict(phi, Q);
+  _timeUpdateIdx++;
   return 0;
 }
 
@@ -267,6 +301,9 @@ int DataFusion::MeasureNHC() {
 int DataFusion::MeasureZeroVelocity() {
   /*零速观测*/
   return 0;
+}
+uint32_t DataFusion::EpochCounter() {
+  return _timeUpdateIdx;
 }
 
 #if USE_OUTAGE == 1

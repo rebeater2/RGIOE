@@ -52,6 +52,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   Mat3d Cbv;
   Option opt;
   uint32_t update_flag;
+  uint32_t _timeUpdateIdx;/*时间更新计数器*/
 #if USE_OUTAGE == 1
   Outage otg;
 #endif
@@ -65,7 +66,6 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
 
  private:
   /*NHC meansurement*/
-  int _time_update_idx;
 
   int MeasureNHC();
 
@@ -77,6 +77,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   DataFusion();
   friend Singleton<DataFusion>;
  public:
+  uint32_t EpochCounter();
   void Initialize(const NavEpoch &ini_nav, const Option &opt);
 
   int TimeUpdate(const ImuData &imu);

@@ -35,6 +35,7 @@ find_package(lapack REQUIRED)
 #add_definitions(-DEIGEN_USE_MKL_ALL)
 
 add_compile_options(-fPIC)
+add_compile_options(-O3)
 set(PROJECT_VERSION 1.00)
 add_library(LooselyCouple STATIC
         Src/LooselyCouple.cpp
