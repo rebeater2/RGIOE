@@ -11,9 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if USE_YAML == 1
-void loadYamlConfig(char *yaml_path,char *imu_path,char *gnss_path,char *out_path,Option *opt,NavOutput *nav);
-#endif
+
 int kalmanInitialize();
 int kalmanOutput(NavOutput *nav_output);
 double kalmanAlignGnss(const GnssData *gnss);

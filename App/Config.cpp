@@ -2,8 +2,9 @@
 // Created by rebeater on 2021/1/16.
 //
 
+#include <cstring>
 #include "Config.h"
-ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
+/*ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
 						-1500 * _mGal, 1000 * _mGal, -3000 * _mGal,
 						1000 * _deg / _hour, -200 * _deg / _hour, 283 * _deg / _hour,
 						0, 0, 0,
@@ -16,24 +17,23 @@ ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
 };
 NavPva default_pva{0, 0, 0, 0};
 Option default_option{
-  default_imupara, default_pva,IMU_FORMAT_IMUTXT,GNSS_TXT_POS_7,
-  128,
-  AlignMode::ALIGN_USE_GIVEN,
-  0, 0, 0, 0,
-  1, 0.3, 0.01, 0,
-  0.1, 0.3, -0.24,
-  0.2, 0.35,
-  0, 0, 0,
-  0, 0, 0,
-  0.5, 0.5, 0.9,
-  0.2, 0.2, 0.2,
-  0.3, 0.3, 0.3,
-  0.3, 0.2,
+	default_imupara, default_pva,
+	128,
+	AlignMode::ALIGN_USE_GIVEN,
+	0, 0, 0, 0,
+	1, 0.3, 0.01, 0,
+	0.1, 0.3, -0.24,
+	0.2, 0.35,
+	0, 0, 0,
+	0, 0, 0,
+	0.5, 0.5, 0.9,
+	0.2, 0.2, 0.2,
+	0.3, 0.3, 0.3,
+	0.3, 0.2,
 #if KD_IN_KALMAN_FILTER == 1
-1.29, 0.3,
+	1.29, 0.3,
 #endif
-};
-
+};*/
 
 Config::Config(const string &yml_path) {
   root_node = YAML::LoadFile(yml_path);
@@ -45,12 +45,13 @@ Config::Config(const string &yml_path) {
   start_time = root_node["start-time"].as<double>();
   end_time = root_node["end-time"].as<double>();
 
+  imu_format = (ImuFileFormat)root_node["imu-format"].as<int>();
+  gnss_format = (GnssFileFormat)root_node["gnss-format"].as<int>();
+
 }
 
 Option Config::getOption() {
   Option opt{};
-  opt.imu_format = (ImuFileFormat)root_node["imu-format"].as<int>();
-  opt.gnss_format = (GnssFileFormat)root_node["gnss-format"].as<int>();
 //    opt.gnss_format = root_node["gnss-format"].as<int>();
   opt.imuPara = getImuPara();
   opt.d_rate = root_node["imu-data-rate"].as<int>();
@@ -122,6 +123,7 @@ NavOutput Config::getInitNav() {
   nav.atti[1] = root_node["alignment-epoch"][9].as<double>() * _deg;
   nav.atti[2] = root_node["alignment-epoch"][10].as<double>() * _deg;
 
-  nav.info = {0x01,0};
+  nav.info = {0x01, 0};
   return nav;
 }
+

@@ -7,6 +7,7 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 
+add_definitions(-DGLOG_OUTPUT=1)
 find_package(Pangolin REQUIRED)
 include_directories(${Pangolin_INCLUDE_DIRS})
 add_executable(showTraj showTraj.cpp ${SOURCE})

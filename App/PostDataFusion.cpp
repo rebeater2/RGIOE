@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 	logi << "Align moving mode, wait for GNSS";
 	AlignMoving align{1.5, opt};
 	do {
-	  readImu(f_imu, &imu,opt.imu_format);
+	  readImu(f_imu, &imu,cfg.imu_format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
 		logi << gnss.gpst << "\tvelocity = " << align.Update(gnss);
@@ -80,9 +80,6 @@ int main(int argc, char *argv[]) {
 	return 1;
   }
   Timer timer;
-  logi<<nav.gb.transpose();
-  logi<<nav.ab.transpose();
-  logi<<nav;
   DataFusion::Instance().Initialize(nav, opt);
 //  writer.update(DataFusion::Instance().Output());
   logi << "initial PVA:" << DataFusion::Instance().Output();
@@ -93,7 +90,6 @@ int main(int argc, char *argv[]) {
 	DataFusion::Instance().TimeUpdate(imu);
 	if (f_gnss.good() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdatePos(gnss);
-
 	  f_gnss >> gnss;
 	}
 	if (f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
@@ -110,7 +106,7 @@ int main(int argc, char *argv[]) {
   f_imu.close();
   f_gnss.close();
   f_odo.close();
-  logi<<"\n Summary:\n"
+  logi<<"\nSummary:\n"
 	  << "All epochs:" << counter<<'\n'
 	  <<"Time for Computing:" << time_resolve<< "s"<<'\n'
 	  <<"Time for File Writing:"<<time_writing<<'s'<<'\n'

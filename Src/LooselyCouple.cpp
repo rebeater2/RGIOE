@@ -28,7 +28,7 @@ NavPva default_pva{0, 0, 0, 0};
 
 /*zho*/
 Option default_option{
-  default_imupara, default_pva,IMU_FORMAT_IMUTXT,GNSS_TXT_POS_7,
+  default_imupara, default_pva,
 	128,
 	AlignMode::ALIGN_USE_GIVEN,
 	0, 0, 0, 0,
@@ -98,15 +98,5 @@ int kalmanOutput(NavOutput *nav_output) {
 }
 
 #if USE_YAML == 1
-#include "../App/Config.h"
-void loadYamlConfig(char *yaml_path, char *imu_path, char *gnss_path, char *out_path, Option *opt, NavOutput *nav) {
-	Config cfg = Config(yaml_path);
-	strcpy(imu_path, cfg.imu_filepath.c_str());
-	strcpy(gnss_path, cfg.gnss_filepath.c_str());
-	strcpy(out_path, cfg.output_filepath.c_str());
-	*opt = cfg.getOption();
-	if (nav != NULL) {
-		*nav = cfg.getInitNav();
-	}
-};
+
 #endif

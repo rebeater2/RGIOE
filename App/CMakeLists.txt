@@ -5,12 +5,12 @@ MESSAGE(${CMAKE_HOME_DIRECTORY}/Src/)
 file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
-add_executable(drIndoor drIndoor.cpp ${SOURCE})
-target_link_libraries(drIndoor  yaml-cpp glog pthread    Eigen3::Eigen)
+#[[add_executable(drIndoor drIndoor.cpp ${SOURCE})
+target_link_libraries(drIndoor  yaml-cpp glog pthread    Eigen3::Eigen)]]
 
 include_directories(${CMAKE_HOME_DIRECTORY}/Inc)
-add_definitions(-DGLOG_OUTPUT)
-add_definitions(-DUSE_YAML=0)
+#[[add_definitions(-DGLOG_OUTPUT)
+add_definitions(-DUSE_YAML=1)]]
 #define GLOG_OUTPUT 0
 #define USE_YAML 0
 add_executable(PostDataFusion
@@ -26,4 +26,14 @@ target_link_libraries(PostDataFusion
         glog
         pthread
         Eigen3::Eigen
+        )
+
+add_definitions(-DUSE_YAML=1)
+find_package(Eigen3 REQUIRED)
+find_package(yaml-cpp REQUIRED)
+add_executable(PostDataFusion_c main.c ReadConfig.cpp ReadConfig.h Config.cpp)
+target_link_libraries(PostDataFusion_c
+        ${CMAKE_HOME_DIRECTORY}/Lib/libLooselyCouple.a
+        Eigen3::Eigen
+        yaml-cpp
         )

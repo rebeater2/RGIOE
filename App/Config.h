@@ -12,22 +12,23 @@
 using namespace std;
 extern Option default_option;
 class Config {
-private:
-    YAML::Node root_node;
-public:
-    string imu_filepath;
-    string imu_para_filepath;
-    string gnss_filepath;
-    string odo_filepath;
-    string output_filepath;
-    double start_time;
-    double end_time;
+ private:
+  YAML::Node root_node;
+ public:
+  string imu_filepath;
+  ImuFileFormat imu_format;
+  string imu_para_filepath;
+  string gnss_filepath;
+  GnssFileFormat gnss_format;
+  string odo_filepath;
+  string output_filepath;
+  double start_time;
+  double end_time;
 
-public:
-    explicit Config(const string& yml_path);
-    Option getOption();
-    NavOutput getInitNav();/*initial pos vel atti*/
-    ImuPara getImuPara() const;
-
+ public:
+  explicit Config(const string &yml_path);
+  Option getOption();
+  NavOutput getInitNav();/*initial pos vel atti*/
+  ImuPara getImuPara() const;
 };
 #endif //LOOSELYCOUPLE2020_CPP_CONFIG_H

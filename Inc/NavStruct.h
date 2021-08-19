@@ -17,9 +17,11 @@
 #define _mGal (1e-5)
 #define _ppm (1e-6)
 
-
-#include <cstdint>
-
+#ifdef __cplusplus
+#include <stdint.h>
+#else
+#include <stdint.h>
+#endif
 #include "Define.h"
 
 typedef struct {
@@ -168,8 +170,7 @@ typedef struct {
 typedef struct {
   ImuPara imuPara;
   NavPva init_epoch;
-  ImuFileFormat imu_format;
-  GnssFileFormat gnss_format;
+
   int d_rate;
   AlignMode align_mode;
   uint8_t nhc_enable;

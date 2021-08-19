@@ -6,7 +6,6 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 
-
 add_executable(test_ins
         ../Src/InsCore.cpp
         ../Src/WGS84.cpp
@@ -19,42 +18,15 @@ add_executable(test_kalman
         ./test_kalman.cpp
         ../Src/KalmanFilter.cpp
         )
-target_link_libraries(test_kalman Eigen3::Eigen glog)
-
-find_package(fmt REQUIRED)
-add_executable(dataFusion
-        ./test_dataFusion.cpp
-        ${SOURCE}
-        )
-target_link_libraries(dataFusion
-        fmt
-        yaml-cpp
-        glog
-        lapack
-        pthread
-        Eigen3::Eigen
-        )
-
-add_executable(dataFusion_C
-        main.c
-        ${SOURCE}
-        )
-include_directories(Lib/eigen-3.3.9)
-add_definitions(-DUSE_YAML=1)
-add_definitions(-DUSE_OUTAGE=0)
-
-target_link_libraries(dataFusion_C
-        yaml-cpp
-        glog
-        lapack
-        pthread
-        Eigen3::Eigen
-        )
+target_link_libraries(test_kalman Eigen3::Eigen)
 
 add_executable(test_align
       test_align.cpp
+        ../App/FileIO.cpp
+        ../App/Config.cpp
         ${SOURCE}
         )
+
 target_link_libraries(test_align
         yaml-cpp
         glog

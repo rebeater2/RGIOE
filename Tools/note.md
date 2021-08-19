@@ -1,0 +1,1 @@
+本文件夹所有python脚本全部迁移到[NavigationTool-qt项目](https://gitee.com/rebeater/NavigationTool_qt), 这是一个可视化工具，包含了误差分析、数据格式转换等功能
