@@ -32,6 +32,8 @@ ifstream &operator>>(ifstream &is, ImuData &imu);
 ifstream &operator>>(ifstream &is, GnssData &gnss);
 
 ostream &operator<<(ostream &os,const ImuPara imuPara);
+
+ostream &operator<<(ostream &os, const AuxiliaryData &aux);
 ostream &operator<<(ostream &os,const GnssData &gnss);
  istream &operator>>( istream &is,  AuxiliaryData &aux);
 

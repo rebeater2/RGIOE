@@ -9,7 +9,7 @@
 
 char *str(NavOutput *out) {
     static char buff[1024];
-    sprintf(buff, "%f %f %f %f %f %f %f", out->gpst, out->pos[0], out->pos[1], out->pos[2], out->vn[0], out->vn[1],
+    sprintf(buff, "%f %f %f %f %f %f %f", out->gpst, out->lat, out->lon, out->height, out->vn[0], out->vn[1],
             out->vn[2]);
     return buff;
 }

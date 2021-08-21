@@ -25,9 +25,21 @@ target_link_libraries(PostDataFusion
         yaml-cpp
         glog
         pthread
+        fmt
         Eigen3::Eigen
         )
 
+find_package(fmt REQUIRED)
+add_executable(DeadReckoning DeadReckoning.cpp FileIO.cpp Config.cpp NavLog.cpp)
+target_link_libraries(DeadReckoning
+        ${CMAKE_HOME_DIRECTORY}/Lib/libLooselyCouple.a
+        yaml-cpp
+        glog
+        pthread
+        fmt
+        Eigen3::Eigen
+        )
+# C语言接口
 add_definitions(-DUSE_YAML=1)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -36,4 +48,5 @@ target_link_libraries(PostDataFusion_c
         ${CMAKE_HOME_DIRECTORY}/Lib/libLooselyCouple.a
         Eigen3::Eigen
         yaml-cpp
+        fmt
         )

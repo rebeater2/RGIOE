@@ -7,13 +7,17 @@
 #include <fstream>
 #include <utility>
 #include <sstream>
-
+#include "fmt/format.h"
 ostream &operator<<(ostream &os, const ImuData &imu) {
-  os << imu.gpst << SEPERATE;
-  os << std::fixed << left << setprecision(8) << imu.gyro[0] << SEPERATE << imu.gyro[1] << SEPERATE << imu.gyro[2]
-	 << SEPERATE;
-  os << std::fixed << left << setprecision(8) << imu.acce[0] << SEPERATE << imu.acce[1] << SEPERATE << imu.acce[2]
-	 << SEPERATE;
+  os << fmt::format("{:.5f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
+					imu.gpst,
+					imu.gyro[0], imu.gyro[1], imu.gyro[2],
+					imu.acce[0], imu.acce[1], imu.acce[2]);// <
+  return os;
+}
+ostream &operator<<(ostream &os, const AuxiliaryData &aux) {
+  os << fmt::format("{:.5f} {:8f} {:8f}",
+					aux.gpst, aux.velocity, aux.angular);
   return os;
 }
 
@@ -43,25 +47,36 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
 }
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
-  os << output.week << SEPERATE <<fixed<< setprecision(3) << output.gpst << SEPERATE;
-  os << fixed << setprecision(12) << output.pos[0] / _deg << SEPERATE << output.pos[1] / _deg << SEPERATE;
-  os << fixed << setprecision(3) << output.pos[2] << SEPERATE;
+  os << fmt::format(
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:.3f} {:.3f} {:.3f} {:.2f} {:.2f} {:.2f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
+	  output.week,
+	  output.gpst,
+	  output.lat, output.lon, output.height,
+	  output.vn[0], output.vn[1], output.vn[2],
+	  output.atti[0], output.atti[1], output.atti[2],
+	  output.gb[0], output.gb[1], output.gb[2],
+	  output.ab[0], output.ab[1], output.ab[2]
+  );
+
+/*  os << output.week << SEPERATE << fixed << setprecision(3) << output.gpst << SEPERATE;
+  os << fixed << setprecision(12) << output.lat << SEPERATE << output.lon << SEPERATE;
+  os << fixed << setprecision(3) << output.height << SEPERATE;
 
   os << fixed << setprecision(3) << output.vn[0] << SEPERATE << output.vn[1] << SEPERATE << output.vn[2] << SEPERATE;
 
-  os << fixed << setprecision(3) << output.atti[0] / _deg << SEPERATE << output.atti[1] / _deg << SEPERATE
-	 << output.atti[2] / _deg << SEPERATE;
+  os << fixed << setprecision(3) << output.atti[0]  << SEPERATE << output.atti[1]  << SEPERATE
+	 << output.atti[2]  << SEPERATE;
 
-  os << fixed << setprecision(2) << output.gb[0]  << SEPERATE << output.gb[1]  << SEPERATE
+  os << fixed << setprecision(2) << output.gb[0] << SEPERATE << output.gb[1] << SEPERATE
 	 << output.gb[2] << SEPERATE;
 
-  os << fixed << setprecision(2) << output.ab[0]  << SEPERATE << output.ab[1]  << SEPERATE
-	 << output.ab[2]  << SEPERATE;
+  os << fixed << setprecision(2) << output.ab[0] << SEPERATE << output.ab[1] << SEPERATE
+	 << output.ab[2] << SEPERATE;
 
   os << output.info.gnss_mode << SEPERATE << output.info.sensors << SEPERATE;
 #if KD_IN_KALMAN_FILTER == 1
   os << fixed << setprecision(3) << output.kd << SEPERATE;
-#endif
+#endif*/
   return os;
 }
 
@@ -177,22 +192,22 @@ int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
 	default:break;
   }
   return os.good();*/
-   if (fmt == GNSS_TXT_GGA) {
-	 getline(os, buffer);
-	 stringstream ss{buffer};
-	 ss >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->hdop >> pgnss->mode
-		>> pgnss->ns;
-	 pgnss->pos_std[0] = 0.1;
-	 pgnss->pos_std[1] = 0.1;
-	 pgnss->pos_std[2] = 0.1;
-   } else if (fmt == GNSS_TXT_POS_7) {
-	 os >> (*pgnss);
-   } else if (fmt == RTKLIB_TXT_POS) {
-	 os >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->pos_std[0]
-		>> pgnss->pos_std[1] >> pgnss->pos_std[2];
-	 pgnss->pos_std[0] = 0.;
-	 pgnss->pos_std[1] = 0.;
-	 pgnss->pos_std[2] = 0.;
-   }
-   return os.good();
+  if (fmt == GNSS_TXT_GGA) {
+	getline(os, buffer);
+	stringstream ss{buffer};
+	ss >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->hdop >> pgnss->mode
+	   >> pgnss->ns;
+	pgnss->pos_std[0] = 0.1;
+	pgnss->pos_std[1] = 0.1;
+	pgnss->pos_std[2] = 0.1;
+  } else if (fmt == GNSS_TXT_POS_7) {
+	os >> (*pgnss);
+  } else if (fmt == RTKLIB_TXT_POS) {
+	os >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->pos_std[0]
+	   >> pgnss->pos_std[1] >> pgnss->pos_std[2];
+	pgnss->pos_std[0] = 0.;
+	pgnss->pos_std[1] = 0.;
+	pgnss->pos_std[2] = 0.;
+  }
+  return os.good();
 }

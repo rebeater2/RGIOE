@@ -30,6 +30,8 @@ add_executable(test_align
 target_link_libraries(test_align
         yaml-cpp
         glog
+        fmt
+        fmt
         lapack
         pthread
         Eigen3::Eigen

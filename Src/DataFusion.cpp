@@ -196,15 +196,15 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   Vec3d z = v_v - vel;
 #endif
 
-  Mat3d R = Vec3d{0.01, 0.01, 0.01}.asDiagonal();
+  Mat3d R = Vec3d{opt.odo_var,opt.odo_var, opt.odo_var}.asDiagonal();
   Update(H3, z, R);
   update_flag |= FLAG_VELOCITY;
   return 0;
 }
 
 int DataFusion::MeasureUpdateVel(const double &vel) {
-  auto v = Vec3d{vel, 0, 0};
-  return MeasureUpdateVel(v);
+//  auto v = Vec3d;
+  return MeasureUpdateVel({vel, 0, 0});
 }
 
 /**

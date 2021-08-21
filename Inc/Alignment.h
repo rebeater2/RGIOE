@@ -27,7 +27,7 @@ class IMUSmooth {
   ImuData imu_pre{};/*用于计算短时过0*/
   int up_cnt;
   int static_cnt;
-  const int width = 30;/*平均数和std窗口*/
+  const int width = 300;/*平均数和std窗口*/
   const double static_std_threshold = 1.5e-6;
   const int static_width = 15;/*连续阈值小于static_std_threshold的判断为静止状态*/
  public:

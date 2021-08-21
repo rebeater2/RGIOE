@@ -111,17 +111,17 @@ NavOutput Config::getInitNav() {
   static NavOutput nav;
   nav.week = root_node["alignment-epoch"][0].as<int>();
   nav.gpst = root_node["alignment-epoch"][1].as<double>();
-  nav.pos[0] = root_node["alignment-epoch"][2].as<double>();
-  nav.pos[1] = root_node["alignment-epoch"][3].as<double>();
-  nav.pos[2] = root_node["alignment-epoch"][4].as<double>();
+  nav.lat = root_node["alignment-epoch"][2].as<double>();
+  nav.lon = root_node["alignment-epoch"][3].as<double>();
+  nav.height = root_node["alignment-epoch"][4].as<double>();
 
   nav.vn[0] = root_node["alignment-epoch"][5].as<double>();
   nav.vn[1] = root_node["alignment-epoch"][6].as<double>();
   nav.vn[2] = root_node["alignment-epoch"][7].as<double>();
 
-  nav.atti[0] = root_node["alignment-epoch"][8].as<double>() * _deg;
-  nav.atti[1] = root_node["alignment-epoch"][9].as<double>() * _deg;
-  nav.atti[2] = root_node["alignment-epoch"][10].as<double>() * _deg;
+  nav.atti[0] = root_node["alignment-epoch"][8].as<double>();
+  nav.atti[1] = root_node["alignment-epoch"][9].as<double>() ;
+  nav.atti[2] = root_node["alignment-epoch"][10].as<double>() ;
 
   nav.info = {0x01, 0};
   return nav;

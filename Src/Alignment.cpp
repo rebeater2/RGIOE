@@ -191,17 +191,18 @@ AlignBase::AlignBase() {
 NavOutput AlignBase::getPva() const {
   static NavOutput out;
   out.gpst = nav.gpst;
+  out.lat = nav.pos[0] / _deg;
+  out.lon = nav.pos[1] / _deg;
+  out.height = (float)nav.pos[2];
   for (int i = 0; i < 3; i++) {
-	out.pos[i] = nav.pos[i];
-	out.vn[i] = (float)nav.vn[i];
-	out.atti[i] = (float)nav.atti[i];
-	out.gb[i] = (float)nav.gb[i];
-	out.ab[i] = (float)nav.ab[i];
+    out.vn[i] = (float)nav.vn[i];
+    out.atti[i] = (float)(nav.atti[i] / _deg);
+    out.gb[i] = (float)nav.gb[i];
+    out.ab[i] = (float)nav.ab[i];
   }
   out.info = nav.info;
   return out;
 }
-
 NavEpoch AlignBase::getNavEpoch() const {
   return nav;
 }

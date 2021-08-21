@@ -124,10 +124,10 @@ typedef struct {
 typedef struct {
   int week;
   double gpst;
-  double pos[3];
+  double lat;
+  double lon;
+  float height;
   float pos_std[3];
-
-
   float vn[3];
   float vn_std[3];
   float atti[3];
