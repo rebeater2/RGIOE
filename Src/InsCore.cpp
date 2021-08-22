@@ -32,12 +32,12 @@ NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti) {
 }
 
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
-  auto &para = opt.imuPara;
-  Vec3d atti = {nav_.atti[0]*_deg, nav_.atti[1]*_deg, nav_.atti[2]*_deg};
+  auto para = opt.imuPara;
+  Vec3d atti = {nav_.atti[0], nav_.atti[1], nav_.atti[2]};
   auto vn = Vec3d{nav_.vn[0], nav_.vn[1], nav_.vn[2]};
   Quad Qbn = Convert::euler_to_quaternion(atti);
   Mat3d Cbn = Convert::euler_to_dcm(atti);
-  auto pos = Vec3d{nav_.lat*_deg, nav_.lon *_deg, nav_.height};
+  auto pos = Vec3d{nav_.lat, nav_.lon, nav_.height};
   auto ll = LatLon{pos[0], pos[1]};
   Quad Qne = Convert::lla_to_qne(ll);
   Mat3d Cne = Convert::lla_to_cne(ll);
@@ -229,23 +229,23 @@ MatXd Ins::TransferMatrix(const ImuPara &para) {
   phi.block<3, 3>(9, 9) = eye3 - eye3 * dt / para.gt_corr;/*corr time*/
   phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
 #if KD_IN_KALMAN_FILTER == 1
-  phi(15, 15) = 1.0 - 1.0 / para.gt_corr;/*TODO 这里暂时用了陀螺仪的相关时间作为里程计的相关时间*/
+  phi(15, 15) = 1.0 - dt / para.gt_corr;/*TODO 这里暂时用了陀螺仪的相关时间作为里程计的相关时间*/
 #endif
   return phi;
 }
 
 NavOutput Ins::Output() const {
-   NavOutput out;
+  static NavOutput out;
   out.gpst = nav.gpst;
   out.lat = nav.pos[0] / _deg;
   out.lon = nav.pos[1] / _deg;
   out.height = (float)nav.pos[2];
 
   for (int i = 0; i < 3; i++) {
-    out.vn[i] = (float)nav.vn[i];
-    out.atti[i] = (float)(nav.atti[i] / _deg);
-    out.gb[i] = (float)(nav.gb[i] / _deg * _hour);
-    out.ab[i] = (float)(nav.ab[i] / _mGal);
+	out.vn[i] = (float)nav.vn[i];
+	out.atti[i] = (float)(nav.atti[i] / _deg);
+	out.gb[i] = (float)(nav.gb[i] / _deg * _hour);
+	out.ab[i] = (float)(nav.ab[i] / _mGal);
   }
 #if KD_IN_KALMAN_FILTER == 1
   out.kd =(float) nav.kd;

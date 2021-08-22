@@ -7,6 +7,7 @@
 
 #include "KalmanFilter.h"
 #include "InsCore.h"
+#include "StaticDetect.h"
 //#define OUTAGE_SUPPORT
 #if USE_OUTAGE == 1
 #include <vector>
@@ -59,7 +60,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
  private:
   Mat3Xd _posH() const;
   Mat3Xd _velH() const;
-
+  IMUSmooth smooth;
   Vec3d _posZ(const Vec3d &pos);
 
   int _feedBack();

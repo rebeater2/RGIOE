@@ -6,6 +6,8 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 
+#add_definitions(-DUSE_INCREMENT=1)
+#define USE_INCREMENT 1c
 add_executable(test_ins
         ../Src/InsCore.cpp
         ../Src/WGS84.cpp
@@ -31,8 +33,29 @@ target_link_libraries(test_align
         yaml-cpp
         glog
         fmt
-        fmt
         lapack
         pthread
         Eigen3::Eigen
         )
+
+add_executable(dataFusiion
+        test_dataFusion.cpp
+        ../Src/InsCore.cpp
+        ../Src/WGS84.cpp
+        ../Src/Convert.cpp
+        ../Src/DataFusion.cpp
+        ../Src/KalmanFilter.cpp
+        ../Src/Alignment.cpp
+        ../App/FileIO.cpp
+        ../App/Config.cpp
+        ../App/NavLog.cpp
+        )
+target_link_libraries(dataFusiion
+        yaml-cpp
+        glog
+        fmt
+        fmt
+        lapack
+        pthread
+        Eigen3::Eigen
+)

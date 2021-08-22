@@ -19,29 +19,7 @@
  */
 #include "matrix_lib.h"
 #include "InsCore.h"
-/* IMU 平均数*/
-class IMUSmooth {
- private:
-  ImuData imu_ave{};/*均值*/
-  ImuData imu_var{};
-  ImuData imu_pre{};/*用于计算短时过0*/
-  int up_cnt;
-  int static_cnt;
-  const int width = 300;/*平均数和std窗口*/
-  const double static_std_threshold = 1.5e-6;
-  const int static_width = 15;/*连续阈值小于static_std_threshold的判断为静止状态*/
- public:
-//    IMUSmooth(){};
-  IMUSmooth();
-
-  void Update(const ImuData &imu);
-
-  ImuData getSmoothedIMU();
-
-  double getStd();
-
-  bool isStatic();
-};
+#include "StaticDetect.h"
 
 class AlignBase {
 

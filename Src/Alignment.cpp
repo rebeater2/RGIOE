@@ -7,59 +7,8 @@
 #include "matrix_lib.h"
 #include "Convert.h"
 
-IMUSmooth::IMUSmooth() {
-  imu_ave = {0, 0, 0, 0, 0, 0, 0};
-  imu_var = {0, 0, 0, 0, 0, 0, 0};
 
-  up_cnt = 0;
-  static_cnt = 0;
-}
 
-/**
- * 滑动计算IMU的均值和方差
- * @param imu
- */
-void IMUSmooth::Update(const ImuData &imu) {
-  up_cnt++;
-  if (up_cnt < width) {/*小于窗口长度*/
-	for (int i = 0; i < 3; i++) {
-	  imu_ave.acce[i] = (imu_ave.acce[i] * (up_cnt - 1) + imu.acce[i]) / up_cnt;
-	  imu_ave.gyro[i] = (imu_ave.gyro[i] * (up_cnt - 1) + imu.gyro[i]) / up_cnt;
-
-	  imu_var.acce[i] = (imu_var.acce[i] * (up_cnt - 1) +
-		  (imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / up_cnt;
-	  imu_var.gyro[i] = (imu_var.gyro[i] * (up_cnt - 1) +
-		  (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / up_cnt;
-	}
-  } else {/*等于窗口长度*/
-	for (int i = 0; i < 3; i++) {
-	  imu_ave.acce[i] = (imu_ave.acce[i] * (width - 1) + imu.acce[i]) / width;
-	  imu_ave.gyro[i] = (imu_ave.gyro[i] * (width - 1) + imu.gyro[i]) / width;
-	  imu_var.acce[i] = (imu_var.acce[i] * (width - 1) +
-		  (imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / width;
-	  imu_var.gyro[i] = (imu_var.gyro[i] * (width - 1) +
-		  (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / width;
-	}
-  }
-  imu_pre = imu;
-}
-
-ImuData IMUSmooth::getSmoothedIMU() {
-  return imu_ave;
-}
-
-double IMUSmooth::getStd() {
-  return sqrt(imu_var.gyro[0] + imu_var.gyro[1] + imu_var.gyro[2]);
-}
-
-bool IMUSmooth::isStatic() {
-  if (getStd() > static_std_threshold) {
-	static_cnt = 0;
-  } else {
-	static_cnt++;
-  }
-  return static_cnt > static_width;
-}
 
 /**
  * 水平调平
@@ -79,6 +28,7 @@ void AlignMoving::Update(const ImuData &imu) {
   nav.atti[0] = asin(aveimu.acce[1]) * (aveimu.acce[2] > 0 ? 1 : -1);
   nav.atti[1] = asin(aveimu.acce[0]) * (aveimu.acce[2] > 0 ? -1 : 1);
 #endif
+  nav.att_std = {0.3*_deg,0.3*_deg,0.3*_deg};
   nav.Qbn = Convert::euler_to_quaternion(nav.atti);
   nav.Cbn = Convert::euler_to_dcm(nav.atti);
   flag_level_finished = true;
@@ -86,8 +36,8 @@ void AlignMoving::Update(const ImuData &imu) {
 }
 
 double AlignMoving::Update(const GnssData &gnss) {
-  if(GnssCheck(gnss)==0){
-    return 0;
+  if (GnssCheck(gnss) == 0) {
+	return 0;
   }
   if (gnss_pre.mode == 0) {
 	gnss_pre = gnss;
@@ -102,6 +52,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 	nav.vn[0] = 0;
 	nav.vn[1] = 0;
 	nav.vn[2] = 0;
+	nav.vel_std = {0.4,0.4,0.4};
 	flag_yaw_finished = true;
   } else {
 	auto distance = wgs84.distance(gnss, gnss_pre);
@@ -109,7 +60,11 @@ double AlignMoving::Update(const GnssData &gnss) {
 	  nav.vn[0] = distance.dn;
 	  nav.vn[1] = distance.de;
 	  nav.vn[2] = distance.dd;
+	  nav.vel_std = {0.4,0.4,0.4};
 	  nav.atti[2] = atan2(distance.de, distance.dn);
+	  nav.att_std[0] = 0.4*_deg;
+	  nav.att_std[1] = 0.4*_deg;
+	  nav.att_std[2] = 0.4*_deg;
 	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
 	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	  flag_yaw_finished = true;
@@ -123,8 +78,8 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.Qne = Convert::lla_to_qne(ll);
   nav.Cne = Convert::lla_to_cne(ll);
   for (int i = 0; i < 3; i++) {
-	nav.pos_std[i] = gnss.pos_std[i];
-	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
+	nav.pos_std[i] = 0.1;//gnss.pos_std[i];
+	nav.vel_std[i] =  0.1;//gnss.pos_std[i] + gnss_pre.pos_std[i];
 	nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
 	nav.ab[i] = option.imuPara.ab_ini[i];
   }
@@ -195,14 +150,15 @@ NavOutput AlignBase::getPva() const {
   out.lon = nav.pos[1] / _deg;
   out.height = (float)nav.pos[2];
   for (int i = 0; i < 3; i++) {
-    out.vn[i] = (float)nav.vn[i];
-    out.atti[i] = (float)(nav.atti[i] / _deg);
-    out.gb[i] = (float)nav.gb[i];
-    out.ab[i] = (float)nav.ab[i];
+	out.vn[i] = (float)nav.vn[i];
+	out.atti[i] = (float)(nav.atti[i] / _deg);
+	out.gb[i] = (float)nav.gb[i];
+	out.ab[i] = (float)nav.ab[i];
   }
   out.info = nav.info;
   return out;
 }
+
 NavEpoch AlignBase::getNavEpoch() const {
   return nav;
 }

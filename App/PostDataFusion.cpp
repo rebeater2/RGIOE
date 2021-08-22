@@ -37,14 +37,18 @@ int main(int argc, char *argv[]) {
 	return 1;
   }
   Config cfg(argv[1]);
-  logi << "imu path:" << cfg.imu_filepath;
-  logi << "gnss path:" << cfg.gnss_filepath;
   Option opt = cfg.getOption();
+
+  logi << "imu path:" << cfg.imu_filepath;
+  logi << " imu para:\n"<<opt.imuPara;
+  logi << "gnss path:" << cfg.gnss_filepath;
+
 
   ImuData imu;
   GnssData gnss;
   NavOutput out;
   AuxiliaryData aux;
+  IMUSmooth smooth;
 
 /*移动文件指针到指定的开始时间*/
   ifstream f_imu(cfg.imu_filepath);
@@ -54,6 +58,11 @@ int main(int argc, char *argv[]) {
   ifstream f_odo(cfg.odo_filepath);
   moveFilePoint(f_odo, aux, cfg.start_time);
   NavWriter writer(cfg.output_filepath);
+  logi << cfg.getImuPara();
+
+  for (int i = 0; i < 3; i++) {
+	logi << opt.angle_bv[i];
+  }
   /*初始对准*/
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
@@ -81,20 +90,25 @@ int main(int argc, char *argv[]) {
   }
   Timer timer;
   DataFusion::Instance().Initialize(nav, opt);
-//  writer.update(DataFusion::Instance().Output());
+  ofstream of_imu(cfg.imu_filepath + "smoothed.txt");
   logi << "initial PVA:" << DataFusion::Instance().Output();
+  moveFilePoint(f_odo, aux, imu.gpst);
   /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   while ((cfg.end_time <= 0) || (cfg.end_time > 0 && imu.gpst < cfg.end_time)) {
 	f_imu >> imu;
 	if (!f_imu.good())break;
 	DataFusion::Instance().TimeUpdate(imu);
+	smooth.Update(imu);
+	of_imu << smooth.getSmoothedIMU() << ' ' << smooth.getStd() << ' ' << smooth.isStatic() << '\n';
 	if (f_gnss.good() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdatePos(gnss);
+	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss;
 	  f_gnss >> gnss;
 	}
 	if (f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdateVel(aux.velocity);
-	  f_odo >> aux;
+	  LOG_EVERY_N(INFO, 50*100) << "Odo update:" << aux;
+	  do{f_odo >> aux;}while(aux.gpst<imu.gpst and f_odo.good());
 	}
 	out = DataFusion::Instance().Output();
 	writer.update(out);
@@ -110,7 +124,8 @@ int main(int argc, char *argv[]) {
 	   << "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
 	   << "\tTime for Computing:" << time_resolve << "s" << '\n'
 	   << "\tTime for File Writing:" << time_writing << 's' << '\n'
-	   << "\tFinal PVA:" << DataFusion::Instance().Output();
+	   << "\tFinal PVA:" << DataFusion::Instance().Output() << '\n'
+	   << "\tFinal Scale Factor:" << out.kd;
   return 0;
 }
 

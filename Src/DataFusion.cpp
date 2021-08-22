@@ -67,6 +67,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
+  wgs84.Update(nav.pos[0],nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
   P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -115,16 +116,25 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
 int DataFusion::TimeUpdate(const ImuData &imu) {
   if (update_flag) {
 	_feedBack();
-	Reset();
 	update_flag = 0;
   }
-
+  smooth.Update(imu);
   ForwardMechanization(imu);
   MatXd phi = TransferMatrix(opt.imuPara);
   MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
   Predict(phi, Q);
   _timeUpdateIdx++;
+
+  if(_timeUpdateIdx % 16){
+    if(smooth.isStatic()){
+      MeasureZeroVelocity();
+      nav.info.sensors |= SENSOR_ZUPT;
+    }else{
+      nav.info.sensors &=~ SENSOR_ZUPT;
+    }
+  }
+
   return 0;
 }
 
@@ -137,13 +147,15 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
   Mat3Xd H = _posH();
   Vec3d z = _posZ(pos);
-  xd.setZero();
   Update(H, z, Rk);
   update_flag |= FLAG_POSITION;
   return 0;
 }
 inline int GnssCheck(const GnssData &gnss) {
   if (gnss.ns > 60) {
+	return 0;
+  }
+  if (gnss.ns < 15) {//低于5的抛弃
 	return 0;
   }
   if (gnss.mode == SPP) {
@@ -169,9 +181,9 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	nav.info.gnss_mode = gnssData.mode;
 	Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
 	Mat3d Rk = Mat3d::Zero();
-	Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0];
-	Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1];
-	Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2];
+	Rk(0, 0) = 0.1* gnssData.pos_std[0] * gnssData.pos_std[0];
+	Rk(1, 1) = 0.1*gnssData.pos_std[1] * gnssData.pos_std[1];
+	Rk(2, 2) = 0.1*gnssData.pos_std[2] * gnssData.pos_std[2];
 	MeasureUpdatePos(pos, Rk);
   } else {
 	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
@@ -182,23 +194,23 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   nav.info.sensors |= SensorType::SENSOR_ODO;
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
-  Vec3d w_ib = _gyro_pre / dt;
+  Vec3d w_ib = _gyro_pre;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));
   Mat3Xd H3 = Mat3Xd::Zero();
   H3.block<3, 3>(0, 3) = Cnv;
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
+
 #if KD_IN_KALMAN_FILTER == 1
-  H3(0, 15) = 1;
+//  H3.block<3,1>(0,15)=vel;
   Vec3d z = v_v - nav.kd * vel;
 #else
-  Vec3d z = v_v - vel;
+  Vec3d z = v_v - 1.29* vel;
 #endif
-
-  Mat3d R = Vec3d{opt.odo_var,opt.odo_var, opt.odo_var}.asDiagonal();
+  auto R = 10 * Vec3d{0.5, 0.5, 0.5}.asDiagonal();/*TODO 参数，需要放到文件中*/
   Update(H3, z, R);
-  update_flag |= FLAG_VELOCITY;
+//  update_flag |= FLAG_VELOCITY;
   return 0;
 }
 
@@ -224,7 +236,7 @@ int DataFusion::_feedBack() {
 						+xd[0] / (rm + h),
 						+xd[1] * tan(lat) / (rn + h)
   };
-  Quad qnc = Convert::rv_to_quaternion(_d_atti);
+  Quad qnc = Convert::rv_to_quaternion(-d_atti);
   nav.Qne = (nav.Qne * qnc).normalized();
   LatLon ll = Convert::qne_to_lla(nav.Qne);
   nav.pos[0] = ll.latitude;
@@ -282,7 +294,7 @@ Vec3d DataFusion::_posZ(const Vec3d &pos) {
 
 int DataFusion::MeasureNHC() {
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
-  Vec3d w_ib = _gyro_pre / dt;
+  Vec3d w_ib = _gyro_pre;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
   Mat3Xd H3 = Mat3Xd::Zero();
@@ -300,6 +312,20 @@ int DataFusion::MeasureNHC() {
 
 int DataFusion::MeasureZeroVelocity() {
   /*零速观测*/
+
+  Mat3Xd H = Mat3Xd::Zero();
+  H.block<3, 3>(0, 3) = eye3;
+  Vec3d z = nav.vn;
+  Mat3d R = Mat3d::Zero();
+  for (int i = 0; i < 3; i++) R(i, i) = 0.001;
+  Update(H, z, R);
+  /*ZUPT A*/
+  Vec1Xd HzuptA = Vec1Xd::Zero();
+  HzuptA(0,11) = 1;/*z轴零偏*/
+  double zputa = _gyro_pre[2];
+  double Rzupta = 0.001;
+  Update(HzuptA,zputa,Rzupta);
+  update_flag |= FLAG_VELOCITY;
   return 0;
 }
 uint32_t DataFusion::EpochCounter() {

@@ -56,11 +56,11 @@ int main(int argc, char *argv[]) {
 
   /*初始对准*/
   NavEpoch nav;
-  if (opt.alignmode == AlignMode::ALIGN_MOVING) {
+  if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	logi << "Align moving mode, wait for GNSS";
 	AlignMoving align{1.5, opt};
 	do {
-	  readImu(f_imu, &imu, opt.imu_format);
+	  readImu(f_imu, &imu, cfg.imu_format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
 		logi << gnss.gpst << "\tvelocity = " << align.Update(gnss);
@@ -72,11 +72,11 @@ int main(int argc, char *argv[]) {
 	  return -1;
 	}
 	nav = align.getNavEpoch();
-  } else if (opt.alignmode == ALIGN_USE_GIVEN) {
+  } else if (opt.align_mode == ALIGN_USE_GIVEN) {
 	auto nav_ = cfg.getInitNav();
 	nav = makeNavEpoch(nav_, opt);/* 这是UseGiven模式对准 */
   } else {
-	loge << "supported align mode" << opt.alignmode;
+    loge << "supported align mode" << opt.align_mode;
   }
   Timer timer;
   DataFusion::Instance().Initialize(nav, opt);
@@ -106,9 +106,9 @@ int main(int argc, char *argv[]) {
   f_gnss.close();
   f_odo.close();
   logi<<"\n Summary:\n"
-  << "All epochs:" << counter<<'\n'
+  << "All epochs:" << DataFusion::Instance().EpochCounter()<<'\n'
   <<"Time for Computing:" << time_resolve<< "s"<<'\n'
-  <<"Resolve Speed:"<<1000*time_resolve/counter*cfg.getOption().d_rate*100<<"ms/100s"<<'\n'
+  <<"Resolve Speed:"<<1000*time_resolve/DataFusion::Instance().EpochCounter()*cfg.getOption().d_rate*100<<"ms/100s"<<'\n'
   <<"Time for File Writing:"<<time_writing<<'s'<<'\n'
   <<"Final PVA:"<<DataFusion::Instance().Output();
 

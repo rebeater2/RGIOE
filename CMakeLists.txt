@@ -45,7 +45,7 @@ add_library(LooselyCouple STATIC
         Src/WGS84.cpp
         Src/Convert.cpp
         Src/Alignment.cpp
-)
+        Src/StaticDetect.cpp Inc/StaticDetect.h)
 set_target_properties(LooselyCouple PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1

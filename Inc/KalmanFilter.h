@@ -18,7 +18,7 @@
 #include "matrix_lib.h"
 
 #ifndef SEQUENCED
-#define SEQUENCED 1
+#define SEQUENCED 0
 #endif
 
 class KalmanFilter {
@@ -31,7 +31,7 @@ class KalmanFilter {
 
  public:
   void Predict(const MatXd &PHI, const MatXd &Q);
-
+  void Update(const Vec1Xd &H, double z, double R);
   void Update(const MatXd &H, const VecXd &Z, const MatXd &R);
   void Update(const Mat3Xd &H, const Vec3d &Z, const Mat3d &R);
   void Update(const Mat2Xd &H, const Vec2d &z, const Mat2d &R);

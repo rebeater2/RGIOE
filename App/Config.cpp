@@ -79,8 +79,10 @@ Option Config::getOption() {
   opt.outage_step = root_node["outage-step"].as<int>();
 #endif
   opt.d_rate = root_node["imu-data-rate"].as<int>();
+#if KD_IN_KALMAN_FILTER == 1
   opt.kd_std = root_node["odo-kd-std"].as<float>();
   opt.kd_init = root_node["odo-kd-init"].as<float>();
+#endif
   return opt;
 }
 
@@ -91,10 +93,10 @@ ImuPara Config::getImuPara() const {
   imuPara.arw = imu_para_node["arw"].as<double>() * _deg / _sqrt_h;
   imuPara.vrw = imu_para_node["vrw"].as<double>() / _sqrt_h;
   for (int i = 0; i < 3; i++) {
-	imuPara.gb_std[i] = imu_para_node["gb-std"][i].as<double>() * _deg / _hour;
+    imuPara.gb_std[i] = 0.1 *imu_para_node["gb-std"][i].as<double>() * _deg / _hour;
 	imuPara.gs_std[i] = imu_para_node["gs-std"][i].as<double>() * _ppm;
 	imuPara.as_std[i] = imu_para_node["as-std"][i].as<double>() * _ppm;
-	imuPara.ab_std[i] = imu_para_node["ab-std"][i].as<double>() * _mGal;
+	imuPara.ab_std[i] = 0.002 * imu_para_node["ab-std"][i].as<double>() * _mGal;
 
 	imuPara.gb_ini[i] = imu_para_node["gb-ini"][i].as<double>() * _deg / _hour;
 	imuPara.gs_ini[i] = imu_para_node["gs-ini"][i].as<double>() * _ppm;
@@ -120,8 +122,8 @@ NavOutput Config::getInitNav() {
   nav.vn[2] = root_node["alignment-epoch"][7].as<double>();
 
   nav.atti[0] = root_node["alignment-epoch"][8].as<double>();
-  nav.atti[1] = root_node["alignment-epoch"][9].as<double>() ;
-  nav.atti[2] = root_node["alignment-epoch"][10].as<double>() ;
+  nav.atti[1] = root_node["alignment-epoch"][9].as<double>();
+  nav.atti[2] = root_node["alignment-epoch"][10].as<double>();
 
   nav.info = {0x01, 0};
   return nav;

@@ -27,7 +27,7 @@ typedef Eigen::Quaternion<double> Quad;
 #endif
 typedef Eigen::Matrix<double, STATE_CNT, STATE_CNT> MatXd;
 typedef Eigen::Matrix<double, STATE_CNT, 1> VecXd;/*列向量*/
-typedef Eigen::Matrix<double, 1, STATE_CNT> VecX1d;/*行向量*/
+typedef Eigen::Matrix<double, 1, STATE_CNT> Vec1Xd;/*行向量*/
 typedef Eigen::Matrix<double, 3, STATE_CNT> Mat3Xd;
 typedef Eigen::Matrix<double, 2, STATE_CNT> Mat2Xd;
 typedef Eigen::Matrix<double, STATE_CNT, 3> MatX3d;

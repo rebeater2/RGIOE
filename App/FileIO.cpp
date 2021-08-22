@@ -27,7 +27,7 @@ ifstream &operator>>(ifstream &is, ImuData &imu) {
   is >> imu.gpst;
   is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
   is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
-#else /*右前下坐标系*/
+#else /*zhu右前下坐标系*/
   is >> imu.gpst;
   is >> imu.gyro[1] >> imu.gyro[0] >> imu.gyro[2];
   is >> imu.acce[1] >> imu.acce[0] >> imu.acce[2];
@@ -48,14 +48,15 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
   os << fmt::format(
-	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:.3f} {:.3f} {:.3f} {:.2f} {:.2f} {:.2f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:.3f} {:.3f} {:.3f} {:.2f} {:.2f} {:.2f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
 	  output.week,
 	  output.gpst,
 	  output.lat, output.lon, output.height,
 	  output.vn[0], output.vn[1], output.vn[2],
 	  output.atti[0], output.atti[1], output.atti[2],
 	  output.gb[0], output.gb[1], output.gb[2],
-	  output.ab[0], output.ab[1], output.ab[2]
+	  output.ab[0], output.ab[1], output.ab[2],
+	  output.info.gnss_mode,output.info.sensors
   );
 
 /*  os << output.week << SEPERATE << fixed << setprecision(3) << output.gpst << SEPERATE;
@@ -80,15 +81,31 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
   return os;
 }
 
-ostream &operator<<(ostream &os, const ImuPara imuPara) {
-  os << "arw= " << setprecision(6) << imuPara.arw << endl;
-  os << "arw= " << setprecision(6) << imuPara.vrw << endl;
-  os << "gb_std= " << setprecision(6) << imuPara.gb_std[0] << "\t" << imuPara.gb_std[01] << imuPara.gb_std[2] << endl;
-  os << "ab_std= " << setprecision(6) << imuPara.ab_std[0] << "\t" << imuPara.ab_std[01] << imuPara.ab_std[2] << endl;
-  os << "gb_ini= " << setprecision(6) << imuPara.gb_ini[0] << "\t" << imuPara.gb_ini[01] << imuPara.gb_ini[2] << endl;
-  os << "ab_ini= " << setprecision(6) << imuPara.ab_ini[0] << "\t" << imuPara.ab_ini[01] << imuPara.ab_ini[2] << endl;
-  os << "gt_corr= " << setprecision(6) << imuPara.at_corr << endl;
-  os << "at_corr= " << setprecision(6) << imuPara.gt_corr << endl;
+ostream &operator<<(ostream &os, const ImuPara &para) {
+  os<<fmt::format("arw: {:15f} deg/sqrt_h\n"
+				  "vrw:{:15f} m/s/sqrt_h\n"
+				  "gb-std:{:15f} {:15f} {:15f} deg/h\n"
+				  "ab-std:{:15f} {:15f} {:15f}  mGal\n"
+				  "gb-ini:{:15f} {:15f} {:15f}  deg/h\n"
+				  "ab-ini:{:15f} {:15f} {:15f}  mGal\n"
+				  "acce corr time: {:.1f} h\n"
+				  "gyro corr time: {:.1f} h\n",
+				  para.arw /_deg *_sqrt_h,
+				  para.vrw  *_sqrt_h,
+				  para.gb_std[0]/_deg *_hour,  para.gb_std[1]/_deg *_hour,  para.gb_std[2]/_deg *_hour,
+				  para.ab_std[0]/_mGal,  para.ab_std[1]/_mGal, para.ab_std[2]/_mGal,
+				  para.gb_ini[0]/_deg *_hour,  para.gb_ini[1]/_deg *_hour,  para.gb_ini[2]/_deg *_hour,
+				  para.ab_ini[0]/_mGal,  para.ab_ini[1]/_mGal, para.ab_ini[2]/_mGal,
+				  para.at_corr /_hour,para.gt_corr /_hour
+				  );
+//  os << "arw= " << setprecision(6) << para.arw << endl;
+//  os << "arw= " << setprecision(6) << para.vrw << endl;
+//  os << "gb_std= " << setprecision(6) << para.gb_std[0] << "\t" << para.gb_std[01] << para.gb_std[2] << endl;
+//  os << "ab_std= " << setprecision(6) << para.ab_std[0] << "\t" << para.ab_std[01] << para.ab_std[2] << endl;
+//  os << "gb_ini= " << setprecision(6) << para.gb_ini[0] << "\t" << para.gb_ini[01] << para.gb_ini[2] << endl;
+//  os << "ab_ini= " << setprecision(6) << para.ab_ini[0] << "\t" << para.ab_ini[01] << para.ab_ini[2] << endl;
+//  os << "gt_corr= " << setprecision(6) << para.at_corr << endl;
+//  os << "at_corr= " << setprecision(6) << para.gt_corr << endl;
   return os;
 }
 istream &operator>>(istream &is, AuxiliaryData &aux) {

@@ -3,8 +3,8 @@ imu-parameter-cfg: /home/rebeater/CLionProjects/psins/yaml/imu_adis16460_paramet
 gnss-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/GNSS_210625_452483.gps.gpstxt
 odo-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/VEL_210625_452483.vel.veltxt
 output-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20200625/RSLT_210625_452483.post.lcv2.nav
-start-time: 452738
-end-time: 453738
+start-time: 452743
+end-time: -1
 imu-data-rate: 128
 #--------------------------------------------------------------------------------#
 alignment-mode: 1 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
@@ -64,8 +64,8 @@ antenna-level-arm:
   - 0.0 # right
   - -0.3 # down
 #--------------------------------------------------------------------------------#
-odo-kd-std: 0.1
-odo-kd-init: 1.37 # 里程计初始比例因子
+odo-kd-std: 0
+odo-kd-init: 1.29 # 里程计初始比例因子
 odo-enable: 1 # 0: disable odometer 1: enable odometer
 odo-wheel-radius: 0 # 车轮半径
 odo-level-arm:

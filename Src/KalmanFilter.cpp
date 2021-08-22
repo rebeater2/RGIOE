@@ -13,8 +13,13 @@ void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
   xd = PHI * xd;
   P = PHI * P * PHI.transpose() + Q;
 }
+void KalmanFilter::Update(const Vec1Xd &H,  double z,  double R) {
+  VecXd K = P * H.transpose() / (H * P * H.transpose() + R);
+  xd = K * (z - H * xd);
+  P = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H) * P;
+}
 /*全维卡尔曼更新：基本上用不着 */
-void KalmanFilter::Update(const MatXd &H,const  VecXd &z,const  MatXd &R) {
+void KalmanFilter::Update(const MatXd &H, const VecXd &z, const MatXd &R) {
 /*  MatXd K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
   xd = xd + K * (z - H * xd);
   P = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H) * P;*/
@@ -46,14 +51,14 @@ void KalmanFilter::Update(const MatXd &H,const  VecXd &z,const  MatXd &R) {
  */
 /*3维卡尔曼更新*/
 int counter = 0;
-void KalmanFilter::Update(const Mat3Xd &H,const  Vec3d &z,const  Mat3d &R) {
-#if SEQUENCED == 1
-  counter ++;
-    MatX3d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
-  /*  xd = xd + K * (z - H * xd);*/
-    xd =  K *z;
-    MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
-    P = temp * P * temp.transpose() + K * R * K.transpose();
+void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
+#if SEQUENCED == 0
+  counter++;
+  MatX3d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
+  xd = xd + K * (z - H * xd);
+//    xd =  K *z;
+  MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
+  P = temp * P * temp.transpose() + K * R * K.transpose();
 #else
   VecXd xd_ = xd, temp1;
   VecX1d Hi;
@@ -76,7 +81,7 @@ void KalmanFilter::Update(const Mat3Xd &H,const  Vec3d &z,const  Mat3d &R) {
   P = P_;
 #endif
 }
-void KalmanFilter::Update(const Mat2Xd &H,const  Vec2d &z,const  Mat2d &R) {
+void KalmanFilter::Update(const Mat2Xd &H, const Vec2d &z, const Mat2d &R) {
   MatX2d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
   xd = xd + K * (z - H * xd);
   MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);

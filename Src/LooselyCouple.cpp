@@ -12,14 +12,14 @@
 #include <Alignment.h>
 
 DataFusion *df = nullptr;/*point to DataFusion::Instance()*/
-AlignMoving *align = nullptr;//(1.5, default_option);
+AlignMoving *align = nullptr;/*point to Alignment*/
 ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
 						-1500 * _mGal, 1000 * _mGal, -3000 * _mGal,
 						1000 * _deg / _hour, -200 * _deg / _hour, 283 * _deg / _hour,
 						0, 0, 0,
 						0, 0, 0,
-						400 * _mGal, 400 * _mGal, 400 * _mGal,
-						4.83 * _deg / _hour, 8 * _deg / _hour, 8 * _deg / _hour,
+						100 * _mGal, 100 * _mGal, 100 * _mGal,
+						1.83 * _deg / _hour, 1 * _deg / _hour, 1 * _deg / _hour,
 						1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
 						1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
 						1 * _hour, 1 * _hour
@@ -28,13 +28,13 @@ NavPva default_pva{0, 0, 0, 0};
 
 /*zho*/
 Option default_option{
-  default_imupara, default_pva,
+	default_imupara, default_pva,
 	128,
 	AlignMode::ALIGN_USE_GIVEN,
 	0, 0, 0, 0,
-	1, 0.3, 0.01, 0,
+	1, 0.3, 0.01, 0.01,
 	0.1, 0.3, -0.24,
-	0.2, 0.35,
+	0.01, 0.35,
 	0, 0, 0,
 	0, 0, 0,
 	0.5, 0.5, 0.9,
@@ -42,7 +42,7 @@ Option default_option{
 	0.3, 0.3, 0.3,
 	0.3, 0.2,
 #if KD_IN_KALMAN_FILTER == 1
-	1.29, 0.3,
+	1.29, 0,
 #endif
 
 };
@@ -73,16 +73,16 @@ void getXd(double *xds) {
 
 int kalmanAlignLevel(const ImuData *imu) {
   if (align == nullptr) {
-	static AlignMoving s_align{1.5, default_option};
+	static AlignMoving s_align{2, default_option};
 	align = &s_align;
   }
   align->Update(*imu);
   return align->alignFinished();
-};
+}
 
 double kalmanAlignGnss(const GnssData *gnss) {
   if (align == nullptr) {
-	static AlignMoving s_align{1.5, default_option};
+	static AlignMoving s_align{2, default_option};
 	align = &s_align;
   }
   return align->Update(*gnss);
@@ -94,6 +94,11 @@ void kalmanSetVel(const Velocity *vel) {
 
 int kalmanOutput(NavOutput *nav_output) {
   *nav_output = df->Output();
+  for (int i = 0; i < 3; i++) {
+	nav_output->pos_std[i] =(float) df->P(0 + i, 0 + i);
+	nav_output->vn_std[i] =(float) df->P(3 + i, 3 + i);
+	nav_output->atti_std[i] =(float) df->P(6 + i, 6 + i);
+  }
   return 0;
 }
 
