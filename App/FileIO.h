@@ -18,6 +18,7 @@
 #include <mutex>
 #include <thread>
 #include <fstream>
+#include <condition_variable>
 
 #include "NavStruct.h"
 
@@ -45,7 +46,7 @@ class NavWriter {
   std::mutex mtx_nav;
   string file_path;
  private:
-  bool flag_stop = false;
+  atomic_flag flag_running = ATOMIC_FLAG_INIT;
   void th_write_nav();
   void start();
 
