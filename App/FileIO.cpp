@@ -134,6 +134,7 @@ ostream &operator<<(ostream &os, const GnssData &gnss) {
 }
 
 NavWriter::NavWriter(std::string file_path) : file_path(std::move(file_path)) {
+  flag_running.test_and_set();
   this->start();
 }
 
@@ -149,9 +150,7 @@ void NavWriter::start() {
 }
 
 void NavWriter::update(const NavOutput &out) {
-
   mtx_nav.lock();
-
   nav_msgs.emplace(std::make_shared<NavOutput>(out));
   mtx_nav.unlock();
 }
@@ -164,17 +163,14 @@ void NavWriter::stop() {
 
 void NavWriter::th_write_nav() {
   ofstream f_nav(file_path);
-  std::unique_lock<mutex> lk(mtx_nav);
-  while (true) {
+  while (flag_running.test_and_set()) {
 	while (!nav_msgs.empty()) {
 	  mtx_nav.lock();
 	  auto p_nav = nav_msgs.front();
 	  nav_msgs.pop();
 	  mtx_nav.unlock();
 	  f_nav << *p_nav << "\n";/* */
-	}
-	if (flag_running.test_and_set()) {
-	  break;
+
 	}
   }
   f_nav.close();
