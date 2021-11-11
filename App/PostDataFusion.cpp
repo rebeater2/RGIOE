@@ -39,10 +39,10 @@ int main(int argc, char *argv[]) {
   Config cfg(argv[1]);
   Option opt = cfg.getOption();
 
-  logi << "imu path:" << cfg.imu_filepath;
-  logi << " imu para:\n"<<opt.imuPara;
+  logi << "IMU path:" << cfg.imu_filepath;
+  logi << "IMU rate:" << opt.d_rate;
+  logi << " imu para:\n" << opt.imuPara;
   logi << "gnss path:" << cfg.gnss_filepath;
-
 
   ImuData imu;
   GnssData gnss;
@@ -57,22 +57,19 @@ int main(int argc, char *argv[]) {
   moveFilePoint(f_gnss, gnss, cfg.start_time);
   ifstream f_odo(cfg.odo_filepath);
   moveFilePoint(f_odo, aux, cfg.start_time);
+  LOG_IF(ERROR, !f_odo.good()) << "odometer file open failed";
   NavWriter writer(cfg.output_filepath);
   logi << cfg.getImuPara();
-
-  for (int i = 0; i < 3; i++) {
-	logi << opt.angle_bv[i];
-  }
   /*初始对准*/
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	logi << "Align moving mode, wait for GNSS";
-	AlignMoving align{1.5, opt};
+	AlignMoving align{1.3, opt};
 	do {
 	  readImu(f_imu, &imu, cfg.imu_format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-		logi << gnss.gpst << "\tvelocity = " << align.Update(gnss);
+		logi << gnss.gpst << " velocity = " << align.Update(gnss);
 		f_gnss >> gnss;
 	  }
 	} while (!align.alignFinished() and f_imu.good() and f_gnss.good());
@@ -105,18 +102,18 @@ int main(int argc, char *argv[]) {
 	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss;
 	  f_gnss >> gnss;
 	}
-	if (f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
+	if (opt.odo_enable and f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdateVel(aux.velocity);
-	  LOG_EVERY_N(INFO, 50*100) << "Odo update:" << aux;
-	  do{f_odo >> aux;}while(aux.gpst<imu.gpst and f_odo.good());
+	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << aux;
+	  do { f_odo >> aux; } while (aux.gpst < imu.gpst and f_odo.good());
 	}
 	out = DataFusion::Instance().Output();
 	writer.update(out);
   }
   /*show summary and reports:*/
-  double time_resolve = timer.elapsed() / 1000.0;
+  double time_resolve = static_cast<double>(timer.elapsed()) / 1000.0;
   writer.stop();
-  double time_writing = timer.elapsed() / 1000.0;
+  double time_writing = static_cast<double> (timer.elapsed()) / 1000.0;
   f_imu.close();
   f_gnss.close();
   f_odo.close();

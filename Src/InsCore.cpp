@@ -33,11 +33,11 @@ NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti) {
 
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
   auto para = opt.imuPara;
-  Vec3d atti = {nav_.atti[0], nav_.atti[1], nav_.atti[2]};
+  Vec3d atti = {nav_.atti[0]*_deg, nav_.atti[1]*_deg, nav_.atti[2]*_deg};
   auto vn = Vec3d{nav_.vn[0], nav_.vn[1], nav_.vn[2]};
   Quad Qbn = Convert::euler_to_quaternion(atti);
   Mat3d Cbn = Convert::euler_to_dcm(atti);
-  auto pos = Vec3d{nav_.lat, nav_.lon, nav_.height};
+  auto pos = Vec3d{nav_.lat*_deg, nav_.lon*_deg, nav_.height};
   auto ll = LatLon{pos[0], pos[1]};
   Quad Qne = Convert::lla_to_qne(ll);
   Mat3d Cne = Convert::lla_to_cne(ll);

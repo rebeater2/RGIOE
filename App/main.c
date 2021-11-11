@@ -15,6 +15,7 @@ char *str(NavOutput *out) {
 }
 
 int main(int argc, char *argv[]) {
+  /*this is a c test for loosely couple program zX*/
     char imu_path[255], gnss_path[255], out_path[255];
     Option opt;
     NavOutput nav;

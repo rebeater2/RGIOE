@@ -72,6 +72,7 @@ Option Config::getOption() {
   opt.zupta_enable = root_node["zupta-enable"].as<bool>();
 
   opt.outage_enable = root_node["outage-enable"].as<bool>();
+  opt.odo_enable = root_node["odo-enable"].as<bool>();
 #if USE_OUTAGE == 1
   opt.outage_start = root_node["outage-start"].as<int>();
   opt.outage_stop = root_node["outage-stop"].as<int>();
@@ -79,6 +80,8 @@ Option Config::getOption() {
   opt.outage_step = root_node["outage-step"].as<int>();
 #endif
   opt.d_rate = root_node["imu-data-rate"].as<int>();
+  opt.odo_var = root_node["odo-var"].as<float>();
+
 #if KD_IN_KALMAN_FILTER == 1
   opt.kd_std = root_node["odo-kd-std"].as<float>();
   opt.kd_init = root_node["odo-kd-init"].as<float>();

@@ -3,15 +3,12 @@
 //
 
 #include "DataFusion.h"
-/*#include <NavLog.h>
-#include <iomanip>
-#include <Config.h>*/
 
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
-#define FLAG_YAW 0b100000000U
-#define VERSION 2.01
-char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.00)\n"
+//#define FLAG_YAW 0b100000000U
+//#define VERSION 2.01
+char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
 				   "Copyright(c) 2019-2021, by Bao Linfeng, All rights reserved.\n"
 				   "This Version is for Embedded and Real-time Application\n";
 
@@ -20,7 +17,7 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
   Q0.setZero();
   /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
   opt = {
-	  {0 * _deg / _sqrt_h, 0 / _sqrt_h,
+	  {0.f, 0.f,
 	   0 * _mGal, 0 * _mGal, 0 * _mGal,
 	   0 * _deg / _hour, 0 * _deg / _hour, 0 * _deg / _hour,
 	   0, 0, 0,
@@ -203,14 +200,14 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
 
 #if KD_IN_KALMAN_FILTER == 1
-//  H3.block<3,1>(0,15)=vel;
+  H3.block<3,1>(0,15)=vel;
   Vec3d z = v_v - nav.kd * vel;
 #else
-  Vec3d z = v_v - 1.29* vel;
+  Vec3d z = v_v -   vel;
 #endif
-  auto R = 10 * Vec3d{0.5, 0.5, 0.5}.asDiagonal();/*TODO 参数，需要放到文件中*/
+  auto R =  Vec3d{0.1, 0.1, 0.1}.asDiagonal();/*TODO 参数，需要放到文件中*/
   Update(H3, z, R);
-//  update_flag |= FLAG_VELOCITY;
+  update_flag |= FLAG_VELOCITY;/**/
   return 0;
 }
 
@@ -266,7 +263,7 @@ Mat3Xd DataFusion::_posH() const {
   return mat_h;
 }
 
-Mat3Xd DataFusion::_velH() const {
+__attribute__((unused)) Mat3Xd DataFusion::_velH() const {
   Mat3d mat_h = Mat3d::Zero();
   mat_h.block<3, 3>(1, 3);
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
@@ -292,7 +289,7 @@ Vec3d DataFusion::_posZ(const Vec3d &pos) {
   return z;
 }
 
-int DataFusion::MeasureNHC() {
+__attribute__((unused)) int DataFusion::MeasureNHC() {
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
   Vec3d w_ib = _gyro_pre;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
@@ -328,7 +325,7 @@ int DataFusion::MeasureZeroVelocity() {
   update_flag |= FLAG_VELOCITY;
   return 0;
 }
-uint32_t DataFusion::EpochCounter() {
+uint32_t DataFusion::EpochCounter() const {
   return _timeUpdateIdx;
 }
 

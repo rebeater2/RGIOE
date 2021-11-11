@@ -41,8 +41,11 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
   is >> gnss.week >> gnss.gpst;
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
-  is >> gnss.hdop >> gnss.ns >> gnss.mode;
+  is >> gnss.hdop >> gnss.gdop >> gnss.ns >> gnss.mode;
   gnss.yaw = -1;
+  gnss.pos_std[0] *= gnss.hdop;
+  gnss.pos_std[1] *= gnss.hdop;
+  gnss.pos_std[2] *= gnss.hdop;
   return is;
 }
 
@@ -127,9 +130,10 @@ ostream &operator<<(ostream &os, const GnssData &gnss) {
   os << fixed << setprecision(0) << gnss.week << SEPERATE << setprecision(5) << gnss.gpst << SEPERATE
 	 << setprecision(12) << gnss.lat << SEPERATE << gnss.lon << SEPERATE << setprecision(3) << gnss.height << SEPERATE
 	 << setprecision(3) << gnss.pos_std[0] << SEPERATE << gnss.pos_std[1] << SEPERATE << gnss.pos_std[2] << SEPERATE
-	 << gnss.hdop
+/*	 << gnss.hdop
 	 << SEPERATE
-	 << fixed << gnss.ns << SEPERATE << gnss.mode;
+	 << fixed << gnss.ns << SEPERATE << gnss.mode*/
+	  ;
   return os;
 }
 

@@ -60,11 +60,11 @@ double AlignMoving::Update(const GnssData &gnss) {
 	  nav.vn[0] = distance.dn;
 	  nav.vn[1] = distance.de;
 	  nav.vn[2] = distance.dd;
-	  nav.vel_std = {0.4,0.4,0.4};
+	  nav.vel_std = {1.4,1.4,1.4};
 	  nav.atti[2] = atan2(distance.de, distance.dn);
-	  nav.att_std[0] = 0.4*_deg;
-	  nav.att_std[1] = 0.4*_deg;
-	  nav.att_std[2] = 0.4*_deg;
+	  nav.att_std[0] = 2.4*_deg;
+	  nav.att_std[1] = 2.4*_deg;
+	  nav.att_std[2] = 3.4*_deg;
 	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
 	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	  flag_yaw_finished = true;
@@ -78,8 +78,9 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.Qne = Convert::lla_to_qne(ll);
   nav.Cne = Convert::lla_to_cne(ll);
   for (int i = 0; i < 3; i++) {
-	nav.pos_std[i] = 0.1;//gnss.pos_std[i];
-	nav.vel_std[i] =  0.1;//gnss.pos_std[i] + gnss_pre.pos_std[i];
+	nav.pos_std[i] = gnss.pos_std[i];
+	nav.att_std[i] = nav.vel_std[i] / nav.vn[i];
+	nav.vel_std[i] =  gnss.pos_std[i] + gnss_pre.pos_std[i];
 	nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
 	nav.ab[i] = option.imuPara.ab_ini[i];
   }
@@ -94,7 +95,7 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
   nav.week = gnss.week;
   gnss_pre = gnss;
-  return nav.atti[2];
+  return nav.vn[0];
 }
 
 AlignMoving::AlignMoving(double vel_threshold, const Option &opt) : option(opt), vel_threshold(vel_threshold) {

@@ -49,6 +49,7 @@ add_executable(dataFusiion
         ../App/FileIO.cpp
         ../App/Config.cpp
         ../App/NavLog.cpp
+        ../Src/StaticDetect.cpp
         )
 target_link_libraries(dataFusiion
         yaml-cpp

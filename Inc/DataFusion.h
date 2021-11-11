@@ -51,7 +51,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   Vec3d lb_gnss;
   Vec3d lb_wheel;
   Mat3d Cbv;
-  Option opt;
+  Option opt{};
   uint32_t update_flag;
   uint32_t _timeUpdateIdx;/*时间更新计数器*/
 #if USE_OUTAGE == 1
@@ -59,7 +59,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
 #endif
  private:
   Mat3Xd _posH() const;
-  Mat3Xd _velH() const;
+  __attribute__((unused)) Mat3Xd _velH() const;
   IMUSmooth smooth;
   Vec3d _posZ(const Vec3d &pos);
 
@@ -68,7 +68,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
  private:
   /*NHC meansurement*/
 
-  int MeasureNHC();
+  __attribute__((unused)) int MeasureNHC();
 
   /*ZUPT*/
   int MeasureZeroVelocity();
@@ -78,7 +78,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   DataFusion();
   friend Singleton<DataFusion>;
  public:
-  uint32_t EpochCounter();
+  uint32_t EpochCounter() const;
   void Initialize(const NavEpoch &ini_nav, const Option &opt);
 
   int TimeUpdate(const ImuData &imu);
