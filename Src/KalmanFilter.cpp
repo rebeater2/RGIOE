@@ -102,6 +102,4 @@ SequencedKalmanFilter::SequencedKalmanFilter() {
   P = MatXd::Zero();
   /*TODO*/
 }
-SequencedKalmanFilter::~SequencedKalmanFilter() {
-
-}
+SequencedKalmanFilter::~SequencedKalmanFilter() = default;
