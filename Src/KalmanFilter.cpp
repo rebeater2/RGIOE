@@ -10,13 +10,14 @@
 
 #include "KalmanFilter.h"
 void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
-  xd = PHI * xd;
+//  xd = PHI * xd; /*xd保持为0*/
   P = PHI * P * PHI.transpose() + Q;
 }
 void KalmanFilter::Update(const Vec1Xd &H,  double z,  double R) {
   VecXd K = P * H.transpose() / (H * P * H.transpose() + R);
-  xd = K * (z - H * xd);
-  P = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H) * P;
+  xd = K * z ;
+  MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
+  P = temp * P * temp.transpose() + K * R * K.transpose();
 }
 /*全维卡尔曼更新：基本上用不着 */
 void KalmanFilter::Update(const MatXd &H, const VecXd &z, const MatXd &R) {

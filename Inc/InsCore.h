@@ -63,7 +63,6 @@ class Ins {
   Vec3d omega_ie_n;
  private:
   Vec3d pos_mid, vn_mid;
-  double t_pre;
   MatXd phi;
 
   int _velocity_update(const Vec3d &acce, const Vec3d &gyro);
@@ -85,10 +84,11 @@ class Ins {
 
 //    Ins(NavEpoch &nav,Option &opt);
   int ForwardMechanization(const ImuData &imuData);
+  int ForwardMechanization(const Vec3d &acce,const Vec3d &gyro);
 
   MatXd TransferMatrix(const ImuPara &para);
 
-  void CompensateIMU(Vec3d &imu, const Vec3d &bias, const Vec3d &scale) const;
+  Vec3d CompensateIMU(const Vec3d &imu, const Vec3d &bias, const Vec3d &scale) const;
 
   NavOutput Output() const;
 };

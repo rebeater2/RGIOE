@@ -21,8 +21,8 @@ void AlignMoving::Update(const ImuData &imu) {
   nav.gpst = imu.gpst;
 //    if (smooth.isStatic()) {
 #if USE_INCREMENT == 1
-  nav.atti[0] = asin(smoothed_imu.acce[1] * 200 / wgs84.g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
-  nav.atti[1] = asin(smoothed_imu.acce[0] * 200 / wgs84.g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
+  nav.atti[0] = asin(smoothed_imu.acce[1] * 200 /WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
+  nav.atti[1] = asin(smoothed_imu.acce[0] * 200 /WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
 #else
   /*用于加速度单位是1的场景*/
   nav.atti[0] = asin(aveimu.acce[1]) * (aveimu.acce[2] > 0 ? 1 : -1);
@@ -43,7 +43,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 	gnss_pre = gnss;
 	return 0;
   }
-  wgs84.Update(gnss.lat * _deg, gnss.height);
+ WGS84::Instance().Update(gnss.lat * _deg, gnss.height);
   if (gnss.yaw >= 0 and gnss.yaw <= 360) {
 	nav.atti[2] = gnss.yaw * _deg;
 	nav.Qbn = Convert::euler_to_quaternion(nav.atti);
@@ -55,7 +55,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 	nav.vel_std = {0.4,0.4,0.4};
 	flag_yaw_finished = true;
   } else {
-	auto distance = wgs84.distance(gnss, gnss_pre);
+	auto distance =WGS84::Instance().distance(gnss, gnss_pre);
 	if (vel_threshold < distance.d and distance.d < 1e3) {
 	  nav.vn[0] = distance.dn;
 	  nav.vn[1] = distance.de;

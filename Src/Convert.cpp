@@ -22,7 +22,7 @@ Quad Convert::rv_to_quaternion(const Vec3d &rotation_vector) {
         mag2 *= 0.25;
         double cs = 1.0 - mag2 / 2.0 * (1.0 - mag2 / 12.0 * (1 - mag2 / 30.0));
         double sn = 1.0 - mag2 / 6.0 * (1.0 - mag2 / 20.0 * (1 - mag2 / 42.0));
-        return Quad(cs, 0.5 * sn * rotation_vector[0], 0.5 * sn * rotation_vector[1], 0.5 * sn * rotation_vector[2]);
+        return Quad{cs, 0.5 * sn * rotation_vector[0], 0.5 * sn * rotation_vector[1], 0.5 * sn * rotation_vector[2]};
     } else {
         double mag = sqrt(mag2);
         double s_mag = sin(mag / 2.);
@@ -140,7 +140,7 @@ Quad Convert::lla_to_qne(const LatLon &ll) {
     double q1 = -sin(phi) * sin(lamda);
     double q2 = sin(phi) * cos(lamda);
     double q3 = cos(phi) * sin(lamda);
-    return Quad(q0, q1, q2, q3);
+    return Quad{q0, q1, q2, q3};
 }
 
 Mat3d Convert::lla_to_cne(const LatLon &ll) {
@@ -164,10 +164,10 @@ Vec3d Convert::gyro_to_rv(const Vec3d &gyro, const  Vec3d &gyro_pre) {
 
 Vec3d Convert::lla_to_xyz(const Eigen::Vector3d &lla) {
     Vec3d re = Vec3d::Zero();
-    double rn = wgs84.RN(lla[0]);
+    double rn = WGS84::Instance().RN(lla[0]);
     re[0] = (rn + lla[2]) * cos(lla[0]) * cos(lla[1]);
     re[1] = (rn + lla[2]) * cos(lla[0]) * sin(lla[1]);
-    re[2] = (rn * (1 - wgs84.e2) + lla[2]) * sin(lla[0]);
+    re[2] = (rn * (1 - WGS84::Instance().e2) + lla[2]) * sin(lla[0]);
 
 //    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"lla "<<lla.transpose();
 //    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re "<<re.transpose();

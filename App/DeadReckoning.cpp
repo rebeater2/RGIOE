@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   auto ave = smooth.getSmoothedIMU();
   logi << "smooth:" << ave;
   for (int i = 0; i < 3; i++) {
-	opt.imuPara.gb_ini[i] = ave.gyro[i];
+	opt.imuPara.gb_ini[i] = (float)ave.gyro[i];
   }
 
   ifstream f_odo(cfg.odo_filepath);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   NavEpoch nav;
 
   auto nav_ = cfg.getInitNav();
-  wgs84.Update(nav_.lat * _deg, nav_.height);
+ WGS84::Instance().Update(nav_.lat * _deg, nav_.height);
   nav = makeNavEpoch(nav_, opt);/* 这是UseGiven模式对准 */
 
   Timer timer;

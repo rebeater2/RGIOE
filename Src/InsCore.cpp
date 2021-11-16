@@ -33,11 +33,11 @@ NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti) {
 
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
   auto para = opt.imuPara;
-  Vec3d atti = {nav_.atti[0]*_deg, nav_.atti[1]*_deg, nav_.atti[2]*_deg};
+  Vec3d atti = {nav_.atti[0] * _deg, nav_.atti[1] * _deg, nav_.atti[2] * _deg};
   auto vn = Vec3d{nav_.vn[0], nav_.vn[1], nav_.vn[2]};
   Quad Qbn = Convert::euler_to_quaternion(atti);
   Mat3d Cbn = Convert::euler_to_dcm(atti);
-  auto pos = Vec3d{nav_.lat*_deg, nav_.lon*_deg, nav_.height};
+  auto pos = Vec3d{nav_.lat * _deg, nav_.lon * _deg, nav_.height};
   auto ll = LatLon{pos[0], pos[1]};
   Quad Qne = Convert::lla_to_qne(ll);
   Mat3d Cne = Convert::lla_to_cne(ll);
@@ -76,10 +76,10 @@ std::ostream &operator<<(std::ostream &os, NavEpoch &nav) {
 }
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
-  omega_en_n = wgs84.omega_en_n(vn_mid, pos_mid);
-  omega_ie_n = wgs84.omega_ie_n(pos_mid[0]);
+  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
+  omega_ie_n = WGS84::Instance().omega_ie_n(pos_mid[0]);
 
-  Vec3d gn = {0, 0, wgs84.g};
+  Vec3d gn = {0, 0, WGS84::Instance().g};
   Vec3d v_g_cor = (gn - (2 * omega_ie_n + omega_en_n).cross(nav.vn)) * dt;
   Vec3d zeta_mid = (omega_en_n + omega_ie_n) * dt;
   Vec3d vf_kb_k1 = acce + 0.5 * gyro.cross(acce) + (_gyro_pre.cross(acce) + _acce_pre.cross(gyro)) / 12.0;
@@ -91,7 +91,7 @@ int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
 }
 
 int Ins::_position_update() {
-  Vec3d epsilon_k = wgs84.omega_ie_e * dt;
+  Vec3d epsilon_k = WGS84::Instance().omega_ie_e * dt;
   Quad q_e_e_delta = Convert::rv_to_quaternion(epsilon_k).conjugate();
   Vec3d zeta_k = (omega_ie_n + omega_en_n) * dt;
   Quad q_n_n_delta = Convert::rv_to_quaternion(zeta_k);
@@ -103,9 +103,9 @@ int Ins::_position_update() {
   double h = nav.pos[2] - vn_mid[2] * dt;
   nav.pos = {ll.latitude, ll.longitude, h};
   nav.Cne = Convert::lla_to_cne(ll);
-  omega_ie_n = wgs84.omega_ie_n(ll.latitude);
+  omega_ie_n = WGS84::Instance().omega_ie_n(ll.latitude);
   Vec3d temp = {nav.pos[0], nav.pos[1], pos_mid[2]};
-  omega_en_n = wgs84.omega_en_n(vn_mid, temp);
+  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, temp);
   return 0;
 }
 
@@ -133,20 +133,24 @@ int Ins::_atti_update(const Vec3d &gyro) {
  */
 int Ins::ForwardMechanization(const ImuData &imuData) {
 #if USE_INCREMENT == 1
-  Vec3d acce{imuData.acce[0],imuData.acce[1],imuData.acce[2]};
-  Vec3d gyro{imuData.gyro[0],imuData.gyro[1],imuData.gyro[2]};
+  Vec3d acce{imuData.acce[0], imuData.acce[1], imuData.acce[2]};
+  Vec3d gyro{imuData.gyro[0], imuData.gyro[1], imuData.gyro[2]};
 #else
-  Vec3d acce{imuData.acce[0] * dt * wgs84.g, imuData.acce[1] * dt * wgs84.g, imuData.acce[2] * wgs84.g * dt};
+  Vec3d acce{imuData.acce[0] * dt * WGS84::Instance().g, imuData.acce[1] * dt * WGS84::Instance().g, imuData.acce[2] * WGS84::Instance().g * dt};
   Vec3d gyro{imuData.gyro[0] * dt, imuData.gyro[1] * dt, imuData.gyro[2] * dt};
 #endif
-//    dt = 0.005;//imuData.gpst - t_pre;
-  t_pre = imuData.gpst;
-  CompensateIMU(acce, nav.ab, nav.as);
-  CompensateIMU(gyro, nav.gb, nav.gs);
-
+  Vec3d acce_ = CompensateIMU(acce, nav.ab, nav.as);
+  Vec3d gyro_ = CompensateIMU(gyro, nav.gb, nav.gs);
+  ForwardMechanization(acce_, gyro);
+  nav.gpst = imuData.gpst;
+  _acce_pre = acce_;
+  _gyro_pre = gyro_;
+  return 0;
+}
+int Ins::ForwardMechanization(const Vec3d &acce, const Vec3d &gyro) {
   /*外插一个历元*/
-  omega_en_n = wgs84.omega_en_n(nav.vn, nav.pos); /*E 2.50*/
-  omega_ie_n = wgs84.omega_ie_n(nav.pos.x());
+  omega_en_n = WGS84::Instance().omega_en_n(nav.vn, nav.pos); /*E 2.50*/
+  omega_ie_n = WGS84::Instance().omega_ie_n(nav.pos.x());
   /*外推一个周期*/
   pos_mid = _mid_pos();
   vn_mid = nav.vn + 0.5 * nav.dvn;
@@ -156,15 +160,12 @@ int Ins::ForwardMechanization(const ImuData &imuData) {
   _position_update();
   /*姿态更新*/
   _atti_update(gyro);
-  nav.gpst = imuData.gpst;
-  _acce_pre = acce;
-  _gyro_pre = gyro;
   return 0;
 }
 
-void Ins::CompensateIMU(Vec3d &imu, const Vec3d &bias, const Vec3d &scale) const {
+Vec3d Ins::CompensateIMU(const Vec3d &imu, const Vec3d &bias, const Vec3d &scale) const {
   Mat3d scale_mat = scale.asDiagonal();
-  imu = (eye3 - scale_mat) * (imu - bias * dt);
+  return (eye3 - scale_mat) * (imu - bias * dt);
 }
 
 Ins::Ins() {
@@ -172,7 +173,6 @@ Ins::Ins() {
   int d_rate = 100;
   dt = 1.0 / d_rate;
   this->nav = NavEpoch{0, {0, 0, 0}};
-  t_pre = 0;
 }
 
 Ins::~Ins() = default;
@@ -180,16 +180,14 @@ Ins::~Ins() = default;
 void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
   eye3 = Eigen::Matrix3d::Identity(3, 3);
   dt = 1.0 / d_rate;
-  t_pre = nav.gpst;
   nav = nav_;
-  wgs84.Update(nav.pos[0], nav.pos[2]);
+  WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
 
 }
 
 void Ins::InitializePva(const NavEpoch &nav_, const ImuData &imu) {
   eye3 = Eigen::Matrix3d::Identity(3, 3);
   dt = 0.005;
-  t_pre = nav.gpst;
   this->nav = nav_;
   _acce_pre = Vec3d(imu.acce);
   _gyro_pre = Vec3d(imu.gyro);
@@ -198,20 +196,20 @@ void Ins::InitializePva(const NavEpoch &nav_, const ImuData &imu) {
 Vec3d Ins::_mid_pos() {
   double h_mid = nav.pos[2] - nav.vn[2] * dt / 2;
   Vec3d zeta_mid = (omega_ie_n + omega_en_n) * dt / 2;
-  Vec3d epsilon_mid = wgs84.omega_ie_e * dt / 2;
+  Vec3d epsilon_mid = WGS84::Instance().omega_ie_e * dt / 2;
   Quad q_nn_mid = Convert::rv_to_quaternion(zeta_mid);
   Quad q_ee_mid = Convert::rv_to_quaternion(epsilon_mid).conjugate();
   Quad q_ne_mid = q_ee_mid * nav.Qne * q_nn_mid;
   LatLon lat_lon_mid = Convert::qne_to_lla(q_ne_mid);
   pos_mid = {lat_lon_mid.latitude, lat_lon_mid.longitude, h_mid};
-  wgs84.Update(pos_mid[0], pos_mid[2]);
+  WGS84::Instance().Update(pos_mid[0], pos_mid[2]);
   return pos_mid;
 }
 
 MatXd Ins::TransferMatrix(const ImuPara &para) {
-  double g = wgs84.g;
-  double rm = wgs84.RM(nav.pos[0]);
-  double rn = wgs84.RN(nav.pos[0]);
+  double g = WGS84::Instance().g;
+  double rm = WGS84::Instance().RM(nav.pos[0]);
+  double rn = WGS84::Instance().RN(nav.pos[0]);
   phi.setZero();
   phi.block<3, 3>(0, 0) = eye3 - Convert::skew(omega_en_n) * dt;
   phi.block<3, 3>(0, 3) = eye3 * dt;

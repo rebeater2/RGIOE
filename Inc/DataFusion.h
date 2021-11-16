@@ -31,7 +31,7 @@ template<typename T>
 class Singleton {
  public:
   static T &Instance() {
-    static T s_Instance __attribute__((section (".ram_d1")));
+    static T s_Instance;
     return s_Instance;
   }
 

@@ -62,4 +62,3 @@ void WGS84::Update(double lat, double h) {
 	  + 0.0000000000007211 * h * h;
 }
 
-WGS84 wgs84;

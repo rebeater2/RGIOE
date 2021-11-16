@@ -64,7 +64,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
-  wgs84.Update(nav.pos[0], nav.pos[2]);
+ WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
   P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -215,8 +215,8 @@ int DataFusion::MeasureUpdateVel(const double &vel) {
 int DataFusion::_feedBack() {
   double lat = nav.pos[0];
   double h = nav.pos[2];
-  double rn = wgs84.RN(lat);
-  double rm = wgs84.RM(lat);
+  double rn =WGS84::Instance().RN(lat);
+  double rm =WGS84::Instance().RM(lat);
   Vec3d d_atti = Vec3d{xd[1] / (rn + h),
 					   -xd[0] / (rm + h),
 					   -xd[1] * tan(lat) / (rn + h)

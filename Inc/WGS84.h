@@ -19,6 +19,16 @@ struct deltaPos {
 };
 
 class WGS84 {
+ private:
+  WGS84() = default;
+  ~WGS84() = default;
+  WGS84(const WGS84 &rhs) = default;
+  WGS84 &operator=(const WGS84 &rhs) {return *this;}
+ public:
+  static WGS84 &Instance() {
+	static WGS84 wgs;
+	return wgs;
+  }
  public:
   const double omega_e = 7.2921151467e-5; /*地球自转角速度 */
   const double e2 = 0.00669437999013;/*偏心率*/
@@ -48,11 +58,9 @@ class WGS84 {
 
   deltaPos distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const;
 
-  deltaPos distance(const  GnssData &pos1,const  GnssData &pos2) const;
+  deltaPos distance(const GnssData &pos1, const GnssData &pos2) const;
 /*
     delta_d distance(NavEpoch nav1, NavEpoch nav2) const;*/
 
 };
-
-extern WGS84 wgs84;
 #endif //LOOSELYCOUPLE2020_CPP_WGS84_H
