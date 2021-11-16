@@ -1,9 +1,10 @@
 imu-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_imu.bin
 imu-parameter-cfg: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/imu_A15_parameter.yml
 gnss-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/gnss_rtk.gps
+odo-path:
 output-path: /media/rebeater/hd_data2/workspace/raw_data/demo/demo_A15/A15_v2_rslt_cppV2.nav
 start-time: 456300
-end-time: 459600
+end-time: -1
 imu-data-rate: 200
 #--------------------------------------------------------------------------------#
 alignment-mode: 0 # 0: useGiven 1: Moving 2: Stationary(not implement yet)
@@ -32,7 +33,7 @@ init-atti-std:
   - 0.027  # deg
   - 0.03  # deg for SPP is so 不靠谱
 alignment-moving-vel: 3 # m/s threshold velocity for moving align
-nhc-enable: true
+nhc-enable: false
 nhc-hz: 20
 install-angle:
   - 0.1
@@ -44,7 +45,7 @@ nhc-std:
 zupt-enable: true
 zupta-enable: true
 #--------------------------------------------------------------------------------#
-imu-format: 1
+imu-format: 0
 # IMU_FORMAT_IMD = 0
 # IMU_FORMAT_IMUTXT = 1
 gnss-format: 0  #
@@ -61,9 +62,15 @@ antenna-level-arm:
   - -0.301 # right
   - -0.184 # down
 #--------------------------------------------------------------------------------#
-odo-enable: 0 # 0: disable odometer 1: enable odometer
+odo-kd-std: 0.00001
+odo-kd-init: 0.85 # 里程计初始比例因子
+odo-enable: false # 0: disable odometer 1: enable odometer
 odo-wheel-radius: 0 # 车轮半径
-odo-level-arm: [0,0,0]
+odo-var: 0.3
+odo-level-arm:
+  - -0
+  - 0
+  - 00
 #--------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------#
 outage-enable: false

@@ -67,6 +67,7 @@ antenna-level-arm:
 odo-kd-std: 0
 odo-kd-init: 1.29 # 里程计初始比例因子
 odo-enable: 1 # 0: disable odometer 1: enable odometer
+odo-var: 0.3
 odo-wheel-radius: 0 # 车轮半径
 odo-level-arm:
   - -0

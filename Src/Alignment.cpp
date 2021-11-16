@@ -17,12 +17,12 @@
 void AlignMoving::Update(const ImuData &imu) {
   /*必须在静止时刻对准*/
   smooth.Update(imu);
-  auto aveimu = smooth.getSmoothedIMU();
+  auto smoothed_imu = smooth.getSmoothedIMU();
   nav.gpst = imu.gpst;
 //    if (smooth.isStatic()) {
 #if USE_INCREMENT == 1
-  nav.atti[0] = asin(aveimu.acce[1] * 200 / g) * (aveimu.acce[2] > 0 ? 1 : -1);
-  nav.atti[1] = asin(aveimu.acce[0] * 200 / g) * (aveimu.acce[2] > 0 ? -1 : 1);
+  nav.atti[0] = asin(smoothed_imu.acce[1] * 200 / wgs84.g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
+  nav.atti[1] = asin(smoothed_imu.acce[0] * 200 / wgs84.g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
 #else
   /*用于加速度单位是1的场景*/
   nav.atti[0] = asin(aveimu.acce[1]) * (aveimu.acce[2] > 0 ? 1 : -1);

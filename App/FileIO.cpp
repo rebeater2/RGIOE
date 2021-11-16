@@ -20,13 +20,57 @@ ostream &operator<<(ostream &os, const AuxiliaryData &aux) {
 					aux.gpst, aux.velocity, aux.angular);
   return os;
 }
+/**
+ * 返回前右下坐标系的ImuData结构体，其中陀螺单位为rad/s,加速度单位为g
+ * @param os
+ * @param imu
+ * @param fmt
+ * @return
+ */
+int ReadImu(istream &is, ImuData &imu, ImuFileFormat fmt) {
+  switch (fmt) {
+	case IMU_FORMAT_IMD_FRD: is.read((char *)(&imu), sizeof(imu));
+	  for (int i = 0; i < 3; i++) {
+		imu.acce[i] *= 200;
+		imu.gyro[i] *= 200;
+	  }
+	  break;
+	case IMU_FORMAT_IMD_RFU: {
+	  is.read((char *)(&imu), sizeof(imu));
+	  double temp = imu.acce[1];
+	  imu.acce[1] = imu.acce[0];
+	  imu.acce[0] = temp;
+	  imu.acce[2] = -imu.acce[2];
+	  temp = imu.gyro[1];
+	  imu.gyro[1] = imu.gyro[0];
+	  imu.gyro[0] = temp;
+	  imu.gyro[2] = -imu.gyro[2];
+	  break;
+	}
+	case IMU_FORMAT_TXT_FRD: is >> imu.gpst;
+	  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
+	  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
+	  break;
+	case IMU_FORMAT_TXT_RFU: {
+	  is >> imu.gpst;
+	  is >> imu.gyro[1] >> imu.gyro[0] >> imu.gyro[2];
+	  is >> imu.acce[1] >> imu.acce[0] >> imu.acce[2];
+	  imu.gyro[2] *= (-1.0);
+	  imu.acce[2] *= (-1.0);
+	  break;
+	}
+	default: break;
+  }
+  return is.good();
+};
 
 ifstream &operator>>(ifstream &is, ImuData &imu) {
 
 #if IMU_FRAME == 0 /*前坐上*/
-  is >> imu.gpst;
-  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
-  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
+  is.read((char *)&imu,sizeof(ImuData));
+//  is >> imu.gpst;
+//  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
+//  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
 #else /*zhu右前下坐标系*/
   is >> imu.gpst;
   is >> imu.gyro[1] >> imu.gyro[0] >> imu.gyro[2];
@@ -38,14 +82,15 @@ ifstream &operator>>(ifstream &is, ImuData &imu) {
 }
 
 ifstream &operator>>(ifstream &is, GnssData &gnss) {
-  is >> gnss.week >> gnss.gpst;
+  is >> gnss.gpst;
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
-  is >> gnss.hdop >> gnss.gdop >> gnss.ns >> gnss.mode;
-  gnss.yaw = -1;
-  gnss.pos_std[0] *= gnss.hdop;
-  gnss.pos_std[1] *= gnss.hdop;
-  gnss.pos_std[2] *= gnss.hdop;
+//  is >> gnss.hdop >> gnss.gdop >> gnss.ns >> gnss.mode;
+//  gnss.yaw = -1;
+//  gnss.hdop = 0.001;
+//gnss.pos_std[0] *=  0.001;
+//  gnss.pos_std[1] *=  0.001;
+//  gnss.pos_std[2] *= 0.001;
   return is;
 }
 
@@ -186,9 +231,9 @@ void NavWriter::th_write_nav() {
  * @return
  */
 int readImu(ifstream &os, ImuData *pimu, ImuFileFormat fmt) {
-  if (fmt == IMU_FORMAT_IMD) {
+  if (fmt == IMU_FORMAT_IMD_FRD) {
 	os.read(reinterpret_cast<char *>(pimu), sizeof(ImuData));
-  } else if (fmt == IMU_FORMAT_IMUTXT) {
+  } else if (fmt == IMU_FORMAT_TXT_RFU) {
 	os >> (*pimu);
   }
   return os.good();

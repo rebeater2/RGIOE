@@ -10,6 +10,25 @@
 #include "Timer.h"
 #include <Alignment.h>
 
+/*extern int GnssCheck(const GnssData &gnss){
+  if (gnss.ns > 60) {
+    return 0;
+  }
+  if (gnss.ns < 15) {//低于5的抛弃
+    return 0;
+  }
+  if (gnss.mode == SPP) {
+    return 1;
+  }
+  if (gnss.mode == RTK_DGPS) {
+    return 2;
+  } else if (gnss.mode == RTK_FLOAT || gnss.mode == RTK_FIX) {
+    return 3;
+  } else {
+    return 0;
+  }
+}*/
+
 void navExit(const std::string &info) {
   loge << info;
   abort();
@@ -57,14 +76,13 @@ int main(int argc, char *argv[]) {
   moveFilePoint(f_gnss, gnss, cfg.start_time);
   ifstream f_odo(cfg.odo_filepath);
   moveFilePoint(f_odo, aux, cfg.start_time);
-  LOG_IF(ERROR, !f_odo.good()) << "odometer file open failed";
+  LOG_IF(ERROR, opt.odo_enable and !f_odo.good()) << "odometer file open failed";
   NavWriter writer(cfg.output_filepath);
-  logi << cfg.getImuPara();
   /*初始对准*/
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	logi << "Align moving mode, wait for GNSS";
-	AlignMoving align{1.3, opt};
+	AlignMoving align{5, opt};
 	do {
 	  readImu(f_imu, &imu, cfg.imu_format);
 	  align.Update(imu);

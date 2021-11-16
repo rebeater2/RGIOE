@@ -5,6 +5,7 @@
 #include <InsCore.h>
 #include <iostream>
 #include <fstream>
+#include "../App/FileIO.h"
 
 using namespace std;
 
@@ -25,9 +26,9 @@ int main() {
     while (!f_imu.eof()) {
         f_imu.read((char *) &imu, sizeof(ImuData));
         ins.ForwardMechanization(imu);
-        f_nav << ins.nav<<'\n';
+        f_nav << ins.Output()<<'\n';
     }
-    cout<<ins.nav<<endl;
+    cout<<ins.Output()<<endl;
     f_imu.close();
     f_nav.close();
 

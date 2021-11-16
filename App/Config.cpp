@@ -96,10 +96,10 @@ ImuPara Config::getImuPara() const {
   imuPara.arw = imu_para_node["arw"].as<double>() * _deg / _sqrt_h;
   imuPara.vrw = imu_para_node["vrw"].as<double>() / _sqrt_h;
   for (int i = 0; i < 3; i++) {
-    imuPara.gb_std[i] = 0.1 *imu_para_node["gb-std"][i].as<double>() * _deg / _hour;
+    imuPara.gb_std[i] = imu_para_node["gb-std"][i].as<double>() * _deg / _hour;
 	imuPara.gs_std[i] = imu_para_node["gs-std"][i].as<double>() * _ppm;
 	imuPara.as_std[i] = imu_para_node["as-std"][i].as<double>() * _ppm;
-	imuPara.ab_std[i] = 0.002 * imu_para_node["ab-std"][i].as<double>() * _mGal;
+	imuPara.ab_std[i] = imu_para_node["ab-std"][i].as<double>() * _mGal;
 
 	imuPara.gb_ini[i] = imu_para_node["gb-ini"][i].as<double>() * _deg / _hour;
 	imuPara.gs_ini[i] = imu_para_node["gs-ini"][i].as<double>() * _ppm;

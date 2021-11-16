@@ -64,7 +64,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
-  wgs84.Update(nav.pos[0],nav.pos[2]);
+  wgs84.Update(nav.pos[0], nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
   P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -123,13 +123,13 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
   Predict(phi, Q);
   _timeUpdateIdx++;
 
-  if(_timeUpdateIdx % 16){
-    if(smooth.isStatic()){
-      MeasureZeroVelocity();
-      nav.info.sensors |= SENSOR_ZUPT;
-    }else{
-      nav.info.sensors &=~ SENSOR_ZUPT;
-    }
+  if (_timeUpdateIdx % 16 and opt.zupt_enable) {
+	if (smooth.isStatic()) {
+	  MeasureZeroVelocity();
+	  nav.info.sensors |= SENSOR_ZUPT;
+	} else {
+	  nav.info.sensors &= ~SENSOR_ZUPT;
+	}
   }
 
   return 0;
@@ -148,23 +148,15 @@ int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
   update_flag |= FLAG_POSITION;
   return 0;
 }
-inline int GnssCheck(const GnssData &gnss) {
-  if (gnss.ns > 60) {
-	return 0;
-  }
-  if (gnss.ns < 15) {//低于5的抛弃
-	return 0;
-  }
-  if (gnss.mode == SPP) {
-	return 1;
-  }
-  if (gnss.mode == RTK_DGPS) {
-	return 2;
-  } else if (gnss.mode == RTK_FLOAT || gnss.mode == RTK_FIX) {
-	return 3;
-  } else {
-	return 0;
-  }
+
+/**
+ * GNSS数据检查，通过卫星数量、DOP、定位模式等决定是否使用当前观测，
+ * @note 此函数默认使用GNSS数据并且不做检查，需要使用再外部重新定义即可
+ * @param gnss GNSS数据
+ * @return 0：不是用当前GNSS数据，1：使用当前GNSS数据
+ */
+int __attribute__((weak)) GnssCheck(const GnssData &gnss) {
+  return 1;
 }
 int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 #if USE_OUTAGE == 1
@@ -178,9 +170,9 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	nav.info.gnss_mode = gnssData.mode;
 	Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
 	Mat3d Rk = Mat3d::Zero();
-	Rk(0, 0) = 0.1* gnssData.pos_std[0] * gnssData.pos_std[0];
-	Rk(1, 1) = 0.1*gnssData.pos_std[1] * gnssData.pos_std[1];
-	Rk(2, 2) = 0.1*gnssData.pos_std[2] * gnssData.pos_std[2];
+	Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0];
+	Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1];
+	Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2];
 	MeasureUpdatePos(pos, Rk);
   } else {
 	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
@@ -203,9 +195,9 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   H3.block<3,1>(0,15)=vel;
   Vec3d z = v_v - nav.kd * vel;
 #else
-  Vec3d z = v_v -   vel;
+  Vec3d z = v_v - vel;
 #endif
-  auto R =  Vec3d{0.1, 0.1, 0.1}.asDiagonal();/*TODO 参数，需要放到文件中*/
+  auto R = Vec3d{0.1, 0.1, 0.1}.asDiagonal();/*TODO 参数，需要放到文件中*/
   Update(H3, z, R);
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
@@ -228,10 +220,6 @@ int DataFusion::_feedBack() {
   Vec3d d_atti = Vec3d{xd[1] / (rn + h),
 					   -xd[0] / (rm + h),
 					   -xd[1] * tan(lat) / (rn + h)
-  };
-  Vec3d _d_atti = Vec3d{-xd[1] / (rn + h),
-						+xd[0] / (rm + h),
-						+xd[1] * tan(lat) / (rn + h)
   };
   Quad qnc = Convert::rv_to_quaternion(-d_atti);
   nav.Qne = (nav.Qne * qnc).normalized();
@@ -258,8 +246,7 @@ int DataFusion::_feedBack() {
 Mat3Xd DataFusion::_posH() const {
   Mat3Xd mat_h = Mat3Xd::Zero();
   mat_h.block<3, 3>(0, 0) = eye3;
-  Vec3d temp = nav.Cbn * lb_gnss;
-  mat_h.block<3, 3>(0, 6) = Convert::skew(temp);
+  mat_h.block<3, 3>(0, 6) = Convert::skew(nav.Cbn * lb_gnss);
   return mat_h;
 }
 
@@ -318,10 +305,10 @@ int DataFusion::MeasureZeroVelocity() {
   Update(H, z, R);
   /*ZUPT A*/
   Vec1Xd HzuptA = Vec1Xd::Zero();
-  HzuptA(0,11) = 1;/*z轴零偏*/
+  HzuptA(0, 11) = 1;/*z轴零偏*/
   double zputa = _gyro_pre[2];
   double Rzupta = 0.001;
-  Update(HzuptA,zputa,Rzupta);
+  Update(HzuptA, zputa, Rzupta);
   update_flag |= FLAG_VELOCITY;
   return 0;
 }

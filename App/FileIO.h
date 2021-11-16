@@ -24,11 +24,15 @@
 
 using namespace std;
 #define SEPERATE (' ')
+
+
 ostream &operator<<(ostream &os,const ImuData &imu);
 
 ostream &operator<<(ostream &os,const NavOutput &output);
 
 ifstream &operator>>(ifstream &is, ImuData &imu);
+int ReadImu(istream &is,ImuData &imu,ImuFileFormat fmt);
+
 
 ifstream &operator>>(ifstream &is, GnssData &gnss);
 

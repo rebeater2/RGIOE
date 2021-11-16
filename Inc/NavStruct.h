@@ -104,8 +104,10 @@ typedef struct {
   float gt_corr;
 } ImuPara;
 typedef enum {
-  IMU_FORMAT_IMD = 0,
-  IMU_FORMAT_IMUTXT = 1
+  IMU_FORMAT_IMD_FRD = 0,
+  IMU_FORMAT_IMD_RFU = 1,
+  IMU_FORMAT_TXT_FRD = 2,
+  IMU_FORMAT_TXT_RFU = 3
 } ImuFileFormat;
 typedef enum {
   GNSS_TXT_POS_7 = 0,

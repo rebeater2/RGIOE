@@ -8,13 +8,15 @@ file(GLOB_RECURSE SOURCE
 
 #add_definitions(-DUSE_INCREMENT=1)
 #define USE_INCREMENT 1c
+find_package(fmt REQUIRED)
 add_executable(test_ins
         ../Src/InsCore.cpp
         ../Src/WGS84.cpp
         ../Src/Convert.cpp
         ../Src/WGS84.cpp
+        ../App/FileIO.cpp
          test_ins.cpp)
-target_link_libraries(test_ins Eigen3::Eigen)
+target_link_libraries(test_ins Eigen3::Eigen fmt pthread)
 
 add_executable(test_kalman
         ./test_kalman.cpp

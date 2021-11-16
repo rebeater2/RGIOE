@@ -30,9 +30,9 @@ target_link_libraries(PostDataFusion
         )
 
 find_package(fmt REQUIRED)
-add_executable(DeadReckoning DeadReckoning.cpp FileIO.cpp Config.cpp NavLog.cpp    ${SOURCE})
+add_executable(DeadReckoning DeadReckoning.cpp FileIO.cpp Config.cpp NavLog.cpp ${SOURCE})
 target_link_libraries(DeadReckoning
-#        ${CMAKE_HOME_DIRECTORY}/Lib/libLooselyCouple.a
+        #        ${CMAKE_HOME_DIRECTORY}/Lib/libLooselyCouple.a
         yaml-cpp
         glog
         pthread

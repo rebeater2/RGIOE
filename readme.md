@@ -1,11 +1,11 @@
 # GNSS/INS/ODO Loosely Couple based on EKF
 
-## 依赖
+## 算法核心依赖
     1. Eigen
+## 测试应用依赖
     2. glog
     3. gfalgs
     4. yaml-cpp
-
 ## Usage
 ```
 dataFusion configure.yml
@@ -139,3 +139,39 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
 | sensor type |        | 18    | 传感器类型               |
 | kd          |        | 19    | 里程计比例因子，当有效时 |
 
+性能 激光惯导+天宝接收机RTK模式
+
+测试陀螺性能
+
+IMU参数:
+角度随机游走: 0.003, deg/s/sqrt(hr)   
+速度随机游走: 0.03, m/s/sqrt(hr)   
+陀螺零偏标准差: 0.027, deg/hr   
+加表零偏标准差: 15, mGal   
+陀螺零偏相关时间: 4, hr   
+加表零偏相关时间: 4, hr   
+陀螺比例因子标准差: 300, ppm   
+加表比例因子标准差: 300, ppm   
+陀螺比例因子相关时间: 4, hr   
+加表比例因子相关时间: 4, hr   
+
+
+
+|                                | x error /m | y error/m | z error/m |
+|--------------------------------|------------|-----------|-----------|
+|  position error(m) 1-$\sigma$  |   0.0193   |   0.0181  |   0.0144  |
+|  position error(m) 2-$\sigma$  |   0.0694   |   0.0694  |   0.0347  |
+|     position error(m) rms      |   0.0291   |   0.0271  |   0.0234  |
+| velocity error(m/s) 1-$\sigma$ |   0.0144   |   0.0030  |   0.0030  |
+| velocity error(m/s) 2-$\sigma$ |   0.0347   |   0.0079  |   0.0071  |
+|    velocity error(m/s) rms     |   0.0234   |   0.0036  |   0.0033  |
+| attitude error(deg) 1-$\sigma$ |   0.0020   |   0.0035  |   0.0035  |
+| attitude error(deg) 2-$\sigma$ |   0.0040   |   0.0053  |   0.0054  |
+|    attitude error(deg) rms     |   0.0029   |   0.0031  |   0.0031  |
+|      2D error 1-$\sigma$       |   0.0405   |           |           |
+|      2D error 2-$\sigma$       |   0.0764   |           |           |
+|         2D error RMS$          |   0.0398   |           |           |
+|      3D error 1-$\sigma$       |   0.0476   |           |           |
+|      3D error 2-$\sigma$       |   0.0822   |           |           |
+|     3D error RMS $\sigma$      |   0.0462   |           |           |
+|--------------------------------|------------|-----------|-----------|
