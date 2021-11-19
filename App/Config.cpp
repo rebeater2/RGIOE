@@ -2,7 +2,6 @@
 // Created by rebeater on 2021/1/16.
 //
 
-#include <cstring>
 #include "Config.h"
 /*ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
 						-1500 * _mGal, 1000 * _mGal, -3000 * _mGal,
@@ -48,37 +47,44 @@ Config::Config(const string &yml_path) {
   imu_format = (ImuFileFormat)root_node["imu-format"].as<int>();
   gnss_format = (GnssFileFormat)root_node["gnss-format"].as<int>();
 
+  proc_opt_ = LoadOption();
+  outage_enable = root_node["outage-enable"].as<bool>();
+  if (outage_enable) {
+	int start, stop, outage_time, step;
+	start = root_node["outage-start"].as<int>();
+	stop = root_node["outage-stop"].as<int>();
+	outage_time = root_node["outage-time"].as<int>();
+	step = root_node["outage-step"].as<int>();
+	outage_ = Outage(start, stop, outage_time, step);
+  }
 }
 
-Option Config::getOption() {
+Option Config::LoadOption() {
   Option opt{};
 //    opt.gnss_format = root_node["gnss-format"].as<int>();
-  opt.imuPara = getImuPara();
+  opt.imuPara = LoadImuPara();
   opt.d_rate = root_node["imu-data-rate"].as<int>();
   for (int i = 0; i < 3; i++) {
-	opt.pos_std[i] = root_node["init-pos-std"][i].as<double>();
-	opt.vel_std[i] = root_node["init-vel-std"][i].as<double>();
-	opt.atti_std[i] = root_node["init-atti-std"][i].as<double>() * _deg;
-	opt.angle_bv[i] = root_node["install-angle"][i].as<double>() * _deg;
-	opt.lb_wheel[i] = root_node["odo-level-arm"][i].as<double>();
-	opt.lb_gnss[i] = root_node["antenna-level-arm"][i].as<double>();
+	opt.pos_std[i] = root_node["init-pos-std"][i].as<float>();
+	opt.vel_std[i] = root_node["init-vel-std"][i].as<float>();
+	opt.atti_std[i] = (float)(root_node["init-atti-std"][i].as<float>() * _deg);
+	opt.angle_bv[i] = (float)(root_node["install-angle"][i].as<float>() * _deg);
+	opt.lb_wheel[i] = root_node["odo-level-arm"][i].as<float>();
+	opt.lb_gnss[i] = root_node["antenna-level-arm"][i].as<float>();
   }
   opt.align_mode = (AlignMode)root_node["alignment-mode"].as<int>();
   opt.nhc_enable = root_node["nhc-enable"].as<bool>();
-  opt.nhc_std[0] = root_node["nhc-std"][0].as<double>();
-  opt.nhc_std[1] = root_node["nhc-std"][1].as<double>();
+  opt.nhc_std[0] = root_node["nhc-std"][0].as<float>();
+  opt.nhc_std[1] = root_node["nhc-std"][1].as<float>();
 
   opt.zupt_enable = root_node["zupt-enable"].as<bool>();
   opt.zupta_enable = root_node["zupta-enable"].as<bool>();
+  opt.zupt_var = root_node["zupt-std"].as<float>();
+  opt.zupta_var = root_node["zupta-std"].as<float>();
 
   opt.outage_enable = root_node["outage-enable"].as<bool>();
   opt.odo_enable = root_node["odo-enable"].as<bool>();
-#if USE_OUTAGE == 1
-  opt.outage_start = root_node["outage-start"].as<int>();
-  opt.outage_stop = root_node["outage-stop"].as<int>();
-  opt.outage_time = root_node["outage-time"].as<int>();
-  opt.outage_step = root_node["outage-step"].as<int>();
-#endif
+
   opt.d_rate = root_node["imu-data-rate"].as<int>();
   opt.odo_var = root_node["odo-var"].as<float>();
 
@@ -89,25 +95,25 @@ Option Config::getOption() {
   return opt;
 }
 
-ImuPara Config::getImuPara() const {
+ImuPara Config::LoadImuPara() const {
   ImuPara imuPara{};
   YAML::Node imu_para_node = YAML::LoadFile(imu_para_filepath);
 //    imu_para_node.IsDefined()
-  imuPara.arw = imu_para_node["arw"].as<double>() * _deg / _sqrt_h;
-  imuPara.vrw = imu_para_node["vrw"].as<double>() / _sqrt_h;
+imuPara.arw = imu_para_node["arw"].as<float>() * _deg / _sqrt_h;
+imuPara.vrw = imu_para_node["vrw"].as<float>() / _sqrt_h;
   for (int i = 0; i < 3; i++) {
-    imuPara.gb_std[i] = imu_para_node["gb-std"][i].as<double>() * _deg / _hour;
-	imuPara.gs_std[i] = imu_para_node["gs-std"][i].as<double>() * _ppm;
-	imuPara.as_std[i] = imu_para_node["as-std"][i].as<double>() * _ppm;
-	imuPara.ab_std[i] = imu_para_node["ab-std"][i].as<double>() * _mGal;
+    imuPara.gb_std[i] = imu_para_node["gb-std"][i].as<float>() * _deg / _hour;
+    imuPara.gs_std[i] = imu_para_node["gs-std"][i].as<float>() * _ppm;
+    imuPara.as_std[i] = imu_para_node["as-std"][i].as<float>() * _ppm;
+    imuPara.ab_std[i] = imu_para_node["ab-std"][i].as<float>() * _mGal;
 
-	imuPara.gb_ini[i] = imu_para_node["gb-ini"][i].as<double>() * _deg / _hour;
-	imuPara.gs_ini[i] = imu_para_node["gs-ini"][i].as<double>() * _ppm;
-	imuPara.ab_ini[i] = imu_para_node["ab-ini"][i].as<double>() * _mGal;
-	imuPara.as_ini[i] = imu_para_node["as-ini"][i].as<double>() * _ppm;
+    imuPara.gb_ini[i] = imu_para_node["gb-ini"][i].as<float>() * _deg / _hour;
+    imuPara.gs_ini[i] = imu_para_node["gs-ini"][i].as<float>() * _ppm;
+    imuPara.ab_ini[i] = imu_para_node["ab-ini"][i].as<float>() * _mGal;
+    imuPara.as_ini[i] = imu_para_node["as-ini"][i].as<float>() * _ppm;
   }
-  imuPara.gt_corr = imu_para_node["gt-corr"].as<double>() * _hour;
-  imuPara.at_corr = imu_para_node["at-corr"].as<double>() * _hour;
+  imuPara.gt_corr = imu_para_node["gt-corr"].as<float>() * _hour;
+  imuPara.at_corr = imu_para_node["at-corr"].as<float>() * _hour;
 
   return imuPara;
 }
@@ -118,17 +124,23 @@ NavOutput Config::getInitNav() {
   nav.gpst = root_node["alignment-epoch"][1].as<double>();
   nav.lat = root_node["alignment-epoch"][2].as<double>();
   nav.lon = root_node["alignment-epoch"][3].as<double>();
-  nav.height = root_node["alignment-epoch"][4].as<double>();
+  nav.height = root_node["alignment-epoch"][4].as<float>();
 
-  nav.vn[0] = root_node["alignment-epoch"][5].as<double>();
-  nav.vn[1] = root_node["alignment-epoch"][6].as<double>();
-  nav.vn[2] = root_node["alignment-epoch"][7].as<double>();
+  nav.vn[0] = root_node["alignment-epoch"][5].as<float>();
+  nav.vn[1] = root_node["alignment-epoch"][6].as<float>();
+  nav.vn[2] = root_node["alignment-epoch"][7].as<float>();
 
-  nav.atti[0] = root_node["alignment-epoch"][8].as<double>();
-  nav.atti[1] = root_node["alignment-epoch"][9].as<double>();
-  nav.atti[2] = root_node["alignment-epoch"][10].as<double>();
+  nav.atti[0] = root_node["alignment-epoch"][8].as<float>();
+  nav.atti[1] = root_node["alignment-epoch"][9].as<float>();
+  nav.atti[2] = root_node["alignment-epoch"][10].as<float>();
 
   nav.info = {0x01, 0};
   return nav;
+}
+Option Config::getOption() const {
+  return proc_opt_;
+}
+Outage Config::getOutageConfig() const {
+  return outage_;
 }
 
