@@ -64,7 +64,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
- WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
+  WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
   P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -99,10 +99,8 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
   _timeUpdateIdx = 0;
-  Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]});
-#if USE_OUTAGE == 1
-  otg = Outage(opt.outage_start, opt.outage_stop, opt.outage_time, opt.outage_step);
-#endif
+  Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]}).transpose();
+
 }
 
 /**
@@ -183,22 +181,22 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   nav.info.sensors |= SensorType::SENSOR_ODO;
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
-  Vec3d w_ib = _gyro_pre;
+  Vec3d w_ib = _gyro_pre*opt.d_rate;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));
   Mat3Xd H3 = Mat3Xd::Zero();
   H3.block<3, 3>(0, 3) = Cnv;
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
-
 #if KD_IN_KALMAN_FILTER == 1
   H3.block<3,1>(0,15)=vel;
   Vec3d z = v_v - nav.kd * vel;
 #else
   Vec3d z = v_v - vel;
 #endif
-  auto R = Vec3d{0.1, 0.1, 0.1}.asDiagonal();/*TODO 参数，需要放到文件中*/
-  Update(H3, z, R);
+  Mat3d R = Vec3d{opt.odo_var, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
+  Update(H3,z,R);
+//  Update(H3.block<STATE_CNT,1>(0,0), z[0], opt.odo_var);
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
 }
@@ -215,8 +213,8 @@ int DataFusion::MeasureUpdateVel(const double &vel) {
 int DataFusion::_feedBack() {
   double lat = nav.pos[0];
   double h = nav.pos[2];
-  double rn =WGS84::Instance().RN(lat);
-  double rm =WGS84::Instance().RM(lat);
+  double rn = WGS84::Instance().RN(lat);
+  double rm = WGS84::Instance().RM(lat);
   Vec3d d_atti = Vec3d{xd[1] / (rn + h),
 					   -xd[0] / (rm + h),
 					   -xd[1] * tan(lat) / (rn + h)
@@ -315,12 +313,34 @@ int DataFusion::MeasureZeroVelocity() {
 uint32_t DataFusion::EpochCounter() const {
   return _timeUpdateIdx;
 }
+/**
+ * 高程观测更新
+ * @param height：提供高程量测更新
+ * $deltaZ = \hat\deltaH - delta H $
+ * 利用相对高程变化的差计算高程误差，需要保存上时刻高程，和上时刻量测
+ *
+ * @return 0
+ */
+int DataFusion::MeasureUpdateRelativeHeight(const double height) {
+  if (p_height_ < -INT32_MAX + 1 or m_height_ < -INT32_MAX + 1) {
+	m_height_ = height;
+	p_height_ = nav.pos[2];
+  } else {
+	double z = (nav.pos[2] -  p_height_) - (height - m_height_);
+	m_height_ = height;
+	p_height_ = nav.pos[2];
+	Vec1Xd H = Vec1Xd::Zero();
+	H[3] = 1;
+	double R = 0.4;
+	Update(H,z,R);
+	update_flag |= SENSOR_HEIGHT;
+  }
+  return 0;
+}
 
 #if USE_OUTAGE == 1
 Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
-	/**/
 	if ((start > stop and stop > 0) or outage < 0 or step < outage) {
-		loge << "Outage parameter is invalid";
 		flag_enable = false;
 		return;
 	}
@@ -329,8 +349,6 @@ Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
 	for (int i = start; i < stop; i += step) {
 		starts.push_back(i);
 	}
-	for (int &s:starts)
-		logi << "outage time" << s;
 }
 
 /*!
