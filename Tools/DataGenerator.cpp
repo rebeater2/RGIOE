@@ -8,8 +8,8 @@
 
 #include <fstream>
 #include <Convert.h>
-#include <../App/NavLog.h>
 #include <fmt/format.h>
+#include <iostream>
 
 using namespace std;
 
@@ -44,25 +44,24 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
   return os;
 }
 int main(int argc, char *argv[]) {
-  google::InitGoogleLogging("../log");
-  google::LogToStderr();
+
   if (argc < 2) {
-	LOG(ERROR) << "Usage: DataGenerator xxx.nav";
+	std::cout << "Usage: DataGenerator xxx.nav";
 	return 1;
   }
   ifstream f_nav(argv[1]);
   string s(argv[1]);
   ofstream f_odo(s + ".odotxt");
   if (!f_nav.good()) {
-	LOG(ERROR) << "no odometer file " << argv[1];
+    std::cout << "no such file " << argv[1];
   }
   NavOutput nav;
   int skip = 10;/*降低频率*/
-  double abv[]={3,2,4};/*安装角*/
+  double abv[] = {3, 2, 4};/*安装角*/
   double scale = 1.4; /*比例因子*/
 
-  Vec3d phi_bv = Vec3d{abv[0]*_deg,abv[1]*_deg,abv[2]*_deg}.transpose();
-  Mat3d Cbv = Convert::euler_to_dcm(phi_bv);
+  Vec3d phi_bv = Vec3d{abv[0] * _deg, abv[1] * _deg, abv[2] * _deg};
+  Mat3d Cbv = Convert::euler_to_dcm(-phi_bv);
   int cnt = 0;
   while (!f_nav.eof()) {
 	f_nav >> nav;
@@ -70,10 +69,14 @@ int main(int argc, char *argv[]) {
 	Mat3d Cbn = Convert::euler_to_dcm({nav.atti[0] * _deg, nav.atti[1] * _deg, nav.atti[2] * _deg});
 	Vec3d vn = {nav.vn[0], nav.vn[1], nav.vn[2]};
 	Vec3d vb = Cbn.transpose() * vn;
-	Vec3d vv = Cbv*vb;
+	Vec3d vv = Cbv * vb;
 	if (cnt % skip == 0)
-	  f_odo << fmt::format("{:.4f} {:.4f} {:.4f} {:.4f}\n",nav.gpst, vv[0] / scale,vv[2],vv[1]);// nav.gpst << ' ' << vv[0] << ' ' << vv[1] << '\n';
-	cnt ++;
+	  f_odo << fmt::format("{:.4f} {:.4f} {:.4f} {:.4f}\n",
+						   nav.gpst,
+						   vv[0] / scale,
+						   vv[2],
+						   vv[1]);// nav.gpst << ' ' << vv[0] << ' ' << vv[1] << '\n';
+	cnt++;
   }
   f_nav.close();
   f_odo.close();
