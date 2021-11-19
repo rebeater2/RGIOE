@@ -59,6 +59,8 @@ int main(int argc, char *argv[]) {
   Option opt = cfg.getOption();
 
   logi << "IMU path:" << cfg.imu_filepath;
+  if (opt.odo_enable)
+	logi << "Odometer path:" << cfg.odo_filepath;
   logi << "IMU rate:" << opt.d_rate;
   logi << " imu para:\n" << opt.imuPara;
   logi << "gnss path:" << cfg.gnss_filepath;
@@ -67,6 +69,7 @@ int main(int argc, char *argv[]) {
   GnssData gnss;
   NavOutput out;
   AuxiliaryData aux;
+  Outage outage_cfg = cfg.getOutageConfig();
   IMUSmooth smooth;
 
 /*移动文件指针到指定的开始时间*/
@@ -116,7 +119,8 @@ int main(int argc, char *argv[]) {
 	smooth.Update(imu);
 	of_imu << smooth.getSmoothedIMU() << ' ' << smooth.getStd() << ' ' << smooth.isStatic() << '\n';
 	if (f_gnss.good() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	  DataFusion::Instance().MeasureUpdatePos(gnss);
+	  if (!outage_cfg.IsOutage(gnss.gpst))
+		DataFusion::Instance().MeasureUpdatePos(gnss);
 	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss;
 	  f_gnss >> gnss;
 	}

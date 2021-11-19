@@ -18,7 +18,7 @@
 #define _ppm (1e-6)
 
 #ifdef __cplusplus
-#include <stdint.h>
+#include <cstdint>
 #else
 #include <stdint.h>
 #endif
@@ -37,6 +37,7 @@ typedef enum  {
   SENSOR_NHC = 0x10U,
   SENSOR_CAMERA = 0x20U,
   SENSOR_LIDAR = 0x40U,
+  SENSOR_HEIGHT = 0x08U,
 }SensorType;
 typedef enum {
   ALIGN_USE_GIVEN = 0,

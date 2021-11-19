@@ -7,6 +7,7 @@
 **/
 #ifndef LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
 #define LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
+#include "Define.h"
 #include "NavStruct.h"
 #ifdef __cplusplus
 extern "C" {
