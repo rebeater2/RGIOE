@@ -9,12 +9,9 @@
 
 #include "StaticDetect.h"
 #include <cmath>
-IMUSmooth::IMUSmooth() {
+IMUSmooth::IMUSmooth() : is_static_(false), up_cnt(0), static_cnt(0) {
   imu_ave = {0, 0, 0, 0, 0, 0, 0};
   imu_var = {0, 0, 0, 0, 0, 0, 0};
-
-  up_cnt = 0;
-  static_cnt = 0;
 }
 
 /**
@@ -24,42 +21,49 @@ IMUSmooth::IMUSmooth() {
 void IMUSmooth::Update(const ImuData &imu) {
   up_cnt++;
   if (up_cnt < width) {/*小于窗口长度*/
-    for (int i = 0; i < 3; i++) {
-      imu_ave.acce[i] = (imu_ave.acce[i] * (up_cnt - 1) + imu.acce[i]) / up_cnt;
-      imu_ave.gyro[i] = (imu_ave.gyro[i] * (up_cnt - 1) + imu.gyro[i]) / up_cnt;
+	for (int i = 0; i < 3; i++) {
+	  imu_ave.acce[i] = (imu_ave.acce[i] * (up_cnt - 1) + imu.acce[i]) / up_cnt;
+	  imu_ave.gyro[i] = (imu_ave.gyro[i] * (up_cnt - 1) + imu.gyro[i]) / up_cnt;
 
-      imu_var.acce[i] = (imu_var.acce[i] * (up_cnt - 1) +
-      	(imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / up_cnt;
-      imu_var.gyro[i] = (imu_var.gyro[i] * (up_cnt - 1) +
-      	(imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / up_cnt;
-    }
+	  imu_var.acce[i] = (imu_var.acce[i] * (up_cnt - 1) +
+		  (imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / up_cnt;
+	  imu_var.gyro[i] = (imu_var.gyro[i] * (up_cnt - 1) +
+		  (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / up_cnt;
+	}
   } else {/*等于窗口长度*/
-    for (int i = 0; i < 3; i++) {
-      imu_ave.acce[i] = (imu_ave.acce[i] * (width - 1) + imu.acce[i]) / width;
-      imu_ave.gyro[i] = (imu_ave.gyro[i] * (width - 1) + imu.gyro[i]) / width;
+	for (int i = 0; i < 3; i++) {
+	  imu_ave.acce[i] = (imu_ave.acce[i] * (width - 1) + imu.acce[i]) / width;
+	  imu_ave.gyro[i] = (imu_ave.gyro[i] * (width - 1) + imu.gyro[i]) / width;
 
-      imu_var.acce[i] = (imu_var.acce[i] * (width - 1) +
-      	(imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / width;
-      imu_var.gyro[i] = (imu_var.gyro[i] * (width - 1) +
-      	(imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / width;
-    }
+	  imu_var.acce[i] = (imu_var.acce[i] * (width - 1) +
+		  (imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / width;
+	  imu_var.gyro[i] = (imu_var.gyro[i] * (width - 1) +
+		  (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / width;
+	}
   }
+  if (getStd() > static_std_threshold) {
+	static_cnt = 0;
+  } else {
+	static_cnt++;
+  }
+  is_static_ = static_cnt > static_width;
   imu_ave.gpst = imu.gpst;
   imu_pre = imu;
 }
 ImuData IMUSmooth::getSmoothedIMU() {
   return imu_ave;
 }
-
+/**
+ * 零速检测，返回滑动窗口内三轴陀螺仪的标准差，
+ * @return
+ */
 double IMUSmooth::getStd() {
-  return sqrt(imu_var.gyro[0] + imu_var.gyro[1] + imu_var.gyro[2]);
+  return (imu_var.gyro[0] + imu_var.gyro[1] + imu_var.gyro[2]);
 }
 
-bool IMUSmooth::isStatic() {
-  if (getStd() > static_std_threshold) {
-    static_cnt = 0;
-  } else {
-    static_cnt++;
-  }
-  return static_cnt > static_width;
+bool IMUSmooth::isStatic() const {
+  return is_static_;
+}
+IMUSmooth::IMUSmooth(double threshold, int static_width, int window) : static_std_threshold(threshold),
+static_width(static_width), width(window) , is_static_(false), up_cnt(0), static_cnt(0){
 }

@@ -12,3 +12,9 @@ find_package(Pangolin REQUIRED)
 include_directories(${Pangolin_INCLUDE_DIRS})
 add_executable(showTraj showTraj.cpp ${SOURCE})
 target_link_libraries(showTraj ${Pangolin_LIBRARIES} Eigen3::Eigen glog yaml-cpp fmt)
+
+add_executable(DataGenerator DataGenerator.cpp ${SOURCE})
+target_link_libraries(DataGenerator  Eigen3::Eigen  fmt)
+
+add_executable(ZeroDetector ZeroDetector.cpp ${SOURCE})
+target_link_libraries(ZeroDetector  Eigen3::Eigen  fmt)

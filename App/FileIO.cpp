@@ -168,7 +168,8 @@ ostream &operator<<(ostream &os, const ImuPara &para) {
   return os;
 }
 istream &operator>>(istream &is, AuxiliaryData &aux) {
-  is >> aux.gpst >> aux.velocity >> aux.angular;
+  double temp;
+  is >> aux.gpst >> aux.velocity >> aux.angular>>temp;
   return is;
 }
 ostream &operator<<(ostream &os, const GnssData &gnss) {
