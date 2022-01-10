@@ -3,7 +3,7 @@
 //
 
 #include "DataFusion.h"
-
+#include "iostream"
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
 //#define FLAG_YAW 0b100000000U
@@ -16,39 +16,27 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
   P.setZero();
   Q0.setZero();
   /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
-  opt = {
-	  {0.f, 0.f,
-	   0 * _mGal, 0 * _mGal, 0 * _mGal,
-	   0 * _deg / _hour, 0 * _deg / _hour, 0 * _deg / _hour,
-	   0, 0, 0,
-	   0, 0, 0,
-	   0 * _mGal, 0 * _mGal, 0 * _mGal,
-	   0 * _deg / _hour, 8 * _deg / _hour, 8 * _deg / _hour,
-	   0 * _ppm, 0 * _ppm, 0 * _ppm,
-	   0 * _ppm, 0 * _ppm, 0 * _ppm,
-	   0 * _hour, 0 * _hour
-	  },
-	  {0, 0, 0, 0, 0, 0, 0,
-	   0, 0, 0,
-	   0, 0, 0,
-	   0, 0, 0,
-	   0, 0, 0},
-	  0,
-	  AlignMode::ALIGN_USE_GIVEN,
-	  0, 0, 0, 0,
-	  1, 0.3, 0.01, 0,
-	  0.1, 0.3, -0.24,
-	  0.2, 0.35,
-	  0, 0, 0,
-	  0, 0, 0,
-	  0.5, 0.5, 0.9,
-	  0.2, 0.2, 0.2,
-	  0.3, 0.3, 0.3,
-	  0.3, 0.2,
-#if KD_IN_KALMAN_FILTER == 1
-	  1.29, 0.3,
-#endif
-  };
+  Option default_option{
+    .imuPara={0,0},
+    .init_epoch={0,0},
+    .d_rate = 200,
+    .align_mode=AlignMode ::ALIGN_USE_GIVEN,
+    .nhc_enable=false,
+    .zupt_enable=false,
+    .zupta_enable=false,
+    .zupt_std=0.00001,
+    .zupta_std=0.1*_deg,
+    .lb_gnss={0,0,0},
+    .odo_std = 0.000001,
+    .lb_wheel={0,0,0},
+    .angle_bv={0,0,0},
+    .pos_std={0,0,0},
+    .vel_std={0,0,0},
+    .atti_std={10*_deg,10*_deg,10*_deg},
+    .nhc_std={0.00001,0.00001},
+    .kd_init=1.0,
+    .kd_std=0.001 ,
+    };
   _timeUpdateIdx = 0;
   update_flag = 0x00;
 }
@@ -157,12 +145,7 @@ int __attribute__((weak)) GnssCheck(const GnssData &gnss) {
   return 1;
 }
 int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
-#if USE_OUTAGE == 1
-  if (opt.outage_enable and otg.IsOutage(gnssData.gpst)) {
-	  /*outage mode*/
-	  return -1;
-  }
-#endif
+
   if (GnssCheck(gnssData) > 0) {
 	nav.info.sensors |= SensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = gnssData.mode;
@@ -194,7 +177,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
 #else
   Vec3d z = v_v - vel;
 #endif
-  Mat3d R = Vec3d{opt.odo_var, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
+  Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
   Update(H3,z,R);
 //  Update(H3.block<STATE_CNT,1>(0,0), z[0], opt.odo_var);
   update_flag |= FLAG_VELOCITY;/**/
@@ -338,16 +321,16 @@ int DataFusion::MeasureUpdateRelativeHeight(const double height) {
   return 0;
 }
 
-#if USE_OUTAGE == 1
-Outage::Outage(int start, int stop, int outage, int step) : outage(outage) {
+Outage::Outage(float start, float stop, float outage, float step) : outage(outage) {
 	if ((start > stop and stop > 0) or outage < 0 or step < outage) {
 		flag_enable = false;
 		return;
 	}
 	flag_enable = true;
 	if (stop < 0) stop = start + 4000;
-	for (int i = start; i < stop; i += step) {
+	for (float i = start; i < stop; ) {
 		starts.push_back(i);
+		i += step;
 	}
 }
 
@@ -370,4 +353,3 @@ Outage::Outage() {
 	flag_enable = false;
 	outage = 0;
 }
-#endif

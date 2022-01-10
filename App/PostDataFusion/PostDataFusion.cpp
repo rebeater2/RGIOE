@@ -1,14 +1,16 @@
 //
 // Created by rebeater on 2020/12/17.
 //
-#include "Define.h"
+#include "DataFusion.h"
+#include "Alignment.h"
 #include "NavStruct.h"
 #include "FileIO.h"
 #include "Config.h"
-#include "DataFusion.h"
 #include "NavLog.h"
 #include "Timer.h"
-#include <Alignment.h>
+
+
+#include "fmt/format.h"
 
 /*extern int GnssCheck(const GnssData &gnss){
   if (gnss.ns > 60) {
@@ -55,42 +57,50 @@ int main(int argc, char *argv[]) {
 	loge << CopyRight << endl;
 	return 1;
   }
-  Config cfg(argv[1]);
-  Option opt = cfg.getOption();
+  Config cfg;
+  cfg.LoadFrom(argv[1]);
+  bool ok;
+  string error_msg;
+  ok = cfg.LoadImuPara(error_msg);
+  Option opt = cfg.GetOption();
+  LOG_IF(ERROR, !ok) << error_msg;
 
-  logi << "IMU path:" << cfg.imu_filepath;
-  if (opt.odo_enable)
-	logi << "Odometer path:" << cfg.odo_filepath;
+  logi << "IMU path:" << cfg.imu_config.file_path;
+  if (cfg.odometer_config.enable)
+	logi << "Odometer path:" << cfg.odometer_config.file_path;
   logi << "IMU rate:" << opt.d_rate;
   logi << " imu para:\n" << opt.imuPara;
-  logi << "gnss path:" << cfg.gnss_filepath;
+  logi << "gnss path:" << cfg.gnss_config.file_path;
 
   ImuData imu;
   GnssData gnss;
   NavOutput out;
   AuxiliaryData aux;
-  Outage outage_cfg = cfg.getOutageConfig();
+  Outage outage_cfg{cfg.outage_config.start, cfg.outage_config.stop, cfg.outage_config.outage,
+					cfg.outage_config.step};// = cfg.outage_config();
   IMUSmooth smooth;
 
 /*移动文件指针到指定的开始时间*/
-  ifstream f_imu(cfg.imu_filepath);
+  ifstream f_imu(cfg.imu_config.file_path);
   moveFilePoint(f_imu, imu, cfg.start_time);
-  ifstream f_gnss(cfg.gnss_filepath);
+  ifstream f_gnss(cfg.gnss_config.file_path);
   moveFilePoint(f_gnss, gnss, cfg.start_time);
-  ifstream f_odo(cfg.odo_filepath);
+  ifstream f_odo(cfg.odometer_config.file_path);
   moveFilePoint(f_odo, aux, cfg.start_time);
-  LOG_IF(ERROR, opt.odo_enable and !f_odo.good()) << "odometer file open failed";
-  NavWriter writer(cfg.output_filepath);
+  LOG_IF(ERROR, cfg.odometer_config.enable and !f_odo.good()) << "odometer file open failed";
+  NavWriter writer(cfg.output_path);
   /*初始对准*/
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
-	logi << "Align moving mode, wait for GNSS";
-	AlignMoving align{5, opt};
+	logi << "Align moving mode, wait for GNSS,threshold is "<<cfg.align_config.vel_threshold_for_moving;
+	AlignMoving align{cfg.align_config.vel_threshold_for_moving, opt};
 	do {
-	  readImu(f_imu, &imu, cfg.imu_format);
+	  readImu(f_imu, &imu, cfg.imu_config.format);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-		logi << gnss.gpst << " velocity = " << align.Update(gnss);
+		auto res = align.Update(gnss);
+		logi <<gnss;
+	    logi <<fmt::format("{} vel = {:.3f}",gnss.gpst,res);// gnss.gpst << " velocity = " << res;
 		f_gnss >> gnss;
 	  }
 	} while (!align.alignFinished() and f_imu.good() and f_gnss.good());
@@ -100,7 +110,7 @@ int main(int argc, char *argv[]) {
 	}
 	nav = align.getNavEpoch();
   } else if (opt.align_mode == ALIGN_USE_GIVEN) {
-	auto nav_ = cfg.getInitNav();
+	auto nav_ = cfg.align_config.init_pva;
 	nav = makeNavEpoch(nav_, opt);/* 这是UseGiven模式对准 */
   } else {
 	logf << "supported align mode" << opt.align_mode;
@@ -108,11 +118,12 @@ int main(int argc, char *argv[]) {
   }
   Timer timer;
   DataFusion::Instance().Initialize(nav, opt);
-  ofstream of_imu(cfg.imu_filepath + "smoothed.txt");
+  ofstream of_imu(cfg.imu_config.file_path + "smoothed.txt");
   logi << "initial PVA:" << DataFusion::Instance().Output();
   moveFilePoint(f_odo, aux, imu.gpst);
+
   /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
-  while ((cfg.end_time <= 0) || (cfg.end_time > 0 && imu.gpst < cfg.end_time)) {
+  while ((cfg.stop_time <= 0) || (cfg.start_time > 0 && imu.gpst < cfg.stop_time)) {
 	f_imu >> imu;
 	if (!f_imu.good())break;
 	DataFusion::Instance().TimeUpdate(imu);
@@ -124,6 +135,7 @@ int main(int argc, char *argv[]) {
 	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss;
 	  f_gnss >> gnss;
 	}
+	LOG_FIRST_N(INFO,10) <<(int) opt.odo_enable <<" "<< f_odo.good() <<" " << fabs(aux.gpst - imu.gpst);
 	if (opt.odo_enable and f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdateVel(aux.velocity);
 	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << aux;

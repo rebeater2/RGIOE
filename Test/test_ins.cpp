@@ -5,7 +5,7 @@
 #include <InsCore.h>
 #include <iostream>
 #include <fstream>
-#include "../App/FileIO.h"
+#include "FileIO.h"
 
 using namespace std;
 

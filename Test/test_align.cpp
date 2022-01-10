@@ -4,11 +4,11 @@
 #include "Alignment.h"
 #include <fstream>
 #include <iostream>
-#include "../App/FileIO.h"
+#include "FileIO.h"
 
 using namespace std;
 
-#include "../App/Config.h"
+#include "../App/AppCommon/Config.h"
 int main(int argc, char *argv[]) {
     AlignMoving align_moving{1,default_option};
     ImuData imu;

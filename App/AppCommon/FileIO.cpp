@@ -4,7 +4,6 @@
 
 #include "FileIO.h"
 #include <iomanip>
-#include <fstream>
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
@@ -27,15 +26,15 @@ ostream &operator<<(ostream &os, const AuxiliaryData &aux) {
  * @param fmt
  * @return
  */
-int ReadImu(istream &is, ImuData &imu, ImuFileFormat fmt) {
+int ReadImu(istream &is, ImuData &imu, IMUFileFormat fmt) {
   switch (fmt) {
-	case IMU_FORMAT_IMD_FRD: is.read((char *)(&imu), sizeof(imu));
+	case IMU_FILE_IMD: is.read((char *)(&imu), sizeof(imu));
 	  for (int i = 0; i < 3; i++) {
 		imu.acce[i] *= 200;
 		imu.gyro[i] *= 200;
 	  }
 	  break;
-	case IMU_FORMAT_IMD_RFU: {
+	case IMU_FILE_IMUTXT: {
 	  is.read((char *)(&imu), sizeof(imu));
 	  double temp = imu.acce[1];
 	  imu.acce[1] = imu.acce[0];
@@ -47,7 +46,7 @@ int ReadImu(istream &is, ImuData &imu, ImuFileFormat fmt) {
 	  imu.gyro[2] = -imu.gyro[2];
 	  break;
 	}
-	case IMU_FORMAT_TXT_FRD: is >> imu.gpst;
+/*	case IMU_FORMAT_TXT_FRD: is >> imu.gpst;
 	  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
 	  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
 	  break;
@@ -58,7 +57,7 @@ int ReadImu(istream &is, ImuData &imu, ImuFileFormat fmt) {
 	  imu.gyro[2] *= (-1.0);
 	  imu.acce[2] *= (-1.0);
 	  break;
-	}
+	}*/
 	default: break;
   }
   return is.good();
@@ -66,7 +65,7 @@ int ReadImu(istream &is, ImuData &imu, ImuFileFormat fmt) {
 
 ifstream &operator>>(ifstream &is, ImuData &imu) {
 
-#if IMU_FRAME == 0 /*前坐上*/
+#if IMU_FRAME == 0 /**/
   is.read((char *)&imu,sizeof(ImuData));
 //  is >> imu.gpst;
 //  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
@@ -86,7 +85,7 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
 //  is >> gnss.hdop >> gnss.gdop >> gnss.ns >> gnss.mode;
-//  gnss.yaw = -1;
+  gnss.yaw = -1;
 //  gnss.hdop = 0.001;
 //gnss.pos_std[0] *=  0.001;
 //  gnss.pos_std[1] *=  0.001;
@@ -231,10 +230,10 @@ void NavWriter::th_write_nav() {
  * @param pimu
  * @return
  */
-int readImu(ifstream &os, ImuData *pimu, ImuFileFormat fmt) {
-  if (fmt == IMU_FORMAT_IMD_FRD) {
+int readImu(ifstream &os, ImuData *pimu, IMUFileFormat fmt) {
+  if (fmt == IMU_FILE_IMD) {
 	os.read(reinterpret_cast<char *>(pimu), sizeof(ImuData));
-  } else if (fmt == IMU_FORMAT_TXT_RFU) {
+  } else if (fmt == IMU_FILE_IMUTXT) {
 	os >> (*pimu);
   }
   return os.good();
@@ -282,4 +281,115 @@ int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
 	pgnss->pos_std[2] = 0.;
   }
   return os.good();
+}
+
+
+IMUReader::IMUReader(const string &filename, IMUFileFormat fmt, IMUFrame frame, bool increment, int rate) {
+  if (fmt == IMUFileFormat::IMU_FILE_IMD)
+    ifs.open(filename, ios::binary);
+  else
+    ifs.open(filename);
+  format_ = fmt;
+  frame_ = frame;
+  increment_ = increment;
+  dt = 1.0 / rate;
+  ok_ = ifs.good();
+}
+IMUReader::~IMUReader() {
+  ifs.close();
+}
+
+bool IMUReader::ReadNext(ImuData &imu) {
+  if (!ok_) { return ok_; }
+  switch (format_) {
+    case IMU_FILE_IMD:ifs.read((char *)&imu, sizeof(imu));
+    break;
+    case IMU_FILE_IMUTXT:
+      ifs >> imu.gpst >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2] >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
+      default: ok_ = false;
+      return ok_;
+  }
+  /*右前上坐标系转换为前右下坐标系*/
+  if (frame_ == IMU_FRAME_RFU) {
+    swap(imu.acce[0], imu.acce[1]);
+    imu.acce[2] *= -1;
+    swap(imu.gyro[0], imu.gyro[1]);
+    imu.gyro[2] *= -1;
+  }
+  /*非增量模式数据转换为增量模式数据  @warning: 是否使用相邻两个时刻之间的间隔作为dt更科学呢？*/
+  if (!increment_) {
+    for (int i = 0; i < 3; i++) {
+      imu.acce[i] *= dt;
+      imu.gyro[i] *= dt;
+    }
+  }
+  ok_ = !ifs.eof();
+  return ok_;
+}
+double IMUReader::GetTime(const ImuData &imu) const {
+  return imu.gpst;
+};
+void IMUReader::SetFrame(IMUFrame frame) {
+  frame_ = frame;
+}
+void IMUReader::SetFormat(IMUFileFormat format) {
+  format_ = format;
+}
+void IMUReader::SetIncrement(bool increment) {
+  increment_ = increment;
+}
+void IMUReader::SetRate(int rate) {
+  IMUReader::dt = 1.0 / rate;
+}
+
+GnssReader::GnssReader(std::string &filename, GnssFileFormat format) {
+  ifs.open(filename);
+  ok_ = ifs.good();
+  format_ = format;
+}
+bool GnssReader::ReadNext(GnssData &gnss) {
+  if (!ok_) { return ok_; }
+  string buffer;  int q;
+  getline(ifs, buffer);
+  stringstream ss(buffer);
+  switch (format_) {
+    case GNSS_TXT_POS_7:
+      ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
+      gnss.mode = GnssMode::SPP;
+      break;
+      case RTKLIB_TXT_POS: {
+        ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
+        >> q >> gnss.ns;
+        if (q < 0 or q > 7) {
+          ok_ = false;
+          return ok_;
+        }
+        gnss.mode = mode_list[q];
+      }
+      break;
+      default:ok_ = false;
+      return false;
+  }
+  ok_ = !ifs.eof();
+  return ok_;
+}
+double GnssReader::GetTime(const GnssData &gnss) const {
+  return gnss.gpst;
+}
+
+OdometerReader::OdometerReader(const std::string &file_path) {
+  ifs.open(file_path);
+  ok_ = ifs.good();
+}
+bool OdometerReader::ReadNext(Velocity &vel) {
+  if (!ok_) return ok_;
+  std::string buffer;
+  getline(ifs, buffer);
+  stringstream ss(buffer);
+  ss >> vel.gpst >> vel.forward >> vel.angular;
+  ok_ = !ifs.eof();
+  return ok_;
+}
+double OdometerReader::GetTime(const Velocity &vel) const {
+  return vel.gpst;
 }

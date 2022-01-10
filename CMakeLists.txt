@@ -59,8 +59,9 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/Lib)
 set_target_properties(LooselyCouple PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${CUSTOM_OUTDIR}"
         )
-add_subdirectory(Test)
-add_subdirectory(App)
-add_subdirectory(Tools)
+#add_subdirectory(Test)
+add_subdirectory(App/PostDataFusion)
+add_subdirectory(App/UiDataFusion)
+#add_subdirectory(Tools)
 #add_link_options(-lgfortran -lm)
 

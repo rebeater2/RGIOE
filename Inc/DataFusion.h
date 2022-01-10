@@ -13,11 +13,11 @@
 #include <vector>
 class Outage {
 private:
-	std::vector<int> starts;
-	int outage;
+	std::vector<float> starts;
+	float outage;
 	bool flag_enable;
 public:
-	Outage(int start, int stop, int outage, int step);
+  Outage(float start, float stop, float outage, float step);
 
 	Outage();
 

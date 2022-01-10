@@ -40,9 +40,9 @@ typedef enum  {
   SENSOR_HEIGHT = 0x08U,
 }SensorType;
 typedef enum {
-  ALIGN_USE_GIVEN = 0,
-  ALIGN_MOVING = 1,
-  ALIGN_STATIONARY = 2
+  ALIGN_USE_GIVEN = 2,
+  ALIGN_MOVING = 0,
+  ALIGN_STATIONARY = 1
 } AlignMode;
 
 typedef struct {
@@ -59,6 +59,8 @@ typedef enum {
   RTK_FIX = 4,
   RTK_FLOAT = 5,
   INVALID = 6,
+  SBAS,
+  PPP
 } GnssMode;
 
 typedef enum {
@@ -104,12 +106,10 @@ typedef struct {
   float at_corr;
   float gt_corr;
 } ImuPara;
-typedef enum {
-  IMU_FORMAT_IMD_FRD = 0,
-  IMU_FORMAT_IMD_RFU = 1,
-  IMU_FORMAT_TXT_FRD = 2,
-  IMU_FORMAT_TXT_RFU = 3
-} ImuFileFormat;
+enum IMUFileFormat {
+  IMU_FILE_IMD = 1,
+  IMU_FILE_IMUTXT = 0
+};
 typedef enum {
   GNSS_TXT_POS_7 = 0,
   GNSS_BIN_POS_7 = 1,
@@ -172,31 +172,25 @@ typedef struct {
 
 typedef struct {
   ImuPara imuPara;
-  NavPva init_epoch;
-
+  NavOutput init_epoch;
   int d_rate;
   AlignMode align_mode;
-  uint8_t nhc_enable;
-  uint8_t zupt_enable;
-  uint8_t zupta_enable;
-  uint8_t outage_enable;
-  uint8_t odo_enable;
-  float nhc_var;
-  float zupt_var;
-  float zupta_var;
+  int nhc_enable;
+  int zupt_enable;
+  int zupta_enable;
+  int  odo_enable;;
+  float zupt_std;
+  float zupta_std;
   float lb_gnss[3];
-  float odo_var;
-  float odo_wheel_radius;
+  float odo_std;
   float lb_wheel[3];
   float angle_bv[3];
   float pos_std[3];
   float vel_std[3];
   float atti_std[3];
   float  nhc_std[2];
-#if KD_IN_KALMAN_FILTER == 1
   float  kd_init;
   float  kd_std ;
-#endif
 } Option;
 
 typedef struct {
@@ -210,8 +204,13 @@ typedef struct {
 typedef struct {
   float forward;
   float angular;
-  double time_s;
+  double gpst;
 } Velocity;
+typedef enum {
+  IMU_FRAME_RFU = 1,
+  IMU_FRAME_FRD = 0
+} IMUFrame;
+
 /**
  * CameraInfo from Uart
  */
@@ -232,7 +231,6 @@ typedef struct{
   double gpst;
   double velocity;
   double angular;
-}
-AuxiliaryData;
+}AuxiliaryData;
 
 #endif //LOOSELY_COUPLE_H7_NAV_STRUCT_H

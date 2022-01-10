@@ -1,9 +1,9 @@
-imu-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20211110/RAW_211111_357327.RAW.imutxt
+imu-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220106/5/RAW_220107_451273.RAW.imutxt
 imu-parameter-cfg: ../yaml/imu_kyimu102Na0_parameter.yml
-gnss-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20211110/RAW_211111_357327.RAW.gnsstxt
-odo-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20211110/RAW_211111_357327.RAW.veltxt
-output-path: /media/rebeater/hd_data2/workspace/raw_data/robot/20211110/RAW_211111_357327.RAW.post.nav
-start-time: 357446.000
+gnss-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220106/5/RAW_220107_451273.RAW.gnsstxt
+odo-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220106/5/RAW_220107_451273.RAW.veltxt
+output-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220106/5/RAW_220107_451273.post.nav
+start-time: 451273.000
 end-time: -1
 imu-data-rate: 200
 #--------------------------------------------------------------------------------#

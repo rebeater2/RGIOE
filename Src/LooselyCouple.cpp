@@ -24,27 +24,30 @@ ImuPara default_imupara{0.0112 * _deg / _sqrt_h, 0.0025 / _sqrt_h,
 						1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
 						1 * _hour, 1 * _hour
 };
-NavPva default_pva{0, 0, 0, 0};
+NavOutput default_pva{0, 0, 0, 0};
 
 /*zho*/
 Option default_option{
-	default_imupara, default_pva,
-	128,
-	AlignMode::ALIGN_USE_GIVEN,
-	0, 0, 0, 0,
-	1, 0.3, 0.01, 0.01,
-	0.1, 0.3, -0.24,
-	0.01, 0.35,
-	0, 0, 0,
-	0, 0, 0,
-	0.5, 0.5, 0.9,
-	0.2, 0.2, 0.2,
-	0.3, 0.3, 0.3,
-	0.3, 0.2,
-#if KD_IN_KALMAN_FILTER == 1
-	1.29, 0,
-#endif
-
+  .imuPara=default_imupara,
+  .init_epoch=default_pva,
+  .d_rate = 200,
+  .align_mode=AlignMode ::ALIGN_USE_GIVEN,
+  .nhc_enable=false,
+  .zupt_enable=false,
+  .zupta_enable=false,
+  .odo_enable=false,
+  .zupt_std=0.00001,
+  .zupta_std=0.1*_deg,
+  .lb_gnss={0,0,0},
+  .odo_std = 0.000001,
+  .lb_wheel={0,0,0},
+  .angle_bv={0,0,0},
+  .pos_std={0,0,0},
+  .vel_std={0,0,0},
+  .atti_std={10*_deg,10*_deg,10*_deg},
+  .nhc_std={0.00001,0.00001},
+  .kd_init=1.0,
+  .kd_std=0.001 ,
 };
 /**
  * 卡尔曼滤波初始化，

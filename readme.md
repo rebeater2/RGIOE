@@ -155,23 +155,24 @@ IMU参数:
 陀螺比例因子相关时间: 4, hr   
 加表比例因子相关时间: 4, hr   
 
+### 典型性能
+ 激光惯导 demo.yml, Use given 模式对准
+ 22:42:32 :  
 
-
-|                                | x error /m | y error/m | z error/m |
-|--------------------------------|------------|-----------|-----------|
-|  position error(m) 1-$\sigma$  |   0.0193   |   0.0181  |   0.0144  |
-|  position error(m) 2-$\sigma$  |   0.0694   |   0.0694  |   0.0347  |
-|     position error(m) rms      |   0.0291   |   0.0271  |   0.0234  |
-| velocity error(m/s) 1-$\sigma$ |   0.0144   |   0.0030  |   0.0030  |
-| velocity error(m/s) 2-$\sigma$ |   0.0347   |   0.0079  |   0.0071  |
-|    velocity error(m/s) rms     |   0.0234   |   0.0036  |   0.0033  |
-| attitude error(deg) 1-$\sigma$ |   0.0020   |   0.0035  |   0.0035  |
-| attitude error(deg) 2-$\sigma$ |   0.0040   |   0.0053  |   0.0054  |
-|    attitude error(deg) rms     |   0.0029   |   0.0031  |   0.0031  |
-|      2D error 1-$\sigma$       |   0.0405   |           |           |
-|      2D error 2-$\sigma$       |   0.0764   |           |           |
-|         2D error RMS$          |   0.0398   |           |           |
-|      3D error 1-$\sigma$       |   0.0476   |           |           |
-|      3D error 2-$\sigma$       |   0.0822   |           |           |
-|     3D error RMS $\sigma$      |   0.0462   |           |           |
-|--------------------------------|------------|-----------|-----------|
+ |                                | x error /m | y error/m | z error/m |
+ |--------------------------------|------------|-----------|-----------|
+ |  position error(m) 1-$\sigma$  |   0.0066   |   0.0116  |   0.0098  |
+ |  position error(m) 2-$\sigma$  |   0.0194   |   0.0220  |   0.0266  |
+ |     position error(m) rms      |   0.0085   |   0.0112  |   0.0133  |
+ | velocity error(m/s) 1-$\sigma$ |   0.0025   |   0.0018  |   0.0018  |
+ | velocity error(m/s) 2-$\sigma$ |   0.0058   |   0.0045  |   0.0056  |
+ |    velocity error(m/s) rms     |   0.0027   |   0.0021  |   0.0028  |
+ | attitude error(deg) 1-$\sigma$ |   0.0008   |   0.0009  |   0.0238  |
+ | attitude error(deg) 2-$\sigma$ |   0.0016   |   0.0018  |   0.0270  |
+ |    attitude error(deg) rms     |   0.0008   |   0.0009  |   0.0180  |
+ |      2D error 1-$\sigma$       |   0.0149   |           |           |
+ |      2D error 2-$\sigma$       |   0.0253   |           |           |
+ |         2D error RMS$          |   0.0141   |           |           |
+ |      3D error 1-$\sigma$       |   0.0187   |           |           |
+ |      3D error 2-$\sigma$       |   0.0326   |           |           |
+ |     3D error RMS $\sigma$      |   0.0194   |           |           |

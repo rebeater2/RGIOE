@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <fstream>
 #include "Convert.h"
-#include "../App/NavLog.h"
+#include "../App/AppCommon/NavLog.h"
 
 using namespace std;
 using namespace Eigen;
