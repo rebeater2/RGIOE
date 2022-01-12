@@ -18,12 +18,12 @@ void AlignMoving::Update(const ImuData &imu) {
   nav.gpst = imu.gpst;
 //    if (smooth.isStatic()) {
 #if USE_INCREMENT == 1
-  nav.atti[0] = asin(smoothed_imu.acce[0] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
-  nav.atti[1] = asin(smoothed_imu.acce[1] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
+  nav.atti[0] = asin(smoothed_imu.acce[1] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
+  nav.atti[1] = asin(smoothed_imu.acce[0] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
 #else
   /*用于加速度单位是1的场景*/
-  nav.atti[0] = asin(aveimu.acce[1]) * (aveimu.acce[2] > 0 ? 1 : -1);
-  nav.atti[1] = asin(aveimu.acce[0]) * (aveimu.acce[2] > 0 ? -1 : 1);
+  nav.atti[0] = asin(smoothed_imu.acce[1]) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
+  nav.atti[1] = asin(smoothed_imu.acce[0]) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
 #endif
 //  nav.att_std = {0.3 * _deg, 0.3 * _deg, 0.3 * _deg};
   nav.Qbn = Convert::euler_to_quaternion(nav.atti);
@@ -36,9 +36,10 @@ double AlignMoving::Update(const GnssData &gnss) {
 /*  if (!(GnssCheck(gnss) > 0)) {
 	return 0;
   }*/
+  float v = 0;
   if (gnss_pre.pos_std[0] == 0) {
 	gnss_pre = gnss;
-	return 0;
+	return -1;
   }
   WGS84::Instance().Update(gnss.lat * _deg, gnss.height);
   if (gnss.yaw >= 0 and gnss.yaw <= 360) {
@@ -53,15 +54,16 @@ double AlignMoving::Update(const GnssData &gnss) {
 	flag_yaw_finished = true;
   } else {
 	auto distance = WGS84::Instance().distance(gnss, gnss_pre);
+	v =(float) distance.d;
 	if (vel_threshold < distance.d and distance.d < 1e3) {
 	  nav.vn[0] = distance.dn;
 	  nav.vn[1] = distance.de;
 	  nav.vn[2] = distance.dd;
-	  nav.vel_std = {1.4, 1.4, 1.4};
+	  nav.vel_std = {0.3, 0.3, 0.3};
 	  nav.atti[2] = atan2(distance.de, distance.dn);
 	  nav.att_std[0] = 5 * _deg;
 	  nav.att_std[1] = 5 * _deg;
-	  nav.att_std[2] = 5 * _deg;
+	  nav.att_std[2] = 10 * _deg;
 	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
 	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	  flag_yaw_finished = true;
@@ -75,8 +77,8 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.Qne = Convert::lla_to_qne(ll);
   nav.Cne = Convert::lla_to_cne(ll);
   for (int i = 0; i < 3; i++) {
-	nav.pos_std[i] = gnss.pos_std[i];
-//	nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
+	nav.pos_std[i] =  gnss.pos_std[i];
+	nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
 	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
 	nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
 	nav.ab[i] = option.imuPara.ab_ini[i];
@@ -92,7 +94,7 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
   nav.week = gnss.week;
   gnss_pre = gnss;
-  return nav.vn[0] * nav.vn[0] + nav.vn[1] * nav.vn[1] + nav.vn[2] * nav.vn[2];
+  return v;
 }
 
 AlignMoving::AlignMoving(double vel_threshold, const Option &opt) : option(opt), vel_threshold(vel_threshold) {

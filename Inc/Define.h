@@ -8,7 +8,7 @@
 #define KD_IN_KALMAN_FILTER 1 /* 是否将里程计比例因子加入卡尔曼滤波状态量*/
 
 #ifndef USE_INCREMENT
-#define USE_INCREMENT 1 /*增量数据*/
+#define USE_INCREMENT 0 /*增量数据*/
 #endif
 #if KD_IN_KALMAN_FILTER == 1
 #define STATE_CNT  16

@@ -9,9 +9,7 @@
 #ifndef UIDATAFUSION__CONFIG_H_
 #define UIDATAFUSION__CONFIG_H_
 #include "NavStruct.h"
-
 #include <string>
-
 class BaseConfig {
  public:
   bool enable = false;

@@ -7,6 +7,7 @@
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
+#include "glog/logging.h"
 ostream &operator<<(ostream &os, const ImuData &imu) {
   os << fmt::format("{:.5f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
 					imu.gpst,
@@ -66,7 +67,7 @@ int ReadImu(istream &is, ImuData &imu, IMUFileFormat fmt) {
 ifstream &operator>>(ifstream &is, ImuData &imu) {
 
 #if IMU_FRAME == 0 /**/
-  is.read((char *)&imu,sizeof(ImuData));
+  is.read((char *)&imu, sizeof(ImuData));
 //  is >> imu.gpst;
 //  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
 //  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
@@ -95,7 +96,7 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
   os << fmt::format(
-  	"{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
 	  output.week,
 	  output.gpst,
 	  output.lat,
@@ -168,7 +169,7 @@ ostream &operator<<(ostream &os, const ImuPara &para) {
 }
 istream &operator>>(istream &is, AuxiliaryData &aux) {
   double temp;
-  is >> aux.gpst >> aux.velocity >> aux.angular>>temp;
+  is >> aux.gpst >> aux.velocity >> aux.angular >> temp;
   return is;
 }
 ostream &operator<<(ostream &os, const GnssData &gnss) {
@@ -283,12 +284,11 @@ int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
   return os.good();
 }
 
-
 IMUReader::IMUReader(const string &filename, IMUFileFormat fmt, IMUFrame frame, bool increment, int rate) {
   if (fmt == IMUFileFormat::IMU_FILE_IMD)
-    ifs.open(filename, ios::binary);
+	ifs.open(filename, ios::binary);
   else
-    ifs.open(filename);
+	ifs.open(filename);
   format_ = fmt;
   frame_ = frame;
   increment_ = increment;
@@ -301,28 +301,31 @@ IMUReader::~IMUReader() {
 
 bool IMUReader::ReadNext(ImuData &imu) {
   if (!ok_) { return ok_; }
+//LOG(INFO)<<__FILE__<<" "<<__FUNCTION__ <<imu.gpst<<" "<<format_<<" "<<ok_;
   switch (format_) {
-    case IMU_FILE_IMD:ifs.read((char *)&imu, sizeof(imu));
-    break;
-    case IMU_FILE_IMUTXT:
-      ifs >> imu.gpst >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2] >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
-      default: ok_ = false;
-      return ok_;
+	case IMU_FILE_IMD:ifs.read((char *)&imu, sizeof(imu));
+	  break;
+	case IMU_FILE_IMUTXT:
+	  ifs >> imu.gpst >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2] >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
+	  break;
+	default: ok_ = false;
+	  return ok_;
   }
   /*右前上坐标系转换为前右下坐标系*/
   if (frame_ == IMU_FRAME_RFU) {
-    swap(imu.acce[0], imu.acce[1]);
-    imu.acce[2] *= -1;
-    swap(imu.gyro[0], imu.gyro[1]);
-    imu.gyro[2] *= -1;
+	swap(imu.acce[0], imu.acce[1]);
+	imu.acce[2] *= -1;
+	swap(imu.gyro[0], imu.gyro[1]);
+	imu.gyro[2] *= -1;
   }
   /*非增量模式数据转换为增量模式数据  @warning: 是否使用相邻两个时刻之间的间隔作为dt更科学呢？*/
   if (!increment_) {
-    for (int i = 0; i < 3; i++) {
-      imu.acce[i] *= dt;
-      imu.gyro[i] *= dt;
-    }
+	for (int i = 0; i < 3; i++) {
+	  imu.acce[i] *= dt;  /*TODO 重力g没有考虑进去 */
+	  imu.gyro[i] *= dt;
+	}
   }
+
   ok_ = !ifs.eof();
   return ok_;
 }
@@ -349,28 +352,37 @@ GnssReader::GnssReader(std::string &filename, GnssFileFormat format) {
 }
 bool GnssReader::ReadNext(GnssData &gnss) {
   if (!ok_) { return ok_; }
-  string buffer;  int q;
+  string buffer;
+  int q;
   getline(ifs, buffer);
   stringstream ss(buffer);
   switch (format_) {
-    case GNSS_TXT_POS_7:
-      ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
-      gnss.mode = GnssMode::SPP;
-      break;
-      case RTKLIB_TXT_POS: {
-        ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
-        >> q >> gnss.ns;
-        if (q < 0 or q > 7) {
-          ok_ = false;
-          return ok_;
-        }
-        gnss.mode = mode_list[q];
-      }
-      break;
-      default:ok_ = false;
-      return false;
+	case GNSS_TXT_POS_7:
+	  ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
+	  gnss.mode = GnssMode::SPP;
+	  break;
+	case RTKLIB_TXT_POS: {
+	  ss >>gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
+		 >> q >> gnss.ns;
+	  if (q < 0 or q > 7) {
+		ok_ = false;
+		return ok_;
+	  }
+	  gnss.mode = mode_list[q];
+	}
+	  break;
+    case GNSS_10_LINES:
+      ss >>gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
+      >>gnss.hdop>>gnss.ns>> gnss.mode;// >> gnss.ns;
+      gnss.yaw = -1;
+      gnss.pos_std[0] = 0.001;
+      gnss.pos_std[1] = 0.001;
+      gnss.pos_std[2] = 0.001;
+	  break;
+	default:ok_ = false;
+	  return false;
   }
-  ok_ = !ifs.eof();
+  ok_ = !ifs.eof() and ifs.good();
   return ok_;
 }
 double GnssReader::GetTime(const GnssData &gnss) const {

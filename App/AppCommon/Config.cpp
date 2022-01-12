@@ -9,6 +9,7 @@
 
 #include "Config.h"
 #include "yaml-cpp/yaml.h"
+#include "fmt/format.h"
 #include <fstream>
 #include <string>
 using namespace std;
@@ -112,6 +113,9 @@ void Config::SaveTo(const string &path) const {
   for (float i:odometer_config.angle_bv) node["Odometer"]["angle-bv"].push_back(i);
   for (float i:odometer_config.wheel_level_arm) node["Odometer"]["wheel-level-arm"].push_back(i);
 
+
+  node["Odometer"]["scale-factor"]= odometer_config.scale_factor;
+  node["Odometer"]["scale-factor-std"]= odometer_config.scale_factor_std;
   for (int i : gnss_config.index)
 	node["GNSS-Config"]["columns"].push_back(i);
 
@@ -187,6 +191,8 @@ void Config::LoadFrom(const string &path) {
   for (int i = 0; i < 3; i++) {
 	odometer_config.wheel_level_arm[i] = node["Odometer"]["wheel-level-arm"][i].as<float>();
   }
+  odometer_config.scale_factor = node["Odometer"]["scale-factor"].as<float>();
+  odometer_config.scale_factor_std = node["Odometer"]["scale-factor-std"].as<float>();
   for (int i = 0; i < 3; i++) {
 	gnss_config.index[i] = node["GNSS-Config"]["columns"][i].as<int>();
   }
@@ -275,6 +281,11 @@ bool Config::LoadImuPara(string &error_msg) {
 }
 std::string Config::ToStdString() const {
   /*TODO*/
-  return "";
+  string res;
+  res.reserve(1024);
+  res += fmt::format("imu file: {}",imu_config.file_path);
+  res += fmt::format("imu format: {}",imu_config.format);
+  res += fmt::format("imu frame: {}",imu_config.frame);
+  return res;
 }
 

@@ -1,15 +1,20 @@
 # GNSS/INS/ODO Loosely Couple based on EKF
 
-## 算法核心依赖
+#### 算法核心依赖
     1. Eigen
-## 测试应用依赖
+#### 测试应用依赖
     2. glog
     3. gfalgs
     4. yaml-cpp
+    5. Qt
+    6. ROS
+    7. fmt
 ## Usage
 ```
 dataFusion configure.yml
 ```
+#### 编译指导
+
 
 ## 格式说明
 #### GNSS数据格式

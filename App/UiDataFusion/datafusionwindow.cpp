@@ -86,6 +86,8 @@ void DataFusionWindow::on_btnStart_clicked() {
 	OnConvertResult(ui->editOdometerLevelArmY->text(), ok);
 	config_.odometer_config.wheel_level_arm[2] = ui->editOdometerLevelArmZ->text().toFloat(&ok);
 	OnConvertResult(ui->editOdometerLevelArmZ->text(), ok);
+	config_.odometer_config.scale_factor = ui->editOdometerScaleFactor->text().toFloat(&ok);
+	config_.odometer_config.scale_factor_std = ui->editOdometerScaleFactorStd->text().toFloat(&ok);
   }
   config_.zupt_config.zupt_enable = ui->cbxZuptEnable->isChecked();
   if (config_.zupt_config.zupt_enable) {

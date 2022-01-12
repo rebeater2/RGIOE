@@ -179,7 +179,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
 #endif
   Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
   Update(H3,z,R);
-//  Update(H3.block<STATE_CNT,1>(0,0), z[0], opt.odo_var);
+//  Update(H3.block<STATE_CNT,1>(0,0), z[0], 0.01);
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
 }

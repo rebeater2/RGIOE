@@ -9,7 +9,6 @@
 #include "NavLog.h"
 #include "Timer.h"
 
-
 #include "fmt/format.h"
 
 /*extern int GnssCheck(const GnssData &gnss){
@@ -57,106 +56,133 @@ int main(int argc, char *argv[]) {
 	loge << CopyRight << endl;
 	return 1;
   }
-  Config cfg;
-  cfg.LoadFrom(argv[1]);
+  Config config;
+  config.LoadFrom(argv[1]);
   bool ok;
   string error_msg;
-  ok = cfg.LoadImuPara(error_msg);
-  Option opt = cfg.GetOption();
+  ok = config.LoadImuPara(error_msg);
+  Option opt = config.GetOption();
   LOG_IF(ERROR, !ok) << error_msg;
-
-  logi << "IMU path:" << cfg.imu_config.file_path;
-  if (cfg.odometer_config.enable)
-	logi << "Odometer path:" << cfg.odometer_config.file_path;
-  logi << "IMU rate:" << opt.d_rate;
-  logi << " imu para:\n" << opt.imuPara;
-  logi << "gnss path:" << cfg.gnss_config.file_path;
-
+  LOG(INFO)<<config.ToStdString();
+  LOG(INFO)<<opt.imuPara;
+  if (config.odometer_config.enable)
+    logi << "Odometer path:" << config.odometer_config.file_path;
   ImuData imu;
   GnssData gnss;
   NavOutput out;
-  AuxiliaryData aux;
-  Outage outage_cfg{cfg.outage_config.start, cfg.outage_config.stop, cfg.outage_config.outage,
-					cfg.outage_config.step};// = cfg.outage_config();
+  Velocity vel;
+  Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
+					config.outage_config.step};// = cfg.outage_config();
   IMUSmooth smooth;
 
 /*移动文件指针到指定的开始时间*/
-  ifstream f_imu(cfg.imu_config.file_path);
-  moveFilePoint(f_imu, imu, cfg.start_time);
-  ifstream f_gnss(cfg.gnss_config.file_path);
-  moveFilePoint(f_gnss, gnss, cfg.start_time);
-  ifstream f_odo(cfg.odometer_config.file_path);
-  moveFilePoint(f_odo, aux, cfg.start_time);
-  LOG_IF(ERROR, cfg.odometer_config.enable and !f_odo.good()) << "odometer file open failed";
-  NavWriter writer(cfg.output_path);
-  /*初始对准*/
+  IMUReader imu_reader(config.imu_config.file_path,
+					   config.imu_config.format,
+					   config.imu_config.frame,
+					   true, config.imu_config.d_rate);
+  if (!imu_reader.IsOk()) {
+	LOG(ERROR) << "No such file:" + config.imu_config.file_path;
+	return 1;
+  }
+  if (!imu_reader.ReadUntil(config.start_time, &imu)) {
+	LOG(ERROR) << "IMU data does NOT reach the start time: " << config.start_time;
+	return 1;
+  }
+  LOG(INFO) << config.gnss_config.format;
+  GnssReader gnss_reader(config.gnss_config.file_path, config.gnss_config.format);
+  if (!gnss_reader.IsOk()) {
+	LOG(ERROR) << "No such file:" + config.gnss_config.file_path;
+  }
+  if (!gnss_reader.ReadUntil(imu.gpst, &gnss)) {
+	LOG(WARNING) << "GNSS data does NOT reach the start time: " << config.start_time;
+  }
+  ReaderBase<Velocity> *podoReader = nullptr;//= new OdometerReader(config.odometer_config.file_path);
+  if (config.odometer_config.enable) {
+	LOG(INFO) << "Odometer path:" << config.odometer_config.file_path;
+	podoReader = new OdometerReader(config.odometer_config.file_path);
+	if (!podoReader->ReadUntil(imu.gpst, &vel)) {
+	  LOG(ERROR) << "Error odometer data does NOT reach the start time";
+	  return 1;
+	}
+  }
+  NavWriter writer(config.output_path);
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
-	logi << "Align moving mode, wait for GNSS,threshold is "<<cfg.align_config.vel_threshold_for_moving;
-	AlignMoving align{cfg.align_config.vel_threshold_for_moving, opt};
+	LOG(INFO) << "Align moving mode, wait for GNSS";
+	AlignMoving align{config.align_config.vel_threshold_for_moving, opt};
 	do {
-	  readImu(f_imu, &imu, cfg.imu_config.format);
+	  imu_reader.ReadNext(imu);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-		auto res = align.Update(gnss);
-		logi <<gnss;
-	    logi <<fmt::format("{} vel = {:.3f}",gnss.gpst,res);// gnss.gpst << " velocity = " << res;
-		f_gnss >> gnss;
+		logi << "aligning vel = "<<align.Update(gnss);
+		if (!gnss_reader.ReadNext(gnss)) {
+		  LOG(ERROR) << "GNSS read finished,but align not complete!";
+		  return 1;
+		}
 	  }
-	} while (!align.alignFinished() and f_imu.good() and f_gnss.good());
+	} while (!align.alignFinished() and imu_reader.IsOk());
 	if (!align.alignFinished()) {
-//	  navExit("align failed");
+	  LOG(ERROR) << "GNSS read finished,but align not complete!";
 	  return 1;
 	}
 	nav = align.getNavEpoch();
   } else if (opt.align_mode == ALIGN_USE_GIVEN) {
-	auto nav_ = cfg.align_config.init_pva;
+	auto nav_ = config.align_config.init_pva;
 	nav = makeNavEpoch(nav_, opt);/* 这是UseGiven模式对准 */
   } else {
-	logf << "supported align mode" << opt.align_mode;
+	LOG(ERROR) << "supported align mode" << (int)opt.align_mode;
 	return 1;
   }
-  Timer timer;
-  DataFusion::Instance().Initialize(nav, opt);
-  ofstream of_imu(cfg.imu_config.file_path + "smoothed.txt");
-  logi << "initial PVA:" << DataFusion::Instance().Output();
-  moveFilePoint(f_odo, aux, imu.gpst);
+  LOG(INFO)<<"initial gyro bias:"<<nav.gb.transpose()/_deg *_hour;
 
-  /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
-  while ((cfg.stop_time <= 0) || (cfg.start_time > 0 && imu.gpst < cfg.stop_time)) {
-	f_imu >> imu;
-	if (!f_imu.good())break;
+  Timer timer;
+/*第一步：初始化*/
+  DataFusion::Instance().Initialize(nav, opt);
+  LOG(INFO) << "initial PVA:" << DataFusion::Instance().Output();
+  if (config.odometer_config.enable) {
+	podoReader->ReadUntil(imu.gpst, &vel);
+  }
+/* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
+  while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
+	if (!imu_reader.ReadNext(imu))break;
+	/*第二步 时间更新*/
 	DataFusion::Instance().TimeUpdate(imu);
 	smooth.Update(imu);
-	of_imu << smooth.getSmoothedIMU() << ' ' << smooth.getStd() << ' ' << smooth.isStatic() << '\n';
-	if (f_gnss.good() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	  if (!outage_cfg.IsOutage(gnss.gpst))
+	/* GNSS更新 */
+	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
+//	  if (!(config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst)))
 		DataFusion::Instance().MeasureUpdatePos(gnss);
-	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss;
-	  f_gnss >> gnss;
+	  if(!gnss_reader.ReadNext(gnss)){
+	    LOG(WARNING)<<"Gnss read failed"<<gnss;
+	  };
+//	  LOG_EVERY_N(INFO, 1) << "Next gnss:" << gnss<<" "<<gnss_reader.IsOk()<<"\n"<<imu;
 	}
-	LOG_FIRST_N(INFO,10) <<(int) opt.odo_enable <<" "<< f_odo.good() <<" " << fabs(aux.gpst - imu.gpst);
-	if (opt.odo_enable and f_odo.good() and fabs(aux.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	  DataFusion::Instance().MeasureUpdateVel(aux.velocity);
-	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << aux;
-	  do { f_odo >> aux; } while (aux.gpst < imu.gpst and f_odo.good());
+	/*里程计更新*/
+	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
+	  DataFusion::Instance().MeasureUpdateVel(vel.forward);
+	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.forward;
+	  podoReader->ReadUntil(imu.gpst, &vel);
+	}
+	if (opt.zupt_enable and smooth.isStatic()) {
+	  /* TODO : this will be implemented soon,...maybe*/
+	  //	  DataFusion::Instance().MeasureUpdateStatic();
 	}
 	out = DataFusion::Instance().Output();
 	writer.update(out);
+	/*进度打印*/
   }
-  /*show summary and reports:*/
+  LOG(INFO) << "Process finished";
+/*show summary and reports:*/
   double time_resolve = static_cast<double>(timer.elapsed()) / 1000.0;
   writer.stop();
   double time_writing = static_cast<double> (timer.elapsed()) / 1000.0;
-  f_imu.close();
-  f_gnss.close();
-  f_odo.close();
-  logi << "\n\tSummary:\n"
-	   << "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
-	   << "\tTime for Computing:" << time_resolve << "s" << '\n'
-	   << "\tTime for File Writing:" << time_writing << 's' << '\n'
-	   << "\tFinal PVA:" << DataFusion::Instance().Output() << '\n'
-	   << "\tFinal Scale Factor:" << out.kd;
+  delete podoReader;
+  LOG(INFO) << "\n\tSummary:\n"
+			<< "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
+			<< "\tTime for Computing:" << time_resolve << "s" << '\n'
+			<< "\tTime for File Writing:" << time_writing << 's' << '\n'
+			<< "\tFinal odo scale factor:" << nav.kd << '\n'
+			<< "\tFinal PVA:" << DataFusion::Instance().Output() << '\n';
   return 0;
 }
 
