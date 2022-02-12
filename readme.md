@@ -1,19 +1,18 @@
-# RGIOE readme.md
 # RGIOE:A Real-time GNSS/INS/Odometer Integrated Navigation Algorithm based on Extend Kalman Filter
 A Real-time GNSS/INS/Odometer Integrated Navigation Algorithm based on Extend Kalman Filter. 
 
 # Description
-This is an implemention of GNSS/INS/Odometer multi-sensor fusion algorithm base on extend Kalman filter. A high precise inertial mechanization is also  implemented. We also take account of NHC and ZUPT. A C-tyle interface is provided for embedded applicaitons.  We designed a console applicaiton  and a UI version for a post-processing.  A real-time simulation based on ROS will be implemented soon. Brief ad follows:
+This is an implementation of GNSS/INS/Odometer multi-sensor fusion algorithm base on extend Kalman filter. A high precise inertial mechanization is also implemented. We also take account of NHC and ZUPT. A C-tyle interface is provided for embedded applicatons.  We designed a console applicaiton and a UI version for a post-processing.  A real-time simulation based on ROS will be implemented soon. Brief ad follows:
 
 1. Loosely coupled algorithm
 2. High precise mechanization
 3. Real-time and post-processing supported
 4. EKF based
 
-# Complile
-The algorithm library (in Inc and Src  directory) is dependent and only relies on Eigen. To compile the library, you should install eigen on your computer by `apt install libeigen` ,or download its code and tell the compliter where it is by `include_directory` in CMakelist.txt
+# Compile
+The algorithm library (in Inc and Src  directory) is dependent and only relies on Eigen. To compile the library, you should install eigen on your computer by `apt install libeigen` ,or download its source code and tell the compiler where it is by `include_directory` in CMakelist.txt
 
-To complile the exeutable program, you need to install the following library and all of them can be obtained by package manager :
+To compile the executable program, you need to install the following library and all of them can be obtained by package manager :
 
 1. [fmt](https://github.com/fmtlib/fmt.git)
 2. [yaml-cpp](https://github.com/jbeder/yaml-cpp.git)
@@ -21,7 +20,7 @@ To complile the exeutable program, you need to install the following library and
 4. [Qt](https://www.qt.io/)
 
 # Usage
-Both the execuable console program and UI program is able to load the configure file in format of YAML. Some demo configure file are provided in directory `yaml` .  In terminal, you can use the following command:
+Both the executable console program and UI program is able to load the configure file in format of YAML. Some demo configure file are provided in directory `yaml` .  In terminal, you can use the following command:
 
 ```Plain Text
 dataFusion <configure.yml>
@@ -49,7 +48,7 @@ VRW: 0.03, m/s/sqrt(hr)
 
 gyroscope bias stability: 0.027, deg/hr   
 
-accelorator bias stability: 15, mGal     
+accelerator bias stability: 15, mGal   
 
 | |x error /m|y error/m|z error/m|
 | ----- | ----- | ----- | ----- |
