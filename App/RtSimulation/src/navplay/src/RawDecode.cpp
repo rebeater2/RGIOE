@@ -19,3 +19,8 @@ void ConvertKyToDouble(const ImuRawKy *raw, ImuData *imu) {
   imu->acce[1] = ((int32_t)(raw->y_acce_low + ((int32_t)raw->x_acce_out << 16u))) / 81920000.0;
   imu->acce[2] = ((int32_t)(raw->z_acce_low + ((int32_t)raw->z_acce_out << 16u))) / 81920000.0;
 };
+int ConvertVelRawToFloat(const VelocityRawDef *raw, Velocity *vel) {
+  vel->forward = ((float)((int16_t)(raw->vh_ << 8u) | raw->vl_)) / 1000.0f;
+  vel->angular = ((float)((int16_t)(raw->ah_ << 8u) | raw->al_)) / 1000.0f;
+  return 0;
+}

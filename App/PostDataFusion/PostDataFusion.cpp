@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
   IMUReader imu_reader(config.imu_config.file_path,
 					   config.imu_config.format,
 					   config.imu_config.frame,
-					   true, config.imu_config.d_rate);
+					   false, config.imu_config.d_rate);
   if (!imu_reader.IsOk()) {
 	LOG(ERROR) << "No such file:" + config.imu_config.file_path;
 	return 1;

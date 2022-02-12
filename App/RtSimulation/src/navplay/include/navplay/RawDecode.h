@@ -10,4 +10,5 @@
 #define ROS_NAV_REPLAY_SRC_NAVPLAY_INCLUDE_NAVPLAY_RAWDECODE_H_
 #include "NavTypeDef.h"
 void ConvertKyToDouble( const ImuRawKy *raw, ImuData *imu);
+int ConvertVelRawToFloat(const VelocityRawDef *raw, Velocity *vel);
 #endif //ROS_NAV_REPLAY_SRC_NAVPLAY_INCLUDE_NAVPLAY_RAWDECODE_H_

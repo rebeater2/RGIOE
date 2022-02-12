@@ -3,10 +3,18 @@ project(navplay)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
+set(CMAKE_HOME_DIRECTORY ../../../..)
+MESSAGE("CMAKE Home:${CMAKE_HOME_DIRECTORY}")
+include_directories(${CMAKE_HOME_DIRECTORY}/Inc)
+file(GLOB_RECURSE SOURCE
+        ${CMAKE_HOME_DIRECTORY}/Src/*.*
+        )
+add_compile_options(-fshort-enums)
 find_package(Qt5 REQUIRED COMPONENTS Core)
 find_package(glog REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(fmt REQUIRED)
+find_package(Boost REQUIRED)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -139,13 +147,20 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
+
+
 add_executable(${PROJECT_NAME}_node
         src/navplay_node.cpp
         src/NavRawReader.cpp
         src/RawDecode.cpp
-        src/WGS84.cpp
-        src/Convert.cpp
+        ${SOURCE}
         )
+
+add_executable(rtsim_fusion_node
+        src/rtsim_fusion_node.cpp
+        ${SOURCE}
+        )
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,6 +172,7 @@ add_executable(${PROJECT_NAME}_node
 ## same as for the library above
 #add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME}_node navplay_generate_messages_cpp)
+add_dependencies(rtsim_fusion_node navplay_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
@@ -166,7 +182,13 @@ target_link_libraries(${PROJECT_NAME}_node
         fmt
         Eigen3::Eigen
         )
-
+target_link_libraries(rtsim_fusion_node
+        ${catkin_LIBRARIES}
+        glog
+        fmt
+        Eigen3::Eigen
+#        Boost
+        )
 #############
 ## Install ##
 #############

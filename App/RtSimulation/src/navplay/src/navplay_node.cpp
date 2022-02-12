@@ -8,7 +8,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
-#include <visualization_msgs/Marker.h>
 #include "tf/transform_broadcaster.h"
 
 #include "navplay/imu.h"
@@ -87,9 +86,11 @@ class Beats {
   }
   navplay::vel toVelMsg() const {
 	navplay::vel vel_msg;
+	Velocity  vel;
+	ConvertVelRawToFloat(&raw.vel_,&vel);
 	vel_msg.gpst = raw.gpst;
-	vel_msg.forward = raw.vel_.forward;
-	vel_msg.angulars = raw.vel_.angular;
+	vel_msg.forward = vel.forward;
+	vel_msg.angular = vel.angular;
 	return vel_msg;
   }
   nav_msgs::Path toPoseMsg() {
@@ -118,7 +119,10 @@ class Beats {
 	return path;
   }
   void operator()(const ros::TimerEvent &event) {
-	if (!preader) return;
+	if (!preader) {
+	  close();
+	  return;
+	}
 	if (gpst_start <= 0) {
 	  if (!preader->ReadNext(raw)) { close(); }
 	  gpst_start = preader->GetTime();
@@ -131,7 +135,7 @@ class Beats {
 	} else {
 	  time_elapse += 0.001 * speed_up;
 	}
-	LOG_EVERY_N(INFO, 1000) << "current elapse time:" << time_elapse;
+	LOG_EVERY_N(INFO, 1000) << "current elapse time:" << time_elapse<<" "<<(int)raw.gpst;
 	int i = 0;
 	if (time_elapse > raw.gpst - gpst_start) {
 	  switch (raw.type_) {
@@ -142,7 +146,7 @@ class Beats {
 		case DATA_TYPE_VEL: vel_publisher.publish(toVelMsg());
 		  break;
 		case DATA_TYPE_RST:
-			rst_publisher.publish(toPoseMsg());
+//			rst_publisher.publish(toPoseMsg());
 		  break;
 		default: break;
 	  }

@@ -1,0 +1,8 @@
+prefix=/media/rebeater/hd_data2/workspace/CLionProjects/LooselyCouple2020_cpp/App/RtSimulation/devel
+
+Name: navplay
+Description: Description of navplay
+Version: 0.0.0
+Cflags: -I/media/rebeater/hd_data2/workspace/CLionProjects/LooselyCouple2020_cpp/App/RtSimulation/devel/include
+Libs: -L${prefix}/lib 
+Requires: 

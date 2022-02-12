@@ -1,0 +1,2 @@
+navplay
+-DCATKIN_DEVEL_PREFIX=/media/rebeater/hd_data2/workspace/CLionProjects/LooselyCouple2020_cpp/App/RtSimulation/devel -DCMAKE_INSTALL_PREFIX=/media/rebeater/hd_data2/workspace/CLionProjects/LooselyCouple2020_cpp/App/RtSimulation/install -G Unix Makefiles

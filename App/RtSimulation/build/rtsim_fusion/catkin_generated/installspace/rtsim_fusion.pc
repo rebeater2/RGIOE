@@ -1,0 +1,8 @@
+prefix=/media/rebeater/hd_data2/workspace/CLionProjects/LooselyCouple2020_cpp/App/RtSimulation/install
+
+Name: rtsim_fusion
+Description: Description of rtsim_fusion
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

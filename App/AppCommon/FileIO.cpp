@@ -319,12 +319,12 @@ bool IMUReader::ReadNext(ImuData &imu) {
 	imu.gyro[2] *= -1;
   }
   /*非增量模式数据转换为增量模式数据  @warning: 是否使用相邻两个时刻之间的间隔作为dt更科学呢？*/
-  if (!increment_) {
+/*  if (!increment_) {
 	for (int i = 0; i < 3; i++) {
-	  imu.acce[i] *= dt;  /*TODO 重力g没有考虑进去 */
+	  imu.acce[i] *= dt;  *//*TODO 重力g没有考虑进去 *//*
 	  imu.gyro[i] *= dt;
 	}
-  }
+  }*/
 
   ok_ = !ifs.eof();
   return ok_;
@@ -375,9 +375,6 @@ bool GnssReader::ReadNext(GnssData &gnss) {
       ss >>gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
       >>gnss.hdop>>gnss.ns>> gnss.mode;// >> gnss.ns;
       gnss.yaw = -1;
-      gnss.pos_std[0] = 0.001;
-      gnss.pos_std[1] = 0.001;
-      gnss.pos_std[2] = 0.001;
 	  break;
 	default:ok_ = false;
 	  return false;
