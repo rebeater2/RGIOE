@@ -13,15 +13,15 @@
 extern "C" {
 #endif
 
-int kalmanInitialize();
-int kalmanOutput(NavOutput *nav_output);
-double kalmanAlignGnss(const GnssData *gnss);
+int navInitialize();
+int navOutput(NavOutput *nav_output);
+double navAlignGnss(const GnssData *gnss);
 void getXd(double *xds);/*for debug*/
 /*接收前右下、非增量形式的惯导数据*/
-int kalmanAlignLevel(const ImuData *imu);
-void kalmanSetGNSS(const GnssData *gnss);
-void kalmanSetVel(const Velocity *vel);/*里程计速度更新*/
-void kalmanUpdate(const ImuData *imu);
+int navAlignLevel(const ImuData *imu);
+void navSetGNSS(const GnssData *gnss);
+void navSetVel(const Velocity *vel);/*里程计速度更新*/
+void navUpdate(const ImuData *imu);
 #ifdef __cplusplus
 };
 #endif
