@@ -13,15 +13,16 @@
 extern "C" {
 #endif
 
-int navInitialize();
-int navOutput(NavOutput *nav_output);
+int navInitialize(const Option *opt);
+  int navGetResult(NavPva *pva) ;
 double navAlignGnss(const GnssData *gnss);
+int navAlignUseGiven(NavOutput *nav,Option *opt);
 void getXd(double *xds);/*for debug*/
 /*接收前右下、非增量形式的惯导数据*/
 int navAlignLevel(const ImuData *imu);
-void navSetGNSS(const GnssData *gnss);
+void navSetPos(const double latLon[2], float h, const float std[3]);
 void navSetVel(const Velocity *vel);/*里程计速度更新*/
-void navUpdate(const ImuData *imu);
+void timeUpdate(const ImuData *imu);
 #ifdef __cplusplus
 };
 #endif

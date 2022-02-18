@@ -16,7 +16,7 @@
 #define _deg (_PI/180.0)
 #define _mGal (1e-5)
 #define _ppm (1e-6)
-
+#define _knot (0.5144444)
 #ifdef __cplusplus
 #include <cstdint>
 #else
@@ -123,7 +123,7 @@ typedef enum {
 typedef struct {
   unsigned short sensors;
   unsigned short gnss_mode;
-} SystemInfo;
+} NavInfo;
 typedef struct {
   int week;
   double gpst;
@@ -135,7 +135,7 @@ typedef struct {
   float vn_std[3];
   float atti[3];
   float atti_std[3];
-  SystemInfo info;
+  NavInfo info;
   float ab[3];
   float gb[3];
   float kd;
@@ -146,23 +146,12 @@ typedef struct {
   double longitude;
 } LatLon;
 typedef struct {
-  double gpst;
   double lat;
   double lon;
-  float h;
-  float vn;
-  float ve;
-  float vd;
-  float roll;
-  float pitch;
-  float yaw;
-  float ab[3];
-  float gb[3];
-  SystemInfo info;
-/*    double pos_std_[3];
-    double vel_std_[3];
-    double atti_std_[3];*/
-  long mode;
+  float vn[3];
+  float atti[3];
+  NavInfo info;
+  float height;
 } NavPva;
 /*typedef enum {
   UseGiven = 0,
@@ -191,6 +180,8 @@ typedef struct {
   float  nhc_std[2];
   float  kd_init;
   float  kd_std ;
+  /*TODO*/
+  int enable_gnss;
 } Option;
 
 typedef struct {

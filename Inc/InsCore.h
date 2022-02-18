@@ -40,7 +40,7 @@ typedef struct {
 #if KD_IN_KALMAN_FILTER == 1
   double kd;/*里程计比例因子*/
 #endif
-  SystemInfo info;
+  NavInfo info;
   int week;
 
 } NavEpoch;

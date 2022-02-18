@@ -54,19 +54,29 @@ Option default_option{
  * @warning 必须要在初始对准之后完成，如果初始对准未成功，此函数返回-1,y
  * @return error code 0： OK   -1: fail
  */
-int kalmanInitialize() {
-  df = &DataFusion::Instance();
-//  if (!align.alignFinished()) { return -1; }
-//  NavEpoch nav_epoch = makeNavEpoch(align.getPva(), default_option);
-  df->Initialize(align->getNavEpoch(), default_option);
-  return 0;
+int navInitialize(const Option *opt)  {
+  default_option = *opt;
+  if(opt->d_rate==0){
+    return 3;
+  }
+  df = &(DataFusion::Instance());
+  if(!align){return 1;}
+  if (align->alignFinished()){
+    df->Initialize(align->getNavEpoch(), *opt);
+    return 0;
+  }else
+    return 2;
 }
-void kalmanUpdate(const ImuData *imu) {
+void timeUpdate(const ImuData *imu) {
+  if(!df){
+    df = &(DataFusion::Instance());
+  }
   df->TimeUpdate(*imu);
 }
 
-void kalmanSetGNSS(const GnssData *gnss) {
-  df->MeasureUpdatePos(*gnss);
+void navSetPos(const double latLon[2], float h, const float std[3]) {
+  Mat3d rk = Vec3d{std[0] * std[0], std[1] * std[1], std[2] * std[2]}.asDiagonal();
+  df->MeasureUpdatePos({latLon[0], latLon[1], h}, rk);
 }
 void getXd(double *xds) {
   for (int i = 0; i < STATE_CNT; i++) {
@@ -74,7 +84,7 @@ void getXd(double *xds) {
   }
 }
 
-int kalmanAlignLevel(const ImuData *imu) {
+int navAlignLevel(const ImuData *imu) {
   if (align == nullptr) {
 	static AlignMoving s_align{2, default_option};
 	align = &s_align;
@@ -83,7 +93,7 @@ int kalmanAlignLevel(const ImuData *imu) {
   return align->alignFinished();
 }
 
-double kalmanAlignGnss(const GnssData *gnss) {
+double navAlignGnss(const GnssData *gnss) {
   if (align == nullptr) {
 	static AlignMoving s_align{2, default_option};
 	align = &s_align;
@@ -91,20 +101,26 @@ double kalmanAlignGnss(const GnssData *gnss) {
   return align->Update(*gnss);
 }
 
-void kalmanSetVel(const Velocity *vel) {
+void navSetVel(const Velocity *vel) {
   df->MeasureUpdateVel({vel->forward, 0, 0});
 }
 
-int kalmanOutput(NavOutput *nav_output) {
-  *nav_output = df->Output();
-  for (int i = 0; i < 3; i++) {
-	nav_output->pos_std[i] =(float) df->P(0 + i, 0 + i);
-	nav_output->vn_std[i] =(float) df->P(3 + i, 3 + i);
-	nav_output->atti_std[i] =(float) df->P(6 + i, 6 + i);
-  }
+int navGetResult(NavPva *pva) {
+  NavOutput nav = df->Output();
+  *pva=*((NavPva*)&nav.lat);
   return 0;
 }
-
+int navAlignUseGiven(NavOutput *nav,Option *opt) {
+  /*室内启动时，使用给定坐标对准*/
+  if (align == nullptr) {
+    static AlignMoving s_align{2, *opt};
+    align = &s_align;
+  }
+  align->nav= makeNavEpoch(*nav,*opt);
+  align->flag_level_finished = true;
+  align->flag_yaw_finished = true;
+  return 0;
+}
 #if USE_YAML == 1
 
 #endif

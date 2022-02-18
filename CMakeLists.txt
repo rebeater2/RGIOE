@@ -62,7 +62,7 @@ set_target_properties(LooselyCouple PROPERTIES
 #add_subdirectory(Test)
 add_subdirectory(App/PostDataFusion)
 add_subdirectory(App/UiDataFusion)
-add_subdirectory(App/RtSimulation/src)
+#add_subdirectory(App/RtSimulation/src)
 add_subdirectory(Tools)
 #add_link_options(-lgfortran -lm)
 

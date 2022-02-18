@@ -21,12 +21,11 @@ To compile the executable program, you need to install the following library and
 
 # Usage
 Both the executable console program and UI program is able to load the configure file in format of YAML. Some demo configure file are provided in directory `yaml` .  In terminal, you can use the following command:
-
 ```Plain Text
 dataFusion <configure.yml>
 ```
-Or in UiDataFusion, you can use file->load to choose an configure. some of this feature is under development.
-
+The executable program `UiDataFusion` is easy to use. In UiDataFusion, you can use file->load to choose an configure. some of this feature is under development.
+![avatar](Res/UiDataFusion_20220218225723.png)
 # C style API
 To use this library in C environment such as STM32 and DSP, C style functions are provided.
 
