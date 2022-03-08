@@ -53,6 +53,13 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   Mat3d Cbv;
   Option opt{};
   uint32_t update_flag;
+ /*for RTS */
+  std::list<MatXd> matphis;
+  std::list<VecXd> Xds;
+  std::list<MatXd> matp_pres;
+  std::list<MatXd> matp_posts;
+  std::list<NavEpoch> navs;
+
   uint32_t _timeUpdateIdx;/*时间更新计数器*/
 #if USE_OUTAGE == 1
   Outage otg;
@@ -92,6 +99,11 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
 
   int MeasureUpdateRelativeHeight( double height);
 
+  /**
+   *
+   * @return 进度: 0开始,1 完成
+   */
+  bool RtsUpdate();
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_DATAFUSION_H

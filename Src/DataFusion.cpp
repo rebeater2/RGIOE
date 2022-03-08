@@ -97,8 +97,14 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
  * @return : 1 success 0 fail in time check
  */
 int DataFusion::TimeUpdate(const ImuData &imu) {
+  if (opt.enable_rts) {
+	matp_posts.push_back(P);
+	Xds.push_back(xd);
+	navs.push_back(nav);
+  }
   if (update_flag) {
 	_feedBack();
+	Reset();
 	update_flag = 0;
   }
   smooth.Update(imu);
@@ -106,7 +112,13 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
   MatXd phi = TransferMatrix(opt.imuPara);
   MatXd Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
+
   Predict(phi, Q);
+  if (opt.enable_rts) {
+	matp_pres.push_back(P);
+	matphis.push_back(phi);
+  }
+
   _timeUpdateIdx++;
 
   if (_timeUpdateIdx % 16 and opt.zupt_enable) {
@@ -179,7 +191,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
 #endif
   Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
 //  Update(H3, z, R);
-  Update(H3.block<STATE_CNT,1>(0,0), z[0], 0.01);
+  Update(H3.block<STATE_CNT, 1>(0, 0), z[0], 0.01);
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
 }
@@ -220,7 +232,7 @@ int DataFusion::_feedBack() {
 #if KD_IN_KALMAN_FILTER == 1
   nav.kd += xd[15];
 #endif
-  Reset();
+
   return 0;
 }
 
@@ -319,6 +331,31 @@ int DataFusion::MeasureUpdateRelativeHeight(const double height) {
 	update_flag |= SENSOR_HEIGHT;
   }
   return 0;
+}
+bool DataFusion::RtsUpdate() {
+  if (matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty()) {
+	return true;
+  }
+  auto matp = matp_posts.back();
+  matp_posts.pop_back();
+
+  auto matp1 = matp_pres.back();
+  matp_pres.pop_back();
+
+  auto matphi = matphis.back();
+  matphis.pop_back();
+
+  VecXd xdc = Xds.back();
+  Xds.pop_back();
+
+  nav = navs.back();
+  navs.pop_back();
+
+  auto matA = matp * matphi.transpose() * matp1.inverse();
+  P = matp + matA * (P - matp1) * matA.transpose();
+  xd = xdc + matA * xd;
+  _feedBack();
+  return matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty();
 }
 
 Outage::Outage(float start, float stop, float outage, float step) : outage(outage) {

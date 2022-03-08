@@ -175,10 +175,21 @@ int main(int argc, char *argv[]) {
 	  /* TODO : this will be implemented soon,...maybe*/
 	  //	  DataFusion::Instance().MeasureUpdateStatic();
 	}
-	out = DataFusion::Instance().Output();
-	writer.update(out);
-	/*进度打印*/
+	if (!opt.enable_rts) {
+	  writer.update(DataFusion::Instance().Output());
+	}
   }
+  if (opt.enable_rts) {
+	LOG(INFO) << "Start RTS smooth";;
+	bool finished = false;
+	do {
+	  finished = DataFusion::Instance().RtsUpdate();
+	  out = DataFusion::Instance().Output();
+	  writer.update(out);
+	} while (!finished);
+	LOG(INFO) << "RTS smooth finished\n";
+  }
+
   LOG(INFO) << "Process finished";
 /*show summary and reports:*/
   double time_resolve = static_cast<double>(timer.elapsed()) / 1000.0;

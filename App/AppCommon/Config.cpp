@@ -162,6 +162,7 @@ void Config::LoadFrom(const string &path) {
   start_time = node["start-time"].as<float>();
   stop_time = node["stop-time"].as<float>();
   output_path = node["output-path"].as<string>();
+  enable_rts = node["enable-rts"].as<bool>();
   imu_config.enable = node["IMU-Config"]["enable"].as<bool>();
   imu_config.file_path = node["IMU-Config"]["file-path"].as<std::string>();
   imu_config.d_rate = node["IMU-Config"]["d-rate"].as<int>();
@@ -250,6 +251,7 @@ Option Config::GetOption() const {
 	  .kd_init = odometer_config.scale_factor,
 	  .kd_std = odometer_config.scale_factor_std,
 	  .gnss_std_scale = gnss_config.scale_of_std,
+	  .enable_rts = enable_rts,
   };
   return opt;
 }

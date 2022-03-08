@@ -80,6 +80,7 @@ class Config {
  public:
   float start_time{0};
   float stop_time{0};
+  bool enable_rts{false};
   std::string output_path;
   GnssConfig gnss_config;
   IMUConfig imu_config;
