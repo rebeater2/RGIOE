@@ -104,6 +104,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
    * @return 进度: 0开始,1 完成
    */
   bool RtsUpdate();
+  NavOutput Output()const;
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_DATAFUSION_H

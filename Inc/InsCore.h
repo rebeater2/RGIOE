@@ -52,7 +52,7 @@ NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
 NavEpoch makeNavEpoch(NavOutput nav_, Option opt);
 /* 机械编排主类 */
 class Ins {
- public:
+ protected:
   NavEpoch nav;
   double dt;
   Mat3d eye3;
@@ -90,7 +90,7 @@ class Ins {
 
   Vec3d CompensateIMU(const Vec3d &imu, const Vec3d &bias, const Vec3d &scale) const;
 
-  NavOutput Output() const;
+ virtual NavOutput Output() const;
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_INSCORE_H
