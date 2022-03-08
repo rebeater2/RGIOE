@@ -172,6 +172,7 @@ void Config::LoadFrom(const string &path) {
   gnss_config.enable = node["GNSS-Config"]["enable"].as<bool>();
   gnss_config.file_path = node["GNSS-Config"]["file-path"].as<std::string>();
   gnss_config.format = (GnssFileFormat)node["GNSS-Config"]["format"].as<int>();
+  gnss_config.scale_of_std = node["GNSS-Config"]["std-scale"].as<float>();
   for (int i = 0; i < 3; i++)
 	gnss_config.level_arm[i] = node["GNSS-Config"]["level-arm"][i].as<float>();
 
@@ -247,7 +248,8 @@ Option Config::GetOption() const {
 				   odometer_config.angle_bv[2] * (float)_deg},
 	  .nhc_std =  {odometer_config.nhc_std[0], odometer_config.nhc_std[1]},
 	  .kd_init = odometer_config.scale_factor,
-	  .kd_std = odometer_config.scale_factor_std
+	  .kd_std = odometer_config.scale_factor_std,
+	  .gnss_std_scale = gnss_config.scale_of_std,
   };
   return opt;
 }
@@ -283,9 +285,11 @@ std::string Config::ToStdString() const {
   /*TODO*/
   string res;
   res.reserve(1024);
-  res += fmt::format("imu file: {}",imu_config.file_path);
-  res += fmt::format("imu format: {}",imu_config.format);
-  res += fmt::format("imu frame: {}",imu_config.frame);
+  res += fmt::format("imu file: {}\n",imu_config.file_path);
+  res += fmt::format("imu rate: {}\n",imu_config.d_rate);
+  res += fmt::format("imu format: {}\n",imu_config.format);
+  res += fmt::format("imu frame: {}\n",imu_config.frame);
+  res += fmt::format("gnss scale: {:3f}\n",gnss_config.scale_of_std);
   return res;
 }
 

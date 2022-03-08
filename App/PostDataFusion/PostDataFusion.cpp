@@ -51,6 +51,7 @@ void moveFilePoint(ifstream &is, T &t, double gpst) {
 
 int main(int argc, char *argv[]) {
   logInit(argv[0], "./");
+  bool rts_enable = true;
   cout << CopyRight;
   if (argc < 2) {
 	loge << CopyRight << endl;
@@ -63,10 +64,10 @@ int main(int argc, char *argv[]) {
   ok = config.LoadImuPara(error_msg);
   Option opt = config.GetOption();
   LOG_IF(ERROR, !ok) << error_msg;
-  LOG(INFO)<<config.ToStdString();
-  LOG(INFO)<<opt.imuPara;
+  LOG(INFO) << config.ToStdString();
+  LOG(INFO) << opt.imuPara;
   if (config.odometer_config.enable)
-    logi << "Odometer path:" << config.odometer_config.file_path;
+	logi << "Odometer path:" << config.odometer_config.file_path;
   ImuData imu;
   GnssData gnss;
   NavOutput out;
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]) {
 	LOG(ERROR) << "IMU data does NOT reach the start time: " << config.start_time;
 	return 1;
   }
-  LOG(INFO) << config.gnss_config.format;
+  LOG(INFO) << "gnss format:" << config.gnss_config.format;
   GnssReader gnss_reader(config.gnss_config.file_path, config.gnss_config.format);
   if (!gnss_reader.IsOk()) {
 	LOG(ERROR) << "No such file:" + config.gnss_config.file_path;
@@ -114,7 +115,7 @@ int main(int argc, char *argv[]) {
 	  imu_reader.ReadNext(imu);
 	  align.Update(imu);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-		logi << "aligning vel = "<<align.Update(gnss);
+		logi << "aligning vel = " << align.Update(gnss);
 		if (!gnss_reader.ReadNext(gnss)) {
 		  LOG(ERROR) << "GNSS read finished,but align not complete!";
 		  return 1;
@@ -133,16 +134,18 @@ int main(int argc, char *argv[]) {
 	LOG(ERROR) << "supported align mode" << (int)opt.align_mode;
 	return 1;
   }
-  LOG(INFO)<<"initial gyro bias:"<<nav.gb.transpose()/_deg *_hour;
+  LOG(INFO) << "initial gyro bias:" << nav.gb.transpose() / _deg * _hour;
 
   Timer timer;
 /*第一步：初始化*/
   DataFusion::Instance().Initialize(nav, opt);
   LOG(INFO) << "initial PVA:" << DataFusion::Instance().Output();
-  if (config.odometer_config.enable) {
+  if (opt.odo_enable) {
 	podoReader->ReadUntil(imu.gpst, &vel);
   }
 /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
+  LOG(INFO) << "start:" << imu.gpst << ",end:" << config.stop_time;
+//LOG(INFO) << "imu status:"<<imu_reader.IsOk()<<"\t gnss status:"<<gnss_reader.IsOk()<<"\t odo status:"<< podoReader->IsOk();
   while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
 	if (!imu_reader.ReadNext(imu))break;
 	/*第二步 时间更新*/
@@ -150,17 +153,22 @@ int main(int argc, char *argv[]) {
 	smooth.Update(imu);
 	/* GNSS更新 */
 	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-//	  if (!(config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst)))
-		DataFusion::Instance().MeasureUpdatePos(gnss);
-	  if(!gnss_reader.ReadNext(gnss)){
-	    LOG(WARNING)<<"Gnss read failed"<<gnss;
-	  };
-//	  LOG_EVERY_N(INFO, 1) << "Next gnss:" << gnss<<" "<<gnss_reader.IsOk()<<"\n"<<imu;
+	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss.gpst << " " << gnss.lat << " " << gnss.lon << ' ' << gnss.mode;
+	  DataFusion::Instance().MeasureUpdatePos(gnss);
+	  if (!gnss_reader.IsOk()) {
+		LOG(WARNING) << "Gnss read failed" << gnss;
+	  }
+//	  LOG_EVERY_N(INFO, 1) << "Next gnss:" << gnss << " " << gnss_reader.IsOk() << "\n" << imu;
 	}
+	while (gnss.gpst < imu.gpst) {
+	  if (!gnss_reader.ReadNext(gnss)) {
+		LOG(WARNING) << "Gnss read failed" << gnss;
+	  }
+	};
 	/*里程计更新*/
 	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdateVel(vel.forward);
-	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.forward;
+	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.gpst;
 	  podoReader->ReadUntil(imu.gpst, &vel);
 	}
 	if (opt.zupt_enable and smooth.isStatic()) {
@@ -181,7 +189,9 @@ int main(int argc, char *argv[]) {
 			<< "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
 			<< "\tTime for Computing:" << time_resolve << "s" << '\n'
 			<< "\tTime for File Writing:" << time_writing << 's' << '\n'
+			#if KD_IN_KALMAN_FILTER
 			<< "\tFinal odo scale factor:" << nav.kd << '\n'
+			#endif
 			<< "\tFinal PVA:" << DataFusion::Instance().Output() << '\n';
   return 0;
 }

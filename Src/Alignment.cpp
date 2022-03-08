@@ -61,9 +61,9 @@ double AlignMoving::Update(const GnssData &gnss) {
 	  nav.vn[2] = distance.dd;
 	  nav.vel_std = {0.3, 0.3, 0.3};
 	  nav.atti[2] = atan2(distance.de, distance.dn);
-	  nav.att_std[0] = 5 * _deg;
-	  nav.att_std[1] = 5 * _deg;
-	  nav.att_std[2] = 10 * _deg;
+	  nav.att_std[0] = 0.1 * _deg;
+	  nav.att_std[1] = 0.1 * _deg;
+	  nav.att_std[2] = 0.5 * _deg;
 	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
 	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	  flag_yaw_finished = true;
@@ -78,8 +78,8 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.Cne = Convert::lla_to_cne(ll);
   for (int i = 0; i < 3; i++) {
 	nav.pos_std[i] =  gnss.pos_std[i];
-	nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
-	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
+//	nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
+//	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
 	nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
 	nav.ab[i] = option.imuPara.ab_ini[i];
   }

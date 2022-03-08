@@ -141,7 +141,7 @@ int Ins::ForwardMechanization(const ImuData &imuData) {
 #endif
   Vec3d acce_ = CompensateIMU(acce, nav.ab, nav.as);
   Vec3d gyro_ = CompensateIMU(gyro, nav.gb, nav.gs);
-  ForwardMechanization(acce_, gyro);
+  ForwardMechanization(acce_, gyro_);
   nav.gpst = imuData.gpst;
   _acce_pre = acce_;
   _gyro_pre = gyro_;

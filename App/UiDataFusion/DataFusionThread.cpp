@@ -93,6 +93,7 @@ void DataFusionThread::run() {
   }
   /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   LOG(INFO) << "from:" << imu.gpst << " to: " << config.stop_time;
+
   while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
 	if (!imu_reader.ReadNext(imu))break;
 	/*第二步 时间更新*/
@@ -117,7 +118,7 @@ void DataFusionThread::run() {
 	}
 	out = DataFusion::Instance().Output();
 	writer.update(out);
-	usleep(500);
+//	usleep(500);
 	/*进度打印*/
 	SendStatus((int)(100 * (imu.gpst - config.start_time) / (config.stop_time - config.start_time)));
   }

@@ -180,7 +180,7 @@ typedef struct {
   float  nhc_std[2];
   float  kd_init;
   float  kd_std ;
-  /*TODO*/
+  float gnss_std_scale;
   int enable_gnss;
 } Option;
 

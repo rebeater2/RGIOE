@@ -362,7 +362,8 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 	  gnss.mode = GnssMode::SPP;
 	  break;
 	case RTKLIB_TXT_POS: {
-	  ss >>gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
+	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
+		 >> gnss.pos_std[2]
 		 >> q >> gnss.ns;
 	  if (q < 0 or q > 7) {
 		ok_ = false;
@@ -371,10 +372,11 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 	  gnss.mode = mode_list[q];
 	}
 	  break;
-    case GNSS_10_LINES:
-      ss >>gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2]
-      >>gnss.hdop>>gnss.ns>> gnss.mode;// >> gnss.ns;
-      gnss.yaw = -1;
+	case GNSS_10_LINES:
+	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
+		 >> gnss.pos_std[2] >> gnss.ns >> gnss.mode;// >> gnss.ns;
+	  gnss.yaw = -1;
+	  gnss.pitch = -1;
 	  break;
 	default:ok_ = false;
 	  return false;

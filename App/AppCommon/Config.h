@@ -23,6 +23,7 @@ struct GnssConfig : public BaseConfig {
   float level_arm[3]{0};
   float pitch_of_antenna{0};
   float yaw_of_antenna{0};
+  float scale_of_std{1};/*调整标准差缩放水平*/
 };
 
 

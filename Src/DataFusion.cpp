@@ -17,26 +17,26 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
   Q0.setZero();
   /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
   Option default_option{
-    .imuPara={0,0},
-    .init_epoch={0,0},
-    .d_rate = 200,
-    .align_mode=AlignMode ::ALIGN_USE_GIVEN,
-    .nhc_enable=false,
-    .zupt_enable=false,
-    .zupta_enable=false,
-    .zupt_std=0.00001,
-    .zupta_std=0.1*_deg,
-    .lb_gnss={0,0,0},
-    .odo_std = 0.000001,
-    .lb_wheel={0,0,0},
-    .angle_bv={0,0,0},
-    .pos_std={0,0,0},
-    .vel_std={0,0,0},
-    .atti_std={10*_deg,10*_deg,10*_deg},
-    .nhc_std={0.00001,0.00001},
-    .kd_init=1.0,
-    .kd_std=0.001 ,
-    };
+	  .imuPara={0, 0},
+	  .init_epoch={0, 0},
+	  .d_rate = 200,
+	  .align_mode=AlignMode::ALIGN_USE_GIVEN,
+	  .nhc_enable=false,
+	  .zupt_enable=false,
+	  .zupta_enable=false,
+	  .zupt_std=0.00001,
+	  .zupta_std=0.1 * _deg,
+	  .lb_gnss={0, 0, 0},
+	  .odo_std = 0.000001,
+	  .lb_wheel={0, 0, 0},
+	  .angle_bv={0, 0, 0},
+	  .pos_std={0, 0, 0},
+	  .vel_std={0, 0, 0},
+	  .atti_std={10 * _deg, 10 * _deg, 10 * _deg},
+	  .nhc_std={0.00001, 0.00001},
+	  .kd_init=1.0,
+	  .kd_std=0.001,
+  };
   _timeUpdateIdx = 0;
   update_flag = 0x00;
 }
@@ -151,9 +151,9 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	nav.info.gnss_mode = gnssData.mode;
 	Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
 	Mat3d Rk = Mat3d::Zero();
-	Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0];
-	Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1];
-	Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2];
+	Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0] * opt.gnss_std_scale;
+	Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1] * opt.gnss_std_scale;
+	Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2] * opt.gnss_std_scale;
 	MeasureUpdatePos(pos, Rk);
   } else {
 	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
@@ -164,7 +164,7 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   nav.info.sensors |= SensorType::SENSOR_ODO;
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
-  Vec3d w_ib = _gyro_pre*opt.d_rate;
+  Vec3d w_ib = _gyro_pre * opt.d_rate;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));
   Mat3Xd H3 = Mat3Xd::Zero();
@@ -172,14 +172,14 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
 #if KD_IN_KALMAN_FILTER == 1
-  H3.block<3,1>(0,15)=vel;
+  H3.block<3, 1>(0, 15) = vel;
   Vec3d z = v_v - nav.kd * vel;
 #else
   Vec3d z = v_v - vel;
 #endif
   Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
-  Update(H3,z,R);
-//  Update(H3.block<STATE_CNT,1>(0,0), z[0], 0.01);
+//  Update(H3, z, R);
+  Update(H3.block<STATE_CNT,1>(0,0), z[0], 0.01);
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
 }
@@ -309,47 +309,47 @@ int DataFusion::MeasureUpdateRelativeHeight(const double height) {
 	m_height_ = height;
 	p_height_ = nav.pos[2];
   } else {
-	double z = (nav.pos[2] -  p_height_) - (height - m_height_);
+	double z = (nav.pos[2] - p_height_) - (height - m_height_);
 	m_height_ = height;
 	p_height_ = nav.pos[2];
 	Vec1Xd H = Vec1Xd::Zero();
 	H[3] = 1;
 	double R = 0.4;
-	Update(H,z,R);
+	Update(H, z, R);
 	update_flag |= SENSOR_HEIGHT;
   }
   return 0;
 }
 
 Outage::Outage(float start, float stop, float outage, float step) : outage(outage) {
-	if ((start > stop and stop > 0) or outage < 0 or step < outage) {
-		flag_enable = false;
-		return;
-	}
-	flag_enable = true;
-	if (stop < 0) stop = start + 4000;
-	for (float i = start; i < stop; ) {
-		starts.push_back(i);
-		i += step;
-	}
+  if ((start > stop and stop > 0) or outage < 0 or step < outage) {
+	flag_enable = false;
+	return;
+  }
+  flag_enable = true;
+  if (stop < 0) stop = start + 4000;
+  for (float i = start; i < stop;) {
+	starts.push_back(i);
+	i += step;
+  }
 }
 
 /*!
  * 判断当前时间是否处于中断模式
  * */
 bool Outage::IsOutage(double gpst) {
-	if (!flag_enable) {
-		return false;
-	}
-	for (auto &s:starts) {
-		if (gpst <= s + outage) {
-			return s <= gpst;
-		}
-	}
+  if (!flag_enable) {
 	return false;
+  }
+  for (auto &s:starts) {
+	if (gpst <= s + outage) {
+	  return s <= gpst;
+	}
+  }
+  return false;
 }
 
 Outage::Outage() {
-	flag_enable = false;
-	outage = 0;
+  flag_enable = false;
+  outage = 0;
 }
