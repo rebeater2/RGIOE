@@ -183,6 +183,9 @@ typedef struct {
   float gnss_std_scale;
   int enable_rts;
   int enable_gnss;
+  int output_project_enable;
+  float pos_project[3];
+  float atti_project[3];
 } Option;
 
 typedef struct {

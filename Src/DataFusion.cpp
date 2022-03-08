@@ -16,7 +16,7 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
   P.setZero();
   Q0.setZero();
   /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
-  Option default_option{
+/*  Option default_option = default_option{
 	  .imuPara={0, 0},
 	  .init_epoch={0, 0},
 	  .d_rate = 200,
@@ -36,7 +36,7 @@ DataFusion::DataFusion() : Ins(), KalmanFilter() {
 	  .nhc_std={0.00001, 0.00001},
 	  .kd_init=1.0,
 	  .kd_std=0.001,
-  };
+  };*/
   _timeUpdateIdx = 0;
   update_flag = 0x00;
 }
@@ -313,7 +313,6 @@ uint32_t DataFusion::EpochCounter() const {
  * @param height：提供高程量测更新
  * $deltaZ = \hat\deltaH - delta H $
  * 利用相对高程变化的差计算高程误差，需要保存上时刻高程，和上时刻量测
- *
  * @return 0
  */
 int DataFusion::MeasureUpdateRelativeHeight(const double height) {
@@ -356,6 +355,35 @@ bool DataFusion::RtsUpdate() {
   xd = xdc + matA * xd;
   _feedBack();
   return matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty();
+}
+NavOutput DataFusion::Output() const {
+  Vec3d projpos = nav.pos;
+  Vec3d projatti = nav.atti;
+  if (opt.output_project_enable) {
+	Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
+				 1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+				 -1
+	};
+	Vec3d outlb = {opt.pos_project[0], opt.pos_project[1], opt.pos_project[2]};
+	projpos = nav.pos + vdr.asDiagonal() * nav.Cbn * outlb;
+  }
+  static NavOutput out;
+  out.gpst = nav.gpst;
+  out.lat = projpos[0] / _deg;
+  out.lon = projpos[1] / _deg;
+  out.height = (float)projpos[2];
+  for (int i = 0; i < 3; i++) {
+	out.vn[i] = (float)nav.vn[i];
+	out.atti[i] = (float)(projatti[i] / _deg);
+	out.gb[i] = (float)(nav.gb[i] / _deg * _hour);
+	out.ab[i] = (float)(nav.ab[i] / _mGal);
+  }
+#if KD_IN_KALMAN_FILTER == 1
+  out.kd =(float) nav.kd;
+#endif
+  out.info = nav.info;
+  out.week = nav.week;
+  return out;
 }
 
 Outage::Outage(float start, float stop, float outage, float step) : outage(outage) {

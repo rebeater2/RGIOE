@@ -163,6 +163,16 @@ void Config::LoadFrom(const string &path) {
   stop_time = node["stop-time"].as<float>();
   output_path = node["output-path"].as<string>();
   enable_rts = node["enable-rts"].as<bool>();
+
+  output_config.enable = node["Output-Config"]["enable"].as<bool>();
+  output_config.pos_project[0] = node["Output-Config"]["position-project"][0].as<float>();
+  output_config.pos_project[1] = node["Output-Config"]["position-project"][1].as<float>();
+  output_config.pos_project[2] = node["Output-Config"]["position-project"][2].as<float>();
+
+  output_config.atti_project[0] = node["Output-Config"]["attitude-project"][0].as<float>();
+  output_config.atti_project[1] = node["Output-Config"]["attitude-project"][1].as<float>();
+  output_config.atti_project[2] = node["Output-Config"]["attitude-project"][2].as<float>();
+
   imu_config.enable = node["IMU-Config"]["enable"].as<bool>();
   imu_config.file_path = node["IMU-Config"]["file-path"].as<std::string>();
   imu_config.d_rate = node["IMU-Config"]["d-rate"].as<int>();
@@ -252,6 +262,9 @@ Option Config::GetOption() const {
 	  .kd_std = odometer_config.scale_factor_std,
 	  .gnss_std_scale = gnss_config.scale_of_std,
 	  .enable_rts = enable_rts,
+	  .output_project_enable = output_config.enable,
+	  .pos_project={output_config.pos_project[0],output_config.pos_project[1],output_config.pos_project[2]},
+	  .atti_project={output_config.atti_project[1],output_config.atti_project[1],output_config.atti_project[2]}
   };
   return opt;
 }

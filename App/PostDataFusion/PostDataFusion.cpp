@@ -11,6 +11,7 @@
 
 #include "fmt/format.h"
 
+#include <list>
 /*extern int GnssCheck(const GnssData &gnss){
   if (gnss.ns > 60) {
     return 0;
@@ -152,13 +153,12 @@ int main(int argc, char *argv[]) {
 	DataFusion::Instance().TimeUpdate(imu);
 	smooth.Update(imu);
 	/* GNSS更新 */
-	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
+	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
 	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss.gpst << " " << gnss.lat << " " << gnss.lon << ' ' << gnss.mode;
 	  DataFusion::Instance().MeasureUpdatePos(gnss);
 	  if (!gnss_reader.IsOk()) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
-//	  LOG_EVERY_N(INFO, 1) << "Next gnss:" << gnss << " " << gnss_reader.IsOk() << "\n" << imu;
 	}
 	while (gnss.gpst < imu.gpst) {
 	  if (!gnss_reader.ReadNext(gnss)) {
@@ -180,16 +180,22 @@ int main(int argc, char *argv[]) {
 	}
   }
   if (opt.enable_rts) {
+    /* RTS模式下,输出结果顺序是反的,因此用栈结构存储 */
 	LOG(INFO) << "Start RTS smooth";;
-	bool finished = false;
+	bool finished ;
+	std::list<NavOutput> result;
 	do {
 	  finished = DataFusion::Instance().RtsUpdate();
 	  out = DataFusion::Instance().Output();
-	  writer.update(out);
+	  result.push_back(out);
 	} while (!finished);
+	LOG(INFO)<<"Saving result...";
+	while(!result.empty()){
+	  writer.update(result.back());
+	  result.pop_back();
+	}
 	LOG(INFO) << "RTS smooth finished\n";
   }
-
   LOG(INFO) << "Process finished";
 /*show summary and reports:*/
   double time_resolve = static_cast<double>(timer.elapsed()) / 1000.0;

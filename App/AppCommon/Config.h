@@ -26,6 +26,11 @@ struct GnssConfig : public BaseConfig {
   float scale_of_std{1};/*调整标准差缩放水平*/
 };
 
+struct OutputConfig{
+  bool enable{false};
+  float pos_project[3];
+  float atti_project[3];
+};
 
 class IMUConfig : public BaseConfig {
  public:
@@ -88,6 +93,7 @@ class Config {
   ZuptConfig zupt_config;
   AlignConfig align_config;
   OutageConfig outage_config;
+  OutputConfig output_config;
   void SaveTo(const std::string &path) const;
   std::string ToStdString()const;
   void LoadFrom(const std::string &path);
