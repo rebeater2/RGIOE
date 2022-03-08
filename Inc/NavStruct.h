@@ -181,6 +181,7 @@ typedef struct {
   float  kd_init;
   float  kd_std ;
   float gnss_std_scale;
+  int enable_rts;
   int enable_gnss;
 } Option;
 

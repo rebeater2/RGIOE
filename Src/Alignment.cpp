@@ -54,7 +54,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 	flag_yaw_finished = true;
   } else {
 	auto distance = WGS84::Instance().distance(gnss, gnss_pre);
-	v =(float) distance.d;
+	v = (float)distance.d;
 	if (vel_threshold < distance.d and distance.d < 1e3) {
 	  nav.vn[0] = distance.dn;
 	  nav.vn[1] = distance.de;
@@ -70,14 +70,24 @@ double AlignMoving::Update(const GnssData &gnss) {
 	}
   }
   nav.gpst = gnss.gpst;
+
   nav.pos[0] = gnss.lat * _deg;
   nav.pos[1] = gnss.lon * _deg;
   nav.pos[2] = gnss.height;
+
+  Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
+			   1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+			   -1
+  };
+  Vec3d lb = {option.lb_gnss[0], option.lb_gnss[1], option.lb_gnss[2]};
+  Mat3d Dr = vdr.asDiagonal();
+  nav.pos -= Dr * nav.Cbn * lb;
+
   auto ll = LatLon{nav.pos[0], nav.pos[1]};
   nav.Qne = Convert::lla_to_qne(ll);
   nav.Cne = Convert::lla_to_cne(ll);
   for (int i = 0; i < 3; i++) {
-	nav.pos_std[i] =  gnss.pos_std[i];
+	nav.pos_std[i] = gnss.pos_std[i];
 //	nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
 //	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
 	nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
