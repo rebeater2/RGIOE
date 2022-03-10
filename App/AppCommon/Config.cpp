@@ -235,7 +235,7 @@ void Config::LoadFrom(const string &path) {
   outage_config.start = node["Outage-Config"]["start"].as<float>();
   outage_config.stop = node["Outage-Config"]["stop"].as<float>();
   outage_config.step = node["Outage-Config"]["step"].as<float>();
-  outage_config.outage = node["Outage-Config"]["step"].as<float>();
+  outage_config.outage = node["Outage-Config"]["outage"].as<float>();
 }
 Option Config::GetOption() const {
   Option opt{

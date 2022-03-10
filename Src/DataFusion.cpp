@@ -52,6 +52,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
+  nav.kd = opt.kd_init;
   WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
@@ -62,8 +63,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   temp = Vec3d{opt.imuPara.ab_std[0], opt.imuPara.ab_std[1], opt.imuPara.ab_std[2]};
   P.block<3, 3>(12, 12) = temp.asDiagonal();
 #if KD_IN_KALMAN_FILTER == 1
-  float kd_std = opt.kd_std;
-  P(15, 15) = kd_std;/*里程计比例因子*/
+  P(15, 15) = opt.kd_std;/*里程计比例因子*/
 #endif
   P = P * P;/*计算协方差矩阵*/
   Q0.setZero();
@@ -82,7 +82,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   Q0(13, 13) = 2 * opt.imuPara.ab_std[1] * opt.imuPara.ab_std[1] / opt.imuPara.at_corr;
   Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
 #if KD_IN_KALMAN_FILTER == 1
-  Q0(15, 15) = 2 * kd_std * kd_std / opt.imuPara.gt_corr;
+  Q0(15, 15) = 2 *  opt.kd_std *  opt.kd_std / opt.imuPara.gt_corr;
 #endif
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
@@ -185,13 +185,17 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
 #if KD_IN_KALMAN_FILTER == 1
   H3.block<3, 1>(0, 15) = vel;
-  Vec3d z = v_v - nav.kd * vel;
-#else
-  Vec3d z = v_v - vel;
 #endif
+  Vec3d z = v_v - nav.kd * vel;
   Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
+  if(opt.nhc_enable){
+    Update(H3, z, R*R);
+  }else{
+    Update(H3.block<STATE_CNT, 1>(0, 0), z[0], opt.odo_std*opt.odo_std);
+  }
+
 //  Update(H3, z, R);
-  Update(H3.block<STATE_CNT, 1>(0, 0), z[0], 0.01);
+
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
 }
@@ -386,35 +390,3 @@ NavOutput DataFusion::Output() const {
   return out;
 }
 
-Outage::Outage(float start, float stop, float outage, float step) : outage(outage) {
-  if ((start > stop and stop > 0) or outage < 0 or step < outage) {
-	flag_enable = false;
-	return;
-  }
-  flag_enable = true;
-  if (stop < 0) stop = start + 4000;
-  for (float i = start; i < stop;) {
-	starts.push_back(i);
-	i += step;
-  }
-}
-
-/*!
- * 判断当前时间是否处于中断模式
- * */
-bool Outage::IsOutage(double gpst) {
-  if (!flag_enable) {
-	return false;
-  }
-  for (auto &s:starts) {
-	if (gpst <= s + outage) {
-	  return s <= gpst;
-	}
-  }
-  return false;
-}
-
-Outage::Outage() {
-  flag_enable = false;
-  outage = 0;
-}

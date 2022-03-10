@@ -9,22 +9,7 @@
 #include "InsCore.h"
 #include "StaticDetect.h"
 //#define OUTAGE_SUPPORT
-#if USE_OUTAGE == 1
-#include <vector>
-class Outage {
-private:
-	std::vector<float> starts;
-	float outage;
-	bool flag_enable;
-public:
-  Outage(float start, float stop, float outage, float step);
 
-	Outage();
-
-	/*tell if gpst is in outage mode */
-	bool IsOutage(double gpst);
-};
-#endif
 extern Option default_option;
 extern char CopyRight[];
 template<typename T>
@@ -61,9 +46,6 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   std::list<NavEpoch> navs;
 
   uint32_t _timeUpdateIdx;/*时间更新计数器*/
-#if USE_OUTAGE == 1
-  Outage otg;
-#endif
  private:
   Mat3Xd _posH() const;
   __attribute__((unused)) Mat3Xd _velH() const;

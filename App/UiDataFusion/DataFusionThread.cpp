@@ -10,6 +10,7 @@
 #include "Alignment.h"
 #include "FileIO.h"
 #include "Timer.h"
+#include "Outage.h"
 #include <glog/logging.h>
 
 void DataFusionThread::run() {

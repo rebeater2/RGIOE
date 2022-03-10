@@ -37,9 +37,7 @@ typedef struct {
   Vec3d pos_std;
   Vec3d vel_std;
   Vec3d att_std;
-#if KD_IN_KALMAN_FILTER == 1
   double kd;/*里程计比例因子*/
-#endif
   NavInfo info;
   int week;
 

@@ -10,7 +10,7 @@
 
 #include "KalmanFilter.h"
 void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
-//  xd = PHI * xd; /*xd保持为0*/
+  xd = PHI * xd; /*xd保持为0*/
   P = PHI * P * PHI.transpose() + Q;
 }
 void KalmanFilter::Update(const Vec1Xd &H,  double z,  double R) {

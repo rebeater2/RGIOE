@@ -38,4 +38,4 @@ def nav_compare():
 
 
 if __name__ == '__main__':
-    nav_compare()
+    showBias()

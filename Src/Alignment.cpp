@@ -97,9 +97,10 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.vf_kb = {0, 0, 0};
   nav.gs = {0, 0, 0};
   nav.as = {0, 0, 0};
-#if KD_IN_KALMAN_FILTER == 1
+//#if KD_IN_KALMAN_FILTER == 1
+//  nav.kd = option.kd_init;
+//#endif
   nav.kd = option.kd_init;
-#endif
   nav.info.gnss_mode = gnss.mode;
   nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
   nav.week = gnss.week;
@@ -108,9 +109,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 }
 
 AlignMoving::AlignMoving(double vel_threshold, const Option &opt) : option(opt), vel_threshold(vel_threshold) {
-#if KD_IN_KALMAN_FILTER == 1
   nav.kd = opt.kd_init;
-#endif
   gnss_pre = {0, 0, 0,
 			  0, 0, 0,
 			  0,

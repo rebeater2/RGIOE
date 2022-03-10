@@ -42,7 +42,14 @@ Quad Convert::rv_to_quaternion(const Vec3d &rotation_vector) {
         return q;
     }
 }
-
+/**
+ * 反对称矩阵
+ * @param v [x,y,z]
+ * @return matrix 3x3
+ * [[0 -z y]
+ * [z 0 -x]
+ * [-y x 0]]
+ */
 Mat3d Convert::skew(const Vec3d &v) {
     Mat3d m;
     m.setZero();

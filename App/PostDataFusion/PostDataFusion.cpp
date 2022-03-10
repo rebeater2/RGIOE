@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "NavLog.h"
 #include "Timer.h"
+#include "Outage.h"
 
 #include "fmt/format.h"
 
@@ -42,13 +43,6 @@ void navExit(const std::string &info) {
  * @param t 数据存储位置
  * @param gpst 要挪到的时间
  */
-template<class T>
-void moveFilePoint(ifstream &is, T &t, double gpst) {
-  do {
-	is >> t;
-  } while (t.gpst < gpst and is.good());
-  is >> t;
-}
 
 int main(int argc, char *argv[]) {
   logInit(argv[0], "./");
@@ -73,8 +67,11 @@ int main(int argc, char *argv[]) {
   GnssData gnss;
   NavOutput out;
   Velocity vel;
+
   Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
 					config.outage_config.step};// = cfg.outage_config();
+  LOG(INFO) << config.outage_config.start << " " << config.outage_config.stop << " " << config.outage_config.outage
+			<< " " << config.outage_config.step;
   IMUSmooth smooth;
 
 /*移动文件指针到指定的开始时间*/
@@ -155,7 +152,11 @@ int main(int argc, char *argv[]) {
 	/* GNSS更新 */
 	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
 	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss.gpst << " " << gnss.lat << " " << gnss.lon << ' ' << gnss.mode;
-	  DataFusion::Instance().MeasureUpdatePos(gnss);
+	  if (!outage_cfg.IsOutage(gnss.gpst)) {
+		DataFusion::Instance().MeasureUpdatePos(gnss);
+	  }else{
+	    LOG(INFO) << gnss.gpst<<" is in outage" ;
+	  }
 	  if (!gnss_reader.IsOk()) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
@@ -180,17 +181,17 @@ int main(int argc, char *argv[]) {
 	}
   }
   if (opt.enable_rts) {
-    /* RTS模式下,输出结果顺序是反的,因此用栈结构存储 */
+	/* RTS模式下,输出结果顺序是反的,因此用栈结构存储 */
 	LOG(INFO) << "Start RTS smooth";;
-	bool finished ;
+	bool finished;
 	std::list<NavOutput> result;
 	do {
 	  finished = DataFusion::Instance().RtsUpdate();
 	  out = DataFusion::Instance().Output();
 	  result.push_back(out);
 	} while (!finished);
-	LOG(INFO)<<"Saving result...";
-	while(!result.empty()){
+	LOG(INFO) << "Saving result...";
+	while (!result.empty()) {
 	  writer.update(result.back());
 	  result.pop_back();
 	}
@@ -206,9 +207,8 @@ int main(int argc, char *argv[]) {
 			<< "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
 			<< "\tTime for Computing:" << time_resolve << "s" << '\n'
 			<< "\tTime for File Writing:" << time_writing << 's' << '\n'
-			#if KD_IN_KALMAN_FILTER
 			<< "\tFinal odo scale factor:" << nav.kd << '\n'
-			#endif
+			<< "\tFinal odo scale std:" << opt.kd_std << '\n'
 			<< "\tFinal PVA:" << DataFusion::Instance().Output() << '\n';
   return 0;
 }

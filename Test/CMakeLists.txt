@@ -9,6 +9,7 @@ file(GLOB_RECURSE SOURCE
 #add_definitions(-DUSE_INCREMENT=1)
 #define USE_INCREMENT 1c
 find_package(fmt REQUIRED)
+include_directories(../App/AppCommon)
 add_executable(test_ins
         ../Src/InsCore.cpp
         ../Src/WGS84.cpp
@@ -23,3 +24,8 @@ add_executable(test_kalman
         ../Src/KalmanFilter.cpp
         )
 target_link_libraries(test_kalman Eigen3::Eigen)
+
+add_executable(testOutage
+        ../Src/Outage.cpp
+        testOutage.cpp
+        )
