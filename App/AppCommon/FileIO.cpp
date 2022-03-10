@@ -404,3 +404,23 @@ bool OdometerReader::ReadNext(Velocity &vel) {
 double OdometerReader::GetTime(const Velocity &vel) const {
   return vel.gpst;
 }
+NavReader::NavReader(string &filename) {
+  ifs.open(filename);
+  ok_ = ifs.good();
+}
+bool NavReader::ReadNext(NavOutput &nav) {
+  if (!ok_) return ok_;
+  std::string buffer;
+  getline(ifs, buffer);
+  stringstream ss(buffer);
+  ss >> nav.week>>nav.gpst >> nav.lat >> nav.lon >> nav.height
+	 >> nav.vn[0] >> nav.vn[1] >> nav.vn[2]
+	 >> nav.atti[0] >> nav.atti[1] >> nav.atti[2]
+	 >> nav.gb[0] >> nav.gb[1] >> nav.gb[2]
+	 >> nav.ab[0] >> nav.ab[1] >> nav.ab[2];
+  ok_ = !ifs.eof();
+  return ok_;
+}
+double NavReader::GetTime(const NavOutput &nav) const {
+  return nav.gpst;
+}

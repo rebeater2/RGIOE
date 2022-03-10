@@ -25,22 +25,20 @@
 using namespace std;
 #define SEPERATE (' ')
 
+ostream &operator<<(ostream &os, const ImuData &imu);
 
-ostream &operator<<(ostream &os,const ImuData &imu);
-
-ostream &operator<<(ostream &os,const NavOutput &output);
+ostream &operator<<(ostream &os, const NavOutput &output);
 
 ifstream &operator>>(ifstream &is, ImuData &imu);
-int ReadImu(istream &is,ImuData &imu,IMUFileFormat fmt);
-
+int ReadImu(istream &is, ImuData &imu, IMUFileFormat fmt);
 
 ifstream &operator>>(ifstream &is, GnssData &gnss);
 
-ostream &operator<<(ostream &os,const ImuPara &imuPara);
+ostream &operator<<(ostream &os, const ImuPara &imuPara);
 
 ostream &operator<<(ostream &os, const AuxiliaryData &aux);
-ostream &operator<<(ostream &os,const GnssData &gnss);
- istream &operator>>( istream &is,  AuxiliaryData &aux);
+ostream &operator<<(ostream &os, const GnssData &gnss);
+istream &operator>>(istream &is, AuxiliaryData &aux);
 
 class NavWriter {
   /*多线程读写*/
@@ -102,9 +100,9 @@ bool ReaderBase<T>::ReadUntil(double gpst, T *pdata) {
   if (!ok_) return ok_;
   T data;
   do {
-    if (!ReadNext(data)) {
-      return false;
-    };
+	if (!ReadNext(data)) {
+	  return false;
+	};
   } while (GetTime(data) < gpst);
   if (pdata) *pdata = data;
   return true;
@@ -155,6 +153,13 @@ class GnssReader : public ReaderBase<GnssData> {
   GnssMode mode_list[7] = {INVALID, RTK_FIX, RTK_FLOAT, SBAS, RTK_DGPS, SPP, PPP};
 };
 
+class NavReader : public ReaderBase<NavOutput> {
+ public:
+  explicit NavReader(std::string &filename);
+ public:
+  bool ReadNext(NavOutput &nav) override;
+  double GetTime(const NavOutput &nav) const override;
+};
 class OdometerReader : public ReaderBase<Velocity> {
  public:
   explicit OdometerReader(const std::string &file_path);
