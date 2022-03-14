@@ -150,21 +150,23 @@ int main(int argc, char *argv[]) {
 	DataFusion::Instance().TimeUpdate(imu);
 	smooth.Update(imu);
 	/* GNSS更新 */
-	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
-	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss.gpst << " " << gnss.lat << " " << gnss.lon << ' ' << gnss.mode;
-	  if (!outage_cfg.IsOutage(gnss.gpst)) {
-		DataFusion::Instance().MeasureUpdatePos(gnss);
+	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.5 / opt.d_rate) {
+	  if (!(config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst))) {
+	    DataFusion::Instance().MeasureUpdatePos(gnss);
+	    LOG_EVERY_N(INFO, 1) << "GNSS update:" << gnss;
 	  }else{
-	    LOG(INFO) << gnss.gpst<<" is in outage" ;
 	  }
+	  gnss_reader.ReadNext(gnss);
 	  if (!gnss_reader.IsOk()) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
+//	  "imu.gpst="<<imu.gpst<<" gnss:"<<gnss.gpst;
 	}
 	while (gnss.gpst < imu.gpst) {
 	  if (!gnss_reader.ReadNext(gnss)) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
+
 	};
 	/*里程计更新*/
 	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
@@ -207,9 +209,10 @@ int main(int argc, char *argv[]) {
 			<< "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
 			<< "\tTime for Computing:" << time_resolve << "s" << '\n'
 			<< "\tTime for File Writing:" << time_writing << 's' << '\n'
-			<< "\tFinal odo scale factor:" << nav.kd << '\n'
-			<< "\tFinal odo scale std:" << opt.kd_std << '\n'
 			<< "\tFinal PVA:" << DataFusion::Instance().Output() << '\n';
+  LOG_IF(INFO, config.outage_config.enable)
+		  << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
+		  << config.outage_config.stop;
   return 0;
 }
 

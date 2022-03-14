@@ -21,6 +21,7 @@
 #define SEQUENCED 0
 #endif
 
+#define ENABLE_AKF 0
 class KalmanFilter {
 //  using Vec3x = Eigen::Matrix<double, 1, 3>;
 //  Vec3x sf;
@@ -28,6 +29,11 @@ class KalmanFilter {
   VecXd xd;
   MatXd P;
   MatXd Q0;
+  Mat3d Rk;
+  double dk = 1;
+  double b=0.9;
+  double rmin = 1e-4;
+  double rmax = 0.1;
 
  public:
   void Predict(const MatXd &PHI, const MatXd &Q);

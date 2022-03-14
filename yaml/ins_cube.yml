@@ -10,7 +10,7 @@ GNSS-Config:
   enable: true
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482.log.gnsstxt
   format: 1
-  std-scale: 0.1
+  std-scale: 1
   level-arm:
     - -0.317
     - -0.095
@@ -29,7 +29,7 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: true
+  enable: false
   odometer-std: 0.100000012
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt
   NHC-enable: true
@@ -72,7 +72,7 @@ Align-Config:
       - 0
       - 0
 Outage-Config:
-  enable: true
+  enable: false
   start: 122871
   stop: 124130
   step: 300

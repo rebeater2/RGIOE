@@ -24,3 +24,6 @@ target_link_libraries(ZeroDetector  Eigen3::Eigen  fmt)
 include_directories(../App/AppCommon)
 add_executable(ImuFix ImuFix.cpp ../App/AppCommon/FileIO.cpp ${SOURCE})
 target_link_libraries(ImuFix  Eigen3::Eigen pthread fmt)
+
+add_executable(ObtainInstallAngle  ObtainInstallAngle.cpp ../App/AppCommon/FileIO.cpp ${SOURCE})
+target_link_libraries(ObtainInstallAngle  Eigen3::Eigen pthread fmt glog)

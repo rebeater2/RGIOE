@@ -13,9 +13,9 @@ void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
   xd = PHI * xd; /*xd保持为0*/
   P = PHI * P * PHI.transpose() + Q;
 }
-void KalmanFilter::Update(const Vec1Xd &H,  double z,  double R) {
+void KalmanFilter::Update(const Vec1Xd &H, double z, double R) {
   VecXd K = P * H.transpose() / (H * P * H.transpose() + R);
-  xd = K * z ;
+  xd = K * z;
   MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
   P = temp * P * temp.transpose() + K * R * K.transpose();
 }
@@ -52,30 +52,52 @@ void KalmanFilter::Update(const MatXd &H, const VecXd &z, const MatXd &R) {
 /*3维卡尔曼更新*/
 int counter = 0;
 void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
-#if SEQUENCED == 0
   counter++;
-  MatX3d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
+#if SEQUENCED == 0
+
+#if ENABLE_AKF == 1
+  Rk = (1 - dk) * R + dk * (z * z.transpose() - H * P * H.transpose());
+  dk = dk / (dk + b);
+  assert(dk > 0 and dk < 1);
+#else
+  Rk = R;
+#endif
+  MatX3d K = P * H.transpose() * ((H * P * H.transpose() + Rk).inverse() + Rk);
 //  xd = xd + K * (z - H * xd);
-    xd =  K *z;
+  xd = K * z;
   MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
   P = temp * P * temp.transpose() + K * R * K.transpose();
 #else
   VecXd xd_ = xd, temp1;
-  VecX1d Hi;
+  Vec1Xd Hi;
   MatXd P_ = P;
   VecXd K_;
   MatXd i_kh;
-  double inno, temp2;
+  double inno, temp2, rk;
   auto I = MatXd::Identity(STATE_CNT, STATE_CNT);
   for (int i = 0; i < z.rows(); i++) {
 	Hi = H.row(i);
-	temp1 = P_ * Hi.transpose();
-	temp2 = (Hi * temp1)(0, 0) + R(i, i);
-	K_ = temp1 / temp2;
 	inno = (z.row(i) - Hi * xd_)(0, 0);
+	/*constrain Rk*/
+#if ENABLE_AKF == 1
+	if (inno < rmin) {
+	  rk = (1 - dk) * R(i, i) + dk * rmin;
+	} else if (inno > rmax) {
+	  rk = rmax;
+	} else {
+	  rk = (1 - dk) * R(i, i) + dk * inno;
+	}
+	dk = dk / (dk + b);
+#else
+	rk = R(i,i);
+#endif
+	temp1 = P_ * Hi.transpose();
+	temp2 = (Hi * temp1)(0, 0) + rk;
+	K_ = temp1 / temp2;
+
 	xd_ = xd_ + K_ * inno;
 	i_kh = I - K_ * Hi;
-	P_ = i_kh * P_ * i_kh.transpose() + K_ * R(i, i) * K_.transpose();
+	P_ = i_kh * P_ * i_kh.transpose() + K_ * rk * K_.transpose();
   }
   xd = xd_;
   P = P_;

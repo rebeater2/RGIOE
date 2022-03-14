@@ -7,7 +7,7 @@
 **/
 #include "FileIO.h"
 int main(int argc, char **argv) {
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd";
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/04/ADI51_220307_118100.raw.imd";
   int rate = 125;
   double dt = 1.0 / rate;
   IMUReader reader(filename, IMU_FILE_IMD, IMU_FRAME_FRD, true, rate);
