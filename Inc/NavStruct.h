@@ -72,13 +72,14 @@ typedef enum {
 } SystemState;
 
 typedef struct {
-  double gpst;
   double lat;
   double lon;
-  float vn[3];
   float height; /*32*/
-  float vn_std[3];
   float pos_std[3];
+#if RUN_IN_STM32 == 0
+  float vn[3];
+  float vn_std[3];
+  double gpst;
   float hdop;
   float pdop;
   float gdop;
@@ -86,10 +87,10 @@ typedef struct {
   float yaw_std;/*32 + 4*6 = 56 */
   float pitch;
   float pitch_std;
+#endif
   int week;/*4*/
   int ns; /*大于128不可能！！！*/
   int mode; /*  和 NMEA的模式定义保持一致*/
-  unsigned char reserved[24];
 } GnssData;/*64 bytes*/
 
 typedef struct {

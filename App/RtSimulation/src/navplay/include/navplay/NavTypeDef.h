@@ -53,18 +53,7 @@ typedef enum {
   DATA_TYPE_BMP = 3,
   DATA_TYPE_RST = 4
 } DataTypeDef;
-typedef struct {
-  unsigned short sensors;
-  unsigned short mode;
-} NavInfo;
-typedef struct {
-  double lat;
-  double lon;
-  float vn[3];
-  float atti[3];
-  NavInfo info;
-  float height;
-}PvaDef;
+
 typedef struct {
   unsigned char  vh_;
   unsigned char vl_;
@@ -81,7 +70,7 @@ typedef struct {
       short ab_mGal[3];
       short gb_degph[3];
     } imu_;
-    PvaDef rst_;
+    NavPva rst_;
     GnssRawDef gnss_;
     VelocityRawDef vel_;
   };

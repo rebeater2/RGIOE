@@ -11,23 +11,7 @@
 #include <NavStruct.h>
 #include <DataFusion.h>
 #include <fmt/format.h>
-using namespace std;
-ifstream &operator>>(ifstream &is, ImuData &imu) {
-
-/*#if IMU_FRAME == 0 *//*前坐上*//*
-  is.read((char *)&imu,sizeof(ImuData));
-  //  is >> imu.gpst;
-  //  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
-  //  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
-#else *//*zhu右前下坐标系*/
-is >> imu.gpst;
-is >> imu.gyro[1] >> imu.gyro[0] >> imu.gyro[2];
-is >> imu.acce[1] >> imu.acce[0] >> imu.acce[2];
-imu.gyro[2] *= (-1.0);
-imu.acce[2] *= (-1.0);
-//#endif
-return is;
-}
+#include "FileIO.h"
 
 int main(int argc,char *argv[]){
   if(argc < 2){
@@ -35,13 +19,14 @@ int main(int argc,char *argv[]){
     return 1;
   }
   ifstream is(argv[1]);
+  IMUReader reader{argv[1],IMU_FILE_IMD,IMU_FRAME_FRD,true,125};
   string s = argv[1];
   ofstream os(s+"_1.imustd");
   ImuData  imu;
-  IMUSmooth smooth(0.005,5,3);
+  IMUSmooth smooth(5e-9,2,10);
   if(!is.good()) cout << "no such file or directory";
-  while(!is.eof() and is.good()){
-    is >> imu;
+  while(reader.IsOk()){
+    reader.ReadNext(imu);
     smooth.Update(imu);
     os << fmt::format("{:.4f} {:12.10f} {:d}\n",imu.gpst,smooth.getStd(),smooth.isStatic());
   }
