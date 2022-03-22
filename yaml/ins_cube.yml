@@ -1,4 +1,4 @@
-!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
+#!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imdfix.imd
@@ -30,22 +30,22 @@ GNSS-Config:
     - 0
 Odometer:
   enable: false
-  odometer-std: 0.100000012
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt
+  odometer-std: 1
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
   NHC-enable: true
   NHC-std:
-    - 0.05
-    - 0.05
+    - 0.2
+    - 0.1
   angle-bv:
     - 0
-    -  -0.26214
-    - -1.47
+    - -2.3521010
+    - 0.8074366
   wheel-level-arm:
     - 0
     - 0
     - 0
-  scale-factor: 1.05
-  scale-factor-std: 0.1
+  scale-factor: 1
+  scale-factor-std: 0.0001
 ZUPT-Config:
   ZUPT-enable: false
   ZUPTA-enable: false
@@ -73,10 +73,10 @@ Align-Config:
       - 0
 Outage-Config:
   enable: false
-  start: 122871
-  stop: 124130
-  step: 300
-  outage: 20
+  start: 122671
+  stop: 124000
+  step: 120
+  outage: 30
 Output-Config:
   enable: false
   position-project:
@@ -87,7 +87,11 @@ Output-Config:
     - 0
     - 0
     - 0
+Pressure-Config:
+  enable: false
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
+  height-std: 0.2
 start-time: 122371
-stop-time: 124130
-enable-rts: false
+stop-time: 124100
+enable-rts: true
 output-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.post.nav

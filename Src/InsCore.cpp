@@ -60,18 +60,6 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
   return nav;
 }
 
-std::ostream &operator<<(std::ostream &os, NavEpoch &nav) {
-  os << nav.week << "\t" << fixed << setprecision(10) << nav.gpst << setprecision(12) << "\t" << nav.pos[0] / _deg
-	 << " "
-	 << nav.pos[1] / _deg << " " << setprecision(8) << nav.pos[2] << "\t"
-	 << nav.vn[0] << " " << nav.vn[1] << " " << nav.vn[2] << "\t"
-	 << nav.atti[0] / _deg << " " << nav.atti[1] / _deg << " " << nav.atti[2] / _deg;
-  os << "\n" << "bias:" << nav.gb[0] << ' ' << nav.gb[1] << ' ' << nav.gb[2] << ' ' << nav.ab[0] << " " << nav.ab[1]
-	 << ' ' << nav.ab[2] << '\n';
-  os << "mode" << nav.info.gnss_mode << " " << nav.info.sensors;
-  return os;
-
-}
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
   omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
