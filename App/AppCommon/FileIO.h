@@ -167,6 +167,14 @@ class OdometerReader : public ReaderBase<Velocity> {
   double GetTime(const Velocity &vel) const override;
 };
 
+class BmpReader:public ReaderBase<PressureData>{
+ public:
+  explicit BmpReader(const std::string &filepath);
+  bool ReadNext(PressureData &press) override;
+  double GetTime(const PressureData &press)const override;
+};
+
+
 Option loadOptionFromYml(char path[]);
 
 NavOutput loadNavFromYml(char path[]);

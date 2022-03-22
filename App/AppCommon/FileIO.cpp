@@ -219,7 +219,7 @@ void NavWriter::th_write_nav() {
 	  auto p_nav = nav_msgs.front();
 	  nav_msgs.pop();
 	  mtx_nav.unlock();
-	  f_nav << *p_nav << "\n";/* */
+	  f_nav << *p_nav <<" "<<p_nav->kd<< "\n";/* */
 
 	}
   }
@@ -423,4 +423,20 @@ bool NavReader::ReadNext(NavOutput &nav) {
 }
 double NavReader::GetTime(const NavOutput &nav) const {
   return nav.gpst;
+}
+BmpReader::BmpReader(const string &filepath) {
+  ifs.open(filepath);
+  ok_ = ifs.good();
+}
+double BmpReader::GetTime(const PressureData &press) const {
+  return press.gpst;
+}
+bool BmpReader::ReadNext(PressureData &press) {
+  if (!ok_) return ok_;
+  std::string buffer;
+  getline(ifs, buffer);
+  stringstream ss(buffer);
+  ss >> press.gpst>>press.pressure;
+  ok_ = !ifs.eof();
+  return ok_;
 }
