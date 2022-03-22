@@ -9,6 +9,13 @@
 
 
 #include "KalmanFilter.h"
+
+KalmanFilter::KalmanFilter(VecXd xd, MatXd P) : xd(std::move(xd)), P(std::move(P)) {
+#if KALMAN_DEBUG == 1
+  ofs.open("./debug_info.txt");
+#endif
+}
+int predict_cnt = 0;
 void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
   xd = PHI * xd; /*xd保持为0*/
   P = PHI * P * PHI.transpose() + Q;
@@ -18,7 +25,25 @@ void KalmanFilter::Update(const Vec1Xd &H, double z, double R) {
   xd = K * z;
   MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
   P = temp * P * temp.transpose() + K * R * K.transpose();
+
 }
+void KalmanFilter::Update(const Vec1Xd &H, double z) {
+  double inno = z * z - H * P * H.transpose();
+  rk = (1 - dk) * rk + rk * (z * z - H * P * H.transpose());
+  if (inno < rmin) {
+	rk = (1 - dk) * rk + dk * rmin;
+  } else if (inno > rmax) {
+	rk = rmax;
+  } else {
+	rk = (1 - dk) * rk + dk * inno;
+  }
+  dk = dk / (dk + b);
+  VecXd K = P * H.transpose() / (H * P * H.transpose() + rk);
+  xd = K * z;
+  MatXd temp = (MatXd::Identity(STATE_CNT, STATE_CNT) - K * H);
+  P = temp * P * temp.transpose() + K * rk * K.transpose();
+}
+
 /*全维卡尔曼更新：基本上用不着 */
 void KalmanFilter::Update(const MatXd &H, const VecXd &z, const MatXd &R) {
 /*  MatXd K = P * H.transpose() * (H * P * H.transpose() + R).inverse();
@@ -54,7 +79,6 @@ int counter = 0;
 void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
   counter++;
 #if SEQUENCED == 0
-
 #if ENABLE_AKF == 1
   Rk = (1 - dk) * R + dk * (z * z.transpose() - H * P * H.transpose());
   dk = dk / (dk + b);
@@ -102,6 +126,11 @@ void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
   xd = xd_;
   P = P_;
 #endif
+#if KALMAN_DEBUG == 1
+  ofs << "P: " << P.diagonal().transpose() <<" "<<counter<<" "<< '\n';
+  ofs << "Z: " << z.transpose() << '\n';
+#endif
+
 }
 void KalmanFilter::Update(const Mat2Xd &H, const Vec2d &z, const Mat2d &R) {
   MatX2d K = P * H.transpose() * ((H * P * H.transpose() + R).inverse());
@@ -118,6 +147,14 @@ void KalmanFilter::Reset() {
 KalmanFilter::KalmanFilter() {
   xd = VecXd::Zero();
   P = MatXd::Zero();
+  #if KALMAN_DEBUG == 1
+  ofs.open("./debug_info.txt");
+#endif
+}
+KalmanFilter::~KalmanFilter() {
+#if KALMAN_DEBUG == 1
+  ofs.close();
+#endif
 }
 SequencedKalmanFilter::SequencedKalmanFilter() {
   xd = VecXd::Zero();
