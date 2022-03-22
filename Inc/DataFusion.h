@@ -49,18 +49,19 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
  private:
   Mat3Xd _posH() const;
   __attribute__((unused)) Mat3Xd _velH() const;
-  IMUSmooth smooth;
+  IMUSmooth smooth{5e-9,2,10};;
   Vec3d _posZ(const Vec3d &pos);
   int _feedBack();
-  double p_height_{-INT32_MAX};/*上时刻高程预测*/
-  double m_height_{-INT32_MAX};/*保存上时刻高程量测*/
+  double p_height{INT32_MIN};/*上时刻高程预测*/
+  double gnss_height{INT32_MIN};/*保存上时刻高程量测*/
+  double diff_height = 0;
+  int base_height_is_set = 0;
 
  private:
 
   __attribute__((unused)) int MeasureNHC();
 
-  /*ZUPT*/
-  int MeasureZeroVelocity();
+
 
  public:
  protected:
@@ -78,8 +79,8 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
 
   int MeasureUpdateVel(const Vec3d &vel);
   int MeasureUpdateVel(const double &vel);
-
-  int MeasureUpdateRelativeHeight( double height);
+  int MeasureZeroVelocity();
+  float MeasureUpdateRelativeHeight( double height);
 
   /**
    *

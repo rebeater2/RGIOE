@@ -6,6 +6,7 @@
 #include "iostream"
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
+#define FLAG_HEIGHT 0b1000000U
 //#define FLAG_YAW 0b100000000U
 //#define VERSION 2.01
 char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
@@ -82,12 +83,12 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   Q0(13, 13) = 2 * opt.imuPara.ab_std[1] * opt.imuPara.ab_std[1] / opt.imuPara.at_corr;
   Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
 #if KD_IN_KALMAN_FILTER == 1
-  Q0(15, 15) = 2 *  opt.kd_std *  opt.kd_std / opt.imuPara.gt_corr;
+  Q0(15, 15) = 2 * opt.kd_std * opt.kd_std / opt.imuPara.gt_corr;
 #endif
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
   _timeUpdateIdx = 0;
-  Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]}).transpose();
+  Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]});
 
 }
 
@@ -102,10 +103,15 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 	Xds.push_back(xd);
 	navs.push_back(nav);
   }
-  if (update_flag) {
-	_feedBack();
-	Reset();
-	update_flag = 0;
+  if (update_flag & FLAG_HEIGHT) {
+	nav.pos[2] += xd[2];
+	xd[2] = 0;
+	update_flag  &= ~FLAG_HEIGHT;
+  }
+  if(update_flag & FLAG_POSITION){
+    _feedBack();
+    Reset();
+    update_flag = 0;
   }
   smooth.Update(imu);
   ForwardMechanization(imu);
@@ -118,7 +124,6 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 	matp_pres.push_back(P);
 	matphis.push_back(phi);
   }
-
   _timeUpdateIdx++;
 
   if (_timeUpdateIdx % 16 and opt.zupt_enable) {
@@ -154,10 +159,9 @@ int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
  * @return 0：不是用当前GNSS数据，1：使用当前GNSS数据
  */
 int __attribute__((weak)) GnssCheck(const GnssData &gnss) {
-  return 1;
+  return gnss.mode == SPP or gnss.mode == RTK_FIX or gnss.mode == RTK_FLOAT or gnss.mode == RTK_DGPS;
 }
 int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
-
   if (GnssCheck(gnssData) > 0) {
 	nav.info.sensors |= SensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = gnssData.mode;
@@ -167,6 +171,8 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1] * opt.gnss_std_scale;
 	Rk(2, 2) = gnssData.pos_std[2] * gnssData.pos_std[2] * opt.gnss_std_scale;
 	MeasureUpdatePos(pos, Rk);
+	gnss_height = gnssData.height;
+	base_height_is_set = 1;
   } else {
 	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = GnssMode::INVALID;
@@ -187,14 +193,15 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   H3.block<3, 1>(0, 15) = vel;
 #endif
   Vec3d z = v_v - nav.kd * vel;
-  Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
-  if(opt.nhc_enable){
-    Update(H3, z, R*R);
-  }else{
-    Update(H3.block<STATE_CNT, 1>(0, 0), z[0], opt.odo_std*opt.odo_std);
-  }
 
-//  Update(H3, z, R);
+  if (opt.nhc_enable) {
+    Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
+	Update(H3, z, R * R);
+	nav.info.sensors |= SensorType::SENSOR_NHC;
+  } else {
+	nav.info.sensors &= ~SensorType::SENSOR_NHC;
+	Update(H3.block<STATE_CNT, 1>(0, 0), z[0], opt.odo_std * opt.odo_std);
+  }
 
   update_flag |= FLAG_VELOCITY;/**/
   return 0;
@@ -293,7 +300,6 @@ __attribute__((unused)) int DataFusion::MeasureNHC() {
 
 int DataFusion::MeasureZeroVelocity() {
   /*零速观测*/
-
   Mat3Xd H = Mat3Xd::Zero();
   H.block<3, 3>(0, 3) = eye3;
   Vec3d z = nav.vn;
@@ -319,21 +325,26 @@ uint32_t DataFusion::EpochCounter() const {
  * 利用相对高程变化的差计算高程误差，需要保存上时刻高程，和上时刻量测
  * @return 0
  */
-int DataFusion::MeasureUpdateRelativeHeight(const double height) {
-  if (p_height_ < -INT32_MAX + 1 or m_height_ < -INT32_MAX + 1) {
-	m_height_ = height;
-	p_height_ = nav.pos[2];
-  } else {
-	double z = (nav.pos[2] - p_height_) - (height - m_height_);
-	m_height_ = height;
-	p_height_ = nav.pos[2];
-	Vec1Xd H = Vec1Xd::Zero();
-	H[3] = 1;
-	double R = 0.4;
-	Update(H, z, R);
-	update_flag |= SENSOR_HEIGHT;
+float DataFusion::MeasureUpdateRelativeHeight(const double height) {
+  double z = _PI;
+  if (base_height_is_set == 1) {
+	p_height = height;
+	nav.info.sensors &= ~SENSOR_HEIGHT;
   }
-  return 0;
+  if (base_height_is_set > 4) {
+	z = (nav.pos[2]) - (gnss_height + height - p_height);
+	Vec1Xd h = Vec1Xd::Zero();
+	h[2] = 1;
+	Vec3d Z = _posZ({nav.pos[0],nav.pos[1],gnss_height+height-p_height});
+	Mat3Xd H = _posH();
+	Update(H.block<1,STATE_CNT>(2,0), Z[2]);
+	update_flag |= FLAG_HEIGHT;
+	nav.info.sensors |= SENSOR_HEIGHT;
+  } else {
+	nav.info.sensors &= ~SENSOR_HEIGHT;
+  }
+  base_height_is_set++;
+  return (float)z;
 }
 bool DataFusion::RtsUpdate() {
   if (matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty()) {
@@ -383,7 +394,7 @@ NavOutput DataFusion::Output() const {
 	out.ab[i] = (float)(nav.ab[i] / _mGal);
   }
 #if KD_IN_KALMAN_FILTER == 1
-  out.kd =(float) nav.kd;
+  out.kd = (float)nav.kd;
 #endif
   out.info = nav.info;
   out.week = nav.week;
