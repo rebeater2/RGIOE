@@ -1,10 +1,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import yaml
 
+path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube.yml"
+config = yaml.safe_load(open(path))
 
 def showBias():
-    navpath = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.post.nav"
+    navpath = config["output-path"]
     # df = pd.read_csv(navpath,sep=' ')
     nav = np.loadtxt(navpath)
     times = nav[:, 1]
@@ -21,8 +24,13 @@ def showBias():
     plt.ylabel("mGal")
     plt.title("acce bias")
     plt.legend(["x", "y", "z"])
+
+    plt.figure()
+    plt.plot(times,nav[:,19])
+    plt.xlabel("gpst/s")
+    plt.title("scale factor of odometer")
     plt.show()
-    pass
+
 
 
 def nav_compare():

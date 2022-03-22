@@ -37,13 +37,17 @@ typedef enum  {
   SENSOR_NHC = 0x10U,
   SENSOR_CAMERA = 0x20U,
   SENSOR_LIDAR = 0x40U,
-  SENSOR_HEIGHT = 0x08U,
+  SENSOR_HEIGHT = 0x80U,
 }SensorType;
 typedef enum {
   ALIGN_USE_GIVEN = 2,
   ALIGN_MOVING = 0,
   ALIGN_STATIONARY = 1
 } AlignMode;
+typedef struct {
+  double gpst;
+  double pressure;
+}PressureData;
 
 typedef struct {
   double gpst;
