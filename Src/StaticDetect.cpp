@@ -41,6 +41,7 @@ void IMUSmooth::Update(const ImuData &imu) {
 		  (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / width;
 	}
   }
+  /* 静止判定  连续static_width 个历元的标准差 大于 static_std_threshold则认为是静止的  */
   if (getStd() > static_std_threshold) {
 	static_cnt = 0;
   } else {
