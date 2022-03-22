@@ -13,6 +13,7 @@
 #include "fmt/format.h"
 
 #include <list>
+
 /*extern int GnssCheck(const GnssData &gnss){
   if (gnss.ns > 60) {
     return 0;
@@ -67,14 +68,12 @@ int main(int argc, char *argv[]) {
   GnssData gnss;
   NavOutput out;
   Velocity vel;
-
+  PressureData  press;
   Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
 					config.outage_config.step};// = cfg.outage_config();
   LOG(INFO) << config.outage_config.start << " " << config.outage_config.stop << " " << config.outage_config.outage
 			<< " " << config.outage_config.step;
-  IMUSmooth smooth;
 
-/*移动文件指针到指定的开始时间*/
   IMUReader imu_reader(config.imu_config.file_path,
 					   config.imu_config.format,
 					   config.imu_config.frame,
@@ -87,7 +86,6 @@ int main(int argc, char *argv[]) {
 	LOG(ERROR) << "IMU data does NOT reach the start time: " << config.start_time;
 	return 1;
   }
-  LOG(INFO) << "gnss format:" << config.gnss_config.format;
   GnssReader gnss_reader(config.gnss_config.file_path, config.gnss_config.format);
   if (!gnss_reader.IsOk()) {
 	LOG(ERROR) << "No such file:" + config.gnss_config.file_path;
@@ -104,6 +102,12 @@ int main(int argc, char *argv[]) {
 	  return 1;
 	}
   }
+  BmpReader bmp_reader{config.pressure_config.file_path};
+  if(config.pressure_config.enable and !bmp_reader.ReadUntil(config.start_time,&press)){
+    LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
+    return 1;
+  };
+
   NavWriter writer(config.output_path);
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
@@ -148,35 +152,35 @@ int main(int argc, char *argv[]) {
 	if (!imu_reader.ReadNext(imu))break;
 	/*第二步 时间更新*/
 	DataFusion::Instance().TimeUpdate(imu);
-	smooth.Update(imu);
 	/* GNSS更新 */
-	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.5 / opt.d_rate) {
-	  if (!(config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst))) {
-	    DataFusion::Instance().MeasureUpdatePos(gnss);
-	    LOG_EVERY_N(INFO, 1) << "GNSS update:" << gnss;
-	  }else{
+	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
+	  if (config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst)) {
+	    gnss.mode = GnssMode::INVALID;/*手动设置GNSS模式为INVALID*/
 	  }
+	  DataFusion::Instance().MeasureUpdatePos(gnss);
+	   LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss<< "at "<<imu.gpst;
 	  gnss_reader.ReadNext(gnss);
 	  if (!gnss_reader.IsOk()) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
-//	  "imu.gpst="<<imu.gpst<<" gnss:"<<gnss.gpst;
 	}
 	while (gnss.gpst < imu.gpst) {
 	  if (!gnss_reader.ReadNext(gnss)) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
-
 	};
 	/*里程计更新*/
 	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdateVel(vel.forward);
 	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.gpst;
 	  podoReader->ReadUntil(imu.gpst, &vel);
+	  podoReader->ReadUntil(imu.gpst, &vel);
 	}
-	if (opt.zupt_enable and smooth.isStatic()) {
-	  /* TODO : this will be implemented soon,...maybe*/
-	  //	  DataFusion::Instance().MeasureUpdateStatic();
+	if(config.pressure_config.enable and fabs(press.gpst-imu.gpst)<1.0/opt.d_rate){
+	  double height = 44330*(1-pow(press.pressure/101325.0,0.19));
+	  double z = DataFusion::Instance().MeasureUpdateRelativeHeight(height);
+	  LOG(INFO)<<"pressure update: "<< z << "\t" <<height;
+	  bmp_reader.ReadNext(press);
 	}
 	if (!opt.enable_rts) {
 	  writer.update(DataFusion::Instance().Output());
@@ -184,13 +188,16 @@ int main(int argc, char *argv[]) {
   }
   if (opt.enable_rts) {
 	/* RTS模式下,输出结果顺序是反的,因此用栈结构存储 */
-	LOG(INFO) << "Start RTS smooth";;
+	LOG(INFO) << "Start RTS smooth,final state is "<<DataFusion::Instance().Output();
+	LOG(INFO) << "State vector is "<<DataFusion::Instance().xd.transpose();
 	bool finished;
 	std::list<NavOutput> result;
 	do {
 	  finished = DataFusion::Instance().RtsUpdate();
 	  out = DataFusion::Instance().Output();
 	  result.push_back(out);
+	  LOG_FIRST_N(INFO,1)<<out;
+	  LOG_FIRST_N(INFO,1)<<DataFusion::Instance().xd.transpose();
 	} while (!finished);
 	LOG(INFO) << "Saving result...";
 	while (!result.empty()) {

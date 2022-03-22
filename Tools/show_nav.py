@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import yaml
 
-path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube.yml"
+path = "/home/rebeater/CLionProjects/RGIOE/yaml/cpt_482_0302.yml"
 config = yaml.safe_load(open(path))
 
 def showBias():

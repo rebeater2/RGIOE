@@ -1,16 +1,16 @@
 
 IMU-Config:
   enable: false
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04cpt.log.imd
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/Reference/20220202_114341_ttyUSB1.log.imd
   d-rate: 100
   format: 1
   parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/cpt_parameter.yml
   frame: 0
 GNSS-Config:
   enable: true
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482.log.gnsstxt
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/Reference/cutecom20220302_ub482_2.log.gnsstxt
   format: 1
-  std-scale: 1
+  std-scale: 0.1
   level-arm:
     - -0.107
     - -0.145
@@ -78,7 +78,7 @@ Outage-Config:
   step: 120
   outage: 30
 Output-Config:
-  enable: true
+  enable: false
   position-project:
     - 0.21
     - -0.05
@@ -91,7 +91,7 @@ Pressure-Config:
   enable: false
   file-path: " " # /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
   height-std: 0.2
-start-time: 122371
-stop-time: 124050
+start-time: 272815
+stop-time: 275131
 enable-rts: true
-output-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.nav
+output-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/Reference/20220202_114341_ttyUSB1.post.nav

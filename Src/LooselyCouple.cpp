@@ -79,9 +79,7 @@ void navSetPos(const double latLon[2], float h, const float std[3]) {
   df->MeasureUpdatePos({latLon[0], latLon[1], h}, rk);
 }
 void getXd(double *xds) {
-  for (int i = 0; i < STATE_CNT; i++) {
-	xds[i] = (double)df->P(i, i) * 1e9;
-  }
+
 }
 
 int navAlignLevel(const ImuData *imu) {

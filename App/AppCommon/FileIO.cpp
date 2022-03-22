@@ -365,11 +365,11 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
 		 >> gnss.pos_std[2]
 		 >> q >> gnss.ns;
-	  if (q < 0 or q > 7) {
+/*	  if (q < 0 or q > 7) {
 		ok_ = false;
 		return ok_;
-	  }
-	  gnss.mode = mode_list[q];
+	  }*/
+	  gnss.mode = q;
 	}
 	  break;
 	case GNSS_10_LINES:

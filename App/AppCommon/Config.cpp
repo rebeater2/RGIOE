@@ -236,6 +236,11 @@ void Config::LoadFrom(const string &path) {
   outage_config.stop = node["Outage-Config"]["stop"].as<float>();
   outage_config.step = node["Outage-Config"]["step"].as<float>();
   outage_config.outage = node["Outage-Config"]["outage"].as<float>();
+
+  pressure_config.enable = node["Pressure-Config"]["enable"].as<bool>();
+  pressure_config.file_path = node["Pressure-Config"]["file-path"].as<string>();
+  pressure_config.press_height_std = node["Pressure-Config"]["height-std"].as<float>();
+
 }
 Option Config::GetOption() const {
   Option opt{
@@ -305,6 +310,7 @@ std::string Config::ToStdString() const {
   res += fmt::format("imu format: {}\n",imu_config.format);
   res += fmt::format("imu frame: {}\n",imu_config.frame);
   res += fmt::format("gnss scale: {:3f}\n",gnss_config.scale_of_std);
+  res += fmt::format("enable pressure: {}\n",pressure_config.enable);
   return res;
 }
 

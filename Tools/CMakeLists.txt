@@ -18,8 +18,8 @@ target_link_libraries(showTraj ${Pangolin_LIBRARIES} Eigen3::Eigen glog yaml-cpp
 add_executable(DataGenerator DataGenerator.cpp ${SOURCE})
 target_link_libraries(DataGenerator  Eigen3::Eigen  fmt)
 
-add_executable(ZeroDetector ZeroDetector.cpp ${SOURCE})
-target_link_libraries(ZeroDetector  Eigen3::Eigen  fmt)
+add_executable(ZeroDetector ZeroDetector.cpp ../App/AppCommon/FileIO.cpp  ${SOURCE})
+target_link_libraries(ZeroDetector  Eigen3::Eigen  fmt pthread)
 
 include_directories(../App/AppCommon)
 add_executable(ImuFix ImuFix.cpp ../App/AppCommon/FileIO.cpp ${SOURCE})

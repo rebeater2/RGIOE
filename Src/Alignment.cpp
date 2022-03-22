@@ -110,15 +110,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 
 AlignMoving::AlignMoving(double vel_threshold, const Option &opt) : option(opt), vel_threshold(vel_threshold) {
   nav.kd = opt.kd_init;
-  gnss_pre = {0, 0, 0,
-			  0, 0, 0,
-			  0,
-			  0, 0, 0,
-			  0, 0, 0,
-			  0, 0, 0,
-			  0, 0, 0, 0, 0, 0, 0,
-			  {0, 0, 0, 0, 0, 0, 0, 0,}
-  };
+  gnss_pre = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 }
 
 AlignBase::AlignBase() {

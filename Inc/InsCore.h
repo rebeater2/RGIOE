@@ -43,7 +43,6 @@ typedef struct {
 
 } NavEpoch;
 
-std::ostream &operator<<(std::ostream &os, NavEpoch &nav);
 
 NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
 

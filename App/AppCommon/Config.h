@@ -52,6 +52,11 @@ class OdometerConfig : public BaseConfig {
   float scale_factor_std;
 };
 
+class PressureConfig:public BaseConfig{
+ public:
+  float press_height_std;
+};
+
 class ZuptConfig {
  public:
   bool zupt_enable{false};
@@ -94,6 +99,7 @@ class Config {
   AlignConfig align_config;
   OutageConfig outage_config;
   OutputConfig output_config;
+  PressureConfig pressure_config;
   void SaveTo(const std::string &path) const;
   std::string ToStdString()const;
   void LoadFrom(const std::string &path);
