@@ -269,7 +269,7 @@ Option Config::GetOption() const {
 	  .enable_rts = enable_rts,
 	  .output_project_enable = output_config.enable,
 	  .pos_project={output_config.pos_project[0],output_config.pos_project[1],output_config.pos_project[2]},
-	  .atti_project={output_config.atti_project[1],output_config.atti_project[1],output_config.atti_project[2]}
+	  .atti_project={output_config.atti_project[0]* (float)_deg,output_config.atti_project[1]* (float)_deg,output_config.atti_project[2]* (float)_deg}
   };
   return opt;
 }

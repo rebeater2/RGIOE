@@ -7,7 +7,6 @@
 **/
 #include <InsCore.h>
 #include <WGS84.h>
-#include <iomanip>
 //#include <NavLog.h>
 
 using namespace std;
@@ -59,7 +58,6 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
   };
   return nav;
 }
-
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
   omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
@@ -212,8 +210,13 @@ MatXd Ins::TransferMatrix(const ImuPara &para) {
   phi.block<3, 3>(6, 9) = -nav.Cbn * dt;
   phi.block<3, 3>(9, 9) = eye3 - eye3 * dt / para.gt_corr;/*corr time*/
   phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
-#if KD_IN_KALMAN_FILTER == 1
-  phi(15, 15) = 1.0 - dt / para.gt_corr;/*TODO 这里暂时用了陀螺仪的相关时间作为里程计的相关时间*/
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
+  for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i)
+    phi(STATE_GNSS_LEVEL_ARM_START+i, STATE_GNSS_LEVEL_ARM_START+i) = 1.0 - dt / 36000;
+#endif
+#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i)
+    phi(STATE_ODOMETER_SCALE_FACTOR_START+i, STATE_ODOMETER_SCALE_FACTOR_START+i) = 1.0 - dt / 36000;
 #endif
   return phi;
 }

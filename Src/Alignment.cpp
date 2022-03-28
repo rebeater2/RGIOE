@@ -74,7 +74,7 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.pos[0] = gnss.lat * _deg;
   nav.pos[1] = gnss.lon * _deg;
   nav.pos[2] = gnss.height;
-
+	/*补偿杆臂影响*/
   Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
 			   1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 			   -1
@@ -82,7 +82,12 @@ double AlignMoving::Update(const GnssData &gnss) {
   Vec3d lb = {option.lb_gnss[0], option.lb_gnss[1], option.lb_gnss[2]};
   Mat3d Dr = vdr.asDiagonal();
   nav.pos -= Dr * nav.Cbn * lb;
-
+  /*补偿安装角影响*/
+  Vec3d vec = Vec3d{option.angle_bv[0],option.angle_bv[1],option.angle_bv[2]};
+  Mat3d Cbv = Convert::euler_to_dcm(vec);
+  nav.Cbn = nav.Cbn * Cbv;
+  nav.atti = Convert::dcm_to_euler(nav.Cbn);
+  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
   auto ll = LatLon{nav.pos[0], nav.pos[1]};
   nav.Qne = Convert::lla_to_qne(ll);
   nav.Cne = Convert::lla_to_cne(ll);

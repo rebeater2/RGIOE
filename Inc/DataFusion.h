@@ -31,7 +31,7 @@ class Singleton {
   Singleton &operator=(const Singleton &rhs) {}
 };
 class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion> {
- private:
+ public:
   MatXd Q0;
   Vec3d lb_gnss;
   Vec3d lb_wheel;
@@ -58,8 +58,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   int base_height_is_set = 0;
 
  private:
-
-  __attribute__((unused)) int MeasureNHC();
+	int MeasureNHC();
 
 
 

@@ -63,8 +63,16 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   P.block<3, 3>(9, 9) = temp.asDiagonal();
   temp = Vec3d{opt.imuPara.ab_std[0], opt.imuPara.ab_std[1], opt.imuPara.ab_std[2]};
   P.block<3, 3>(12, 12) = temp.asDiagonal();
-#if KD_IN_KALMAN_FILTER == 1
-  P(15, 15) = opt.kd_std;/*里程计比例因子*/
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
+  double level_arm_std = 0.03;
+  for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
+	P(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = level_arm_std;
+  }
+#endif
+#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i) {
+	P(STATE_ODOMETER_SCALE_FACTOR_START + i, STATE_ODOMETER_SCALE_FACTOR_START + i) = 1e-9;
+  }
 #endif
   P = P * P;/*计算协方差矩阵*/
   Q0.setZero();
@@ -82,8 +90,16 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   Q0(12, 12) = 2 * opt.imuPara.ab_std[0] * opt.imuPara.ab_std[0] / opt.imuPara.at_corr;
   Q0(13, 13) = 2 * opt.imuPara.ab_std[1] * opt.imuPara.ab_std[1] / opt.imuPara.at_corr;
   Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
-#if KD_IN_KALMAN_FILTER == 1
-  Q0(15, 15) = 2 * opt.kd_std * opt.kd_std / opt.imuPara.gt_corr;
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
+  for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
+	Q0(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = 2 * level_arm_std * level_arm_std / 36000;
+  }
+#endif
+#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i) {
+	Q0(STATE_ODOMETER_SCALE_FACTOR_START + i, STATE_ODOMETER_SCALE_FACTOR_START + i) =
+		2 * opt.kd_std * opt.kd_std / 3600;
+  }
 #endif
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
   lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
@@ -106,12 +122,12 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
   if (update_flag & FLAG_HEIGHT) {
 	nav.pos[2] += xd[2];
 	xd[2] = 0;
-	update_flag  &= ~FLAG_HEIGHT;
+	update_flag &= ~FLAG_HEIGHT;
   }
-  if(update_flag & FLAG_POSITION){
-    _feedBack();
-    Reset();
-    update_flag = 0;
+  if (update_flag > 0) {
+	_feedBack();
+	Reset();
+	update_flag = 0;
   }
   smooth.Update(imu);
   ForwardMechanization(imu);
@@ -133,6 +149,12 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 	} else {
 	  nav.info.sensors &= ~SENSOR_ZUPT;
 	}
+  }
+  if (_timeUpdateIdx % 32 and opt.nhc_enable) {
+	MeasureNHC();
+	nav.info.sensors |= SENSOR_NHC;
+  } else {
+	nav.info.sensors &= ~SENSOR_NHC;
   }
 
   return 0;
@@ -195,7 +217,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   Vec3d z = v_v - nav.kd * vel;
 
   if (opt.nhc_enable) {
-    Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
+	Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
 	Update(H3, z, R * R);
 	nav.info.sensors |= SensorType::SENSOR_NHC;
   } else {
@@ -240,10 +262,12 @@ int DataFusion::_feedBack() {
   nav.atti = Convert::dcm_to_euler(nav.Cbn);
   nav.gb += Vec3d{xd[9], xd[10], xd[11]};
   nav.ab += Vec3d{xd[12], xd[13], xd[14]};
-#if KD_IN_KALMAN_FILTER == 1
-  nav.kd += xd[15];
+#if ESTIMATE_GNSS_LEVEL_ARM
+  lb_gnss += xd.block<STATE_GNSS_LEVEL_ARM_SIZE, 1>(STATE_GNSS_LEVEL_ARM_START, 0);
 #endif
-
+#if ESTIMATE_ODOMETER_SCALE_FACTOR
+  nav.kd += xd.block<STATE_ODOMETER_SCALE_FACTOR_SIZE, 1>(STATE_ODOMETER_SCALE_FACTOR_START, 0)(0);
+#endif
   return 0;
 }
 
@@ -251,10 +275,13 @@ Mat3Xd DataFusion::_posH() const {
   Mat3Xd mat_h = Mat3Xd::Zero();
   mat_h.block<3, 3>(0, 0) = eye3;
   mat_h.block<3, 3>(0, 6) = Convert::skew(nav.Cbn * lb_gnss);
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
+  mat_h.block<3, STATE_GNSS_LEVEL_ARM_SIZE>(0, STATE_GNSS_LEVEL_ARM_START) = -nav.Cbn;
+#endif
   return mat_h;
 }
 
-__attribute__((unused)) Mat3Xd DataFusion::_velH() const {
+Mat3Xd DataFusion::_velH() const {
   Mat3d mat_h = Mat3d::Zero();
   mat_h.block<3, 3>(1, 3);
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
@@ -265,6 +292,9 @@ __attribute__((unused)) Mat3Xd DataFusion::_velH() const {
   H3.block<3, 3>(0, 3) = Cnv;
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
+/*#if ESTIMATE_GNSS_LEVEL_ARM == 1
+  H3.block<STATE_GNSS_LEVEL_ARM_SIZE,STATE_GNSS_LEVEL_ARM_SIZE>(0,STATE_GNSS_LEVEL_ARM_START)=nav.Cbn;
+#endif*/
   return H3;
 }
 /**
@@ -280,9 +310,9 @@ Vec3d DataFusion::_posZ(const Vec3d &pos) {
   return z;
 }
 
-__attribute__((unused)) int DataFusion::MeasureNHC() {
+int DataFusion::MeasureNHC() {
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
-  Vec3d w_ib = _gyro_pre;
+  Vec3d w_ib = _gyro_pre * opt.d_rate;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
   Vec3d v_v = Cnv * nav.vn + Cbv * (w_nb_b.cross(lb_wheel));/*TODO odo*/
   Mat3Xd H3 = Mat3Xd::Zero();
@@ -295,6 +325,7 @@ __attribute__((unused)) int DataFusion::MeasureNHC() {
 
   Mat2Xd H = H3.block<2, STATE_CNT>(1, 0);
   Update(H, z, R);
+  update_flag |= FLAG_VELOCITY;
   return 0;
 }
 
@@ -335,9 +366,9 @@ float DataFusion::MeasureUpdateRelativeHeight(const double height) {
 	z = (nav.pos[2]) - (gnss_height + height - p_height);
 	Vec1Xd h = Vec1Xd::Zero();
 	h[2] = 1;
-	Vec3d Z = _posZ({nav.pos[0],nav.pos[1],gnss_height+height-p_height});
+	Vec3d Z = _posZ({nav.pos[0], nav.pos[1], gnss_height + height - p_height});
 	Mat3Xd H = _posH();
-	Update(H.block<1,STATE_CNT>(2,0), Z[2]);
+	Update(H.block<1, STATE_CNT>(2, 0), Z[2]);
 	update_flag |= FLAG_HEIGHT;
 	nav.info.sensors |= SENSOR_HEIGHT;
   } else {
@@ -346,6 +377,7 @@ float DataFusion::MeasureUpdateRelativeHeight(const double height) {
   base_height_is_set++;
   return (float)z;
 }
+//#include "glog/logging.h"
 bool DataFusion::RtsUpdate() {
   if (matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty()) {
 	return true;
@@ -365,6 +397,9 @@ bool DataFusion::RtsUpdate() {
   nav = navs.back();
   navs.pop_back();
 
+/*  LOG_FIRST_N(INFO,1) <<"matp:\n"<<matp;
+  LOG_FIRST_N(INFO,1) <<"matphi:\n"<<matphi;
+  LOG_FIRST_N(INFO,1) <<"matp1:\n"<<matp1;*/
   auto matA = matp * matphi.transpose() * matp1.inverse();
   P = matp + matA * (P - matp1) * matA.transpose();
   xd = xdc + matA * xd;
@@ -375,6 +410,9 @@ NavOutput DataFusion::Output() const {
   Vec3d projpos = nav.pos;
   Vec3d projatti = nav.atti;
   if (opt.output_project_enable) {
+	Vec3d atti = Vec3d{opt.atti_project[0] , opt.atti_project[1] , opt.atti_project[2] };
+	Mat3d Cnx = Convert::euler_to_dcm(atti);
+	projatti = Convert::dcm_to_euler(   nav.Cbn * Cnx);
 	Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
 				 1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 				 -1

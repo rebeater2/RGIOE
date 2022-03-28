@@ -9,7 +9,7 @@
 #include "NavLog.h"
 #include "Timer.h"
 #include "Outage.h"
-
+#include "Smoother.h"
 #include "fmt/format.h"
 
 #include <list>
@@ -33,10 +33,6 @@
   }
 }*/
 
-void navExit(const std::string &info) {
-  loge << info;
-  abort();
-}
 /**
  * 移动文件指针到开始时间，需要重载各种运算符
  * @tparam T 格式
@@ -47,13 +43,13 @@ void navExit(const std::string &info) {
 
 int main(int argc, char *argv[]) {
   logInit(argv[0], "./");
-  bool rts_enable = true;
   cout << CopyRight;
   if (argc < 2) {
 	loge << CopyRight << endl;
 	return 1;
   }
   Config config;
+  Smoother<double> odo_smooth{50};/*里程计平滑器*/
   config.LoadFrom(argv[1]);
   bool ok;
   string error_msg;
@@ -106,7 +102,7 @@ int main(int argc, char *argv[]) {
   if(config.pressure_config.enable and !bmp_reader.ReadUntil(config.start_time,&press)){
     LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
     return 1;
-  };
+  }
 
   NavWriter writer(config.output_path);
   NavEpoch nav;
@@ -168,13 +164,13 @@ int main(int argc, char *argv[]) {
 	  if (!gnss_reader.ReadNext(gnss)) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
 	  }
-	};
+	}
 	/*里程计更新*/
 	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	  DataFusion::Instance().MeasureUpdateVel(vel.forward);
+	  DataFusion::Instance().MeasureUpdateVel(odo_smooth.Update( vel.forward));
 	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.gpst;
-	  podoReader->ReadUntil(imu.gpst, &vel);
-	  podoReader->ReadUntil(imu.gpst, &vel);
+	  podoReader->ReadNext(vel);
+	  podoReader->ReadNext(vel);
 	}
 	if(config.pressure_config.enable and fabs(press.gpst-imu.gpst)<1.0/opt.d_rate){
 	  double height = 44330*(1-pow(press.pressure/101325.0,0.19));
@@ -220,6 +216,8 @@ int main(int argc, char *argv[]) {
   LOG_IF(INFO, config.outage_config.enable)
 		  << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
 		  << config.outage_config.stop;
+	LOG(INFO)<<"GNSS level arm:"<<DataFusion::Instance().lb_gnss.transpose();
+	LOG(INFO)<<"Odometer scale factor:"<<DataFusion::Instance().nav.kd;
   return 0;
 }
 
