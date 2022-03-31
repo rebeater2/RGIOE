@@ -436,6 +436,11 @@ NavOutput DataFusion::Output() const {
 #endif
   out.info = nav.info;
   out.week = nav.week;
+  for (int i = 0; i < 3; i++){
+    out.pos_std[i] =(float) sqrt(P(0+i,0+i));
+    out.vn_std[i] =(float) sqrt(P(3+i,3+i));
+    out.atti_std[i] = (float) sqrt(P(6+i,6+i));
+  }
   return out;
 }
 
