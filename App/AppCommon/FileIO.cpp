@@ -3,11 +3,12 @@
 //
 
 #include "FileIO.h"
+#include "WGS84.h"
 #include <iomanip>
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
-#include "glog/logging.h"
+
 ostream &operator<<(ostream &os, const ImuData &imu) {
   os << fmt::format("{:.5f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
 					imu.gpst,
@@ -20,49 +21,6 @@ ostream &operator<<(ostream &os, const AuxiliaryData &aux) {
 					aux.gpst, aux.velocity, aux.angular);
   return os;
 }
-/**
- * 返回前右下坐标系的ImuData结构体，其中陀螺单位为rad/s,加速度单位为g
- * @param os
- * @param imu
- * @param fmt
- * @return
- */
-int ReadImu(istream &is, ImuData &imu, IMUFileFormat fmt) {
-  switch (fmt) {
-	case IMU_FILE_IMD: is.read((char *)(&imu), sizeof(imu));
-	  for (int i = 0; i < 3; i++) {
-		imu.acce[i] *= 200;
-		imu.gyro[i] *= 200;
-	  }
-	  break;
-	case IMU_FILE_IMUTXT: {
-	  is.read((char *)(&imu), sizeof(imu));
-	  double temp = imu.acce[1];
-	  imu.acce[1] = imu.acce[0];
-	  imu.acce[0] = temp;
-	  imu.acce[2] = -imu.acce[2];
-	  temp = imu.gyro[1];
-	  imu.gyro[1] = imu.gyro[0];
-	  imu.gyro[0] = temp;
-	  imu.gyro[2] = -imu.gyro[2];
-	  break;
-	}
-/*	case IMU_FORMAT_TXT_FRD: is >> imu.gpst;
-	  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
-	  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
-	  break;
-	case IMU_FORMAT_TXT_RFU: {
-	  is >> imu.gpst;
-	  is >> imu.gyro[1] >> imu.gyro[0] >> imu.gyro[2];
-	  is >> imu.acce[1] >> imu.acce[0] >> imu.acce[2];
-	  imu.gyro[2] *= (-1.0);
-	  imu.acce[2] *= (-1.0);
-	  break;
-	}*/
-	default: break;
-  }
-  return is.good();
-};
 
 ifstream &operator>>(ifstream &is, ImuData &imu) {
 
@@ -173,9 +131,11 @@ istream &operator>>(istream &is, AuxiliaryData &aux) {
   return is;
 }
 ostream &operator<<(ostream &os, const GnssData &gnss) {
-  os << fixed << setprecision(0) << gnss.week << SEPERATE << setprecision(5) << gnss.gpst << SEPERATE
-	 << setprecision(12) << gnss.lat << SEPERATE << gnss.lon << SEPERATE << setprecision(3) << gnss.height << SEPERATE
-	 << setprecision(3) << gnss.pos_std[0] << SEPERATE << gnss.pos_std[1] << SEPERATE << gnss.pos_std[2] << SEPERATE
+  os << std::fixed << std::setprecision(0) << gnss.week << SEPERATE << std::setprecision(5) << gnss.gpst << SEPERATE
+	 << std::setprecision(12) << gnss.lat << SEPERATE << gnss.lon << SEPERATE << std::setprecision(3) << gnss.height
+	 << SEPERATE
+	 << std::setprecision(3) << gnss.pos_std[0] << SEPERATE << gnss.pos_std[1] << SEPERATE << gnss.pos_std[2]
+	 << SEPERATE
 /*	 << gnss.hdop
 	 << SEPERATE
 	 << fixed << gnss.ns << SEPERATE << gnss.mode*/
@@ -183,7 +143,7 @@ ostream &operator<<(ostream &os, const GnssData &gnss) {
   return os;
 }
 
-NavWriter::NavWriter(std::string file_path) : file_path(std::move(file_path)) {
+NavWriter::NavWriter(std::string file_path, NavFileFormat fmt) : file_path(std::move(file_path)), fmt(fmt) {
   flag_running.test_and_set();
   this->start();
 }
@@ -194,7 +154,7 @@ NavWriter::~NavWriter() {
 }
 
 void NavWriter::start() {
-  thread th(&NavWriter::th_write_nav, this);
+  std::thread th(&NavWriter::th_write_nav, this);
   th_write = std::move(th);
 
 }
@@ -210,83 +170,56 @@ void NavWriter::stop() {
   if (th_write.joinable())
 	th_write.join();
 }
+void NavWriter::ConvertNavToDouble(const NavOutput &nav, NavDoubleList &bin) {
+  static double base_position[3] = {0, 0, 0};
+  bin.gpst = nav.gpst;
+  bin.pos[0] = nav.lat;
+  bin.pos[1] = nav.lon;
+  bin.pos[2] = nav.height;
+  auto delta_d = WGS84::Instance().distance(
+  	nav.lat * _deg, nav.lon * _deg,
+  	base_position[0] * _deg, base_position[1] * _deg);
+  bin.horiz[0] = delta_d.de;
+  bin.horiz[1] = delta_d.dn;
+  for (int i = 0; i < 3; i++) {
+    bin.vn[i] = nav.vn[i];
+    bin.atti[i] = nav.atti[i];
+    bin.pos_std[i] = nav.pos_std[i];
+    bin.atti_std[i] = nav.atti_std[i];
+    bin.vn_std[i] = nav.vn_std[i];
+  }
+}
 
 void NavWriter::th_write_nav() {
-  ofstream f_nav(file_path);
+  std::ofstream f_nav;
+  NavDoubleList ndl;
+  if (fmt == NavFileFormat::NavBinary or fmt == NavFileFormat::NavDoubleMatrix)
+	f_nav.open(file_path, std::ios::binary);
+  else
+	f_nav.open(file_path);
   while (flag_running.test_and_set()) {
 	while (!nav_msgs.empty()) {
 	  mtx_nav.lock();
 	  auto p_nav = nav_msgs.front();
 	  nav_msgs.pop();
 	  mtx_nav.unlock();
-	  f_nav << *p_nav <<" "<<p_nav->kd<< "\n";/* */
-
+	  if (fmt == NavFileFormat::NavBinary)
+		f_nav.write((char *)p_nav.get(), sizeof(NavOutput));
+	  else if (fmt == NavFileFormat::NavDoubleMatrix) {
+		ConvertNavToDouble(*p_nav,ndl);
+		f_nav.write((char *)&ndl,sizeof(NavDoubleList));
+	  }
+	  else {
+		f_nav << *p_nav << " " << p_nav->kd << "\n";
+	  }
 	}
   }
   f_nav.close();
 }
-/**
- * binary
- * @param os
- * @param pimu
- * @return
- */
-int readImu(ifstream &os, ImuData *pimu, IMUFileFormat fmt) {
-  if (fmt == IMU_FILE_IMD) {
-	os.read(reinterpret_cast<char *>(pimu), sizeof(ImuData));
-  } else if (fmt == IMU_FILE_IMUTXT) {
-	os >> (*pimu);
-  }
-  return os.good();
-}
-
-int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt) {
-  static string buffer;
-
-/*  switch (fmt) {
-	case GNSS_TXT_GGA: {
-	  getline(os, buffer);
-	  stringstream ss(buffer);
-	  ss >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->hdop >> pgnss->mode
-		 >> pgnss->ns;
-	  pgnss->pos_std[0] = 0.1;
-	  pgnss->pos_std[1] = 0.1;
-	  pgnss->pos_std[2] = 0.1;
-	  break;
-	}
-	case GNSS_TXT_POS_7: os >> (*pgnss);
-	  break;
-//	case RTKLIB_TXT_POS:break;
-	case RESERVED:
-	  os >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->pos_std[0]
-		 >> pgnss->pos_std[1] >> pgnss->pos_std[2] >> pgnss->hdop >> pgnss->ns >> pgnss->mode;
-	  break;
-	default:break;
-  }
-  return os.good();*/
-  if (fmt == GNSS_TXT_GGA) {
-	getline(os, buffer);
-	stringstream ss{buffer};
-	ss >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->hdop >> pgnss->mode
-	   >> pgnss->ns;
-	pgnss->pos_std[0] = 0.1;
-	pgnss->pos_std[1] = 0.1;
-	pgnss->pos_std[2] = 0.1;
-  } else if (fmt == GNSS_TXT_POS_7) {
-	os >> (*pgnss);
-  } else if (fmt == RTKLIB_TXT_POS) {
-	os >> pgnss->week >> pgnss->gpst >> pgnss->lat >> pgnss->lon >> pgnss->height >> pgnss->pos_std[0]
-	   >> pgnss->pos_std[1] >> pgnss->pos_std[2];
-	pgnss->pos_std[0] = 0.;
-	pgnss->pos_std[1] = 0.;
-	pgnss->pos_std[2] = 0.;
-  }
-  return os.good();
-}
 
 IMUReader::IMUReader(const string &filename, IMUFileFormat fmt, IMUFrame frame, bool increment, int rate) {
   if (fmt == IMUFileFormat::IMU_FILE_IMD)
-	ifs.open(filename, ios::binary);
+	ifs.open(filename, std::ios::binary);
   else
 	ifs.open(filename);
   format_ = fmt;
@@ -313,9 +246,9 @@ bool IMUReader::ReadNext(ImuData &imu) {
   }
   /*右前上坐标系转换为前右下坐标系*/
   if (frame_ == IMU_FRAME_RFU) {
-	swap(imu.acce[0], imu.acce[1]);
+	std::swap(imu.acce[0], imu.acce[1]);
 	imu.acce[2] *= -1;
-	swap(imu.gyro[0], imu.gyro[1]);
+	std::swap(imu.gyro[0], imu.gyro[1]);
 	imu.gyro[2] *= -1;
   }
   /*非增量模式数据转换为增量模式数据  @warning: 是否使用相邻两个时刻之间的间隔作为dt更科学呢？*/
@@ -331,7 +264,7 @@ bool IMUReader::ReadNext(ImuData &imu) {
 }
 double IMUReader::GetTime(const ImuData &imu) const {
   return imu.gpst;
-};
+}
 void IMUReader::SetFrame(IMUFrame frame) {
   frame_ = frame;
 }
@@ -355,7 +288,7 @@ bool GnssReader::ReadNext(GnssData &gnss) {
   string buffer;
   int q;
   getline(ifs, buffer);
-  stringstream ss(buffer);
+  std::stringstream ss(buffer);
   switch (format_) {
 	case GNSS_TXT_POS_7:
 	  ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
@@ -365,6 +298,8 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
 		 >> gnss.pos_std[2]
 		 >> q >> gnss.ns;
+
+
 /*	  if (q < 0 or q > 7) {
 		ok_ = false;
 		return ok_;
@@ -375,6 +310,33 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 	case GNSS_10_LINES:
 	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
 		 >> gnss.pos_std[2] >> gnss.ns >> gnss.mode;// >> gnss.ns;
+	  gnss.yaw = -1;
+	  gnss.pitch = -1;
+	  break;
+	case GNSS_TXT_GGA:
+	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
+		 >> gnss.mode >> gnss.ns;
+	  switch (gnss.mode) {
+		case RTK_FIX:
+		  for (auto &i:gnss.pos_std)
+			i = 0.001;
+		  break;
+		case RTK_FLOAT:
+		  for (auto &i:gnss.pos_std)
+			i = 0.005;
+		  break;
+		case RTK_DGPS:
+		  for (auto &i:gnss.pos_std)
+			i = 1;
+		  gnss.mode = INVALID;
+		  break;
+		case SPP:
+		  for (auto &i:gnss.pos_std)
+			i = 1;
+		  break;
+		default: gnss.mode = INVALID;
+		  break;
+	  }
 	  gnss.yaw = -1;
 	  gnss.pitch = -1;
 	  break;
@@ -396,7 +358,7 @@ bool OdometerReader::ReadNext(Velocity &vel) {
   if (!ok_) return ok_;
   std::string buffer;
   getline(ifs, buffer);
-  stringstream ss(buffer);
+  std::stringstream ss(buffer);
   ss >> vel.gpst >> vel.forward >> vel.angular;
   ok_ = !ifs.eof();
   return ok_;
@@ -404,20 +366,27 @@ bool OdometerReader::ReadNext(Velocity &vel) {
 double OdometerReader::GetTime(const Velocity &vel) const {
   return vel.gpst;
 }
-NavReader::NavReader(string &filename) {
-  ifs.open(filename);
+NavReader::NavReader(string &filename, NavFileFormat fmt) : fmt(fmt) {
+  if (fmt == NavFileFormat::NavBinary) {
+	ifs.open(filename, std::ios::binary);
+  } else
+	ifs.open(filename);
   ok_ = ifs.good();
 }
 bool NavReader::ReadNext(NavOutput &nav) {
   if (!ok_) return ok_;
-  std::string buffer;
-  getline(ifs, buffer);
-  stringstream ss(buffer);
-  ss >> nav.week>>nav.gpst >> nav.lat >> nav.lon >> nav.height
-	 >> nav.vn[0] >> nav.vn[1] >> nav.vn[2]
-	 >> nav.atti[0] >> nav.atti[1] >> nav.atti[2]
-	 >> nav.gb[0] >> nav.gb[1] >> nav.gb[2]
-	 >> nav.ab[0] >> nav.ab[1] >> nav.ab[2];
+  if (fmt == NavFileFormat::NavAscii) {
+	std::string buffer;
+	getline(ifs, buffer);
+	std::stringstream ss(buffer);
+	ss >> nav.week >> nav.gpst >> nav.lat >> nav.lon >> nav.height
+	   >> nav.vn[0] >> nav.vn[1] >> nav.vn[2]
+	   >> nav.atti[0] >> nav.atti[1] >> nav.atti[2]
+	   >> nav.gb[0] >> nav.gb[1] >> nav.gb[2]
+	   >> nav.ab[0] >> nav.ab[1] >> nav.ab[2];
+  } else {
+	ifs.read((char *)&nav, sizeof(NavOutput));
+  }
   ok_ = !ifs.eof();
   return ok_;
 }
@@ -435,8 +404,8 @@ bool BmpReader::ReadNext(PressureData &press) {
   if (!ok_) return ok_;
   std::string buffer;
   getline(ifs, buffer);
-  stringstream ss(buffer);
-  ss >> press.gpst>>press.pressure;
+  std::stringstream ss(buffer);
+  ss >> press.gpst >> press.pressure;
   ok_ = !ifs.eof();
   return ok_;
 }

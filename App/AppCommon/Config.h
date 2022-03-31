@@ -9,13 +9,15 @@
 #ifndef UIDATAFUSION__CONFIG_H_
 #define UIDATAFUSION__CONFIG_H_
 #include "NavStruct.h"
+#include "FileIO.h"
 #include <string>
 class BaseConfig {
- public:
-  bool enable = false;
-  std::string file_path;
+
 };
 struct GnssConfig : public BaseConfig {
+ public:
+  bool enable{false};
+  std::string file_path;
   GnssFileFormat format{GNSS_TXT_POS_7};
   int columns = 7;
   int index[9]{0};/*存储列标*/
@@ -26,14 +28,18 @@ struct GnssConfig : public BaseConfig {
   float scale_of_std{1};/*调整标准差缩放水平*/
 };
 
-struct OutputConfig{
-  bool enable{false};
+struct OutputConfig:public BaseConfig{
+ public:
+  std::string file_path;
+  NavFileFormat format;
+  bool project_enable{false};
   float pos_project[3];
   float atti_project[3];
 };
 
 class IMUConfig : public BaseConfig {
  public:
+  std::string file_path;
   IMUFileFormat format{IMU_FILE_IMUTXT};
   IMUFrame frame{IMU_FRAME_FRD};
   int d_rate{0};
@@ -41,8 +47,11 @@ class IMUConfig : public BaseConfig {
   ImuPara para{0};
 };
 
+
 class OdometerConfig : public BaseConfig {
  public:
+  bool enable = false;
+  std::string file_path;
   float odometer_std{0};
   bool nhc_enable{false};
   float nhc_std[2]{0};
@@ -54,6 +63,8 @@ class OdometerConfig : public BaseConfig {
 
 class PressureConfig:public BaseConfig{
  public:
+  bool enable = false;
+  std::string file_path;
   float press_height_std;
 };
 
@@ -91,7 +102,7 @@ class Config {
   float start_time{0};
   float stop_time{0};
   bool enable_rts{false};
-  std::string output_path;
+
   GnssConfig gnss_config;
   IMUConfig imu_config;
   OdometerConfig odometer_config;

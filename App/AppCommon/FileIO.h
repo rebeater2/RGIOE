@@ -19,18 +19,40 @@
 #include <thread>
 #include <fstream>
 #include <condition_variable>
-
 #include "NavStruct.h"
 
-using namespace std;
+using std::ostream;
+using std::istream;
+using std::fstream;
+using std::ifstream;
+using std::ofstream;
+using std::atomic_flag;
+using std::string;
+using std::queue;
+
 #define SEPERATE (' ')
 
+enum NavFileFormat{
+  NavBinary=0,
+  NavAscii,
+  NavDoubleMatrix,
+};
+struct NavDoubleList {
+  double gpst;
+  double pos[3];
+  double horiz[2];
+  double vn[3];
+  double atti[3];
+  double pos_std[3];
+  double vn_std[3];
+  double atti_std[3];
+};
 ostream &operator<<(ostream &os, const ImuData &imu);
 
 ostream &operator<<(ostream &os, const NavOutput &output);
 
 ifstream &operator>>(ifstream &is, ImuData &imu);
-int ReadImu(istream &is, ImuData &imu, IMUFileFormat fmt);
+
 
 ifstream &operator>>(ifstream &is, GnssData &gnss);
 
@@ -40,26 +62,26 @@ ostream &operator<<(ostream &os, const AuxiliaryData &aux);
 ostream &operator<<(ostream &os, const GnssData &gnss);
 istream &operator>>(istream &is, AuxiliaryData &aux);
 
-class NavWriter {
-  /*多线程读写*/
-  queue<std::shared_ptr<NavOutput>> nav_msgs;
 
-  std::thread th_write;
-  std::mutex mtx_nav;
-  string file_path;
+class NavWriter {
+
  private:
   atomic_flag flag_running = ATOMIC_FLAG_INIT;
   void th_write_nav();
   void start();
-
+  static void ConvertNavToDouble(const NavOutput & nav, NavDoubleList &bin);
  public:
-  explicit NavWriter(string filepath);
-
+  explicit NavWriter(string filepath,NavFileFormat fmt = NavFileFormat::NavAscii);
   ~NavWriter();
-
   void stop();
-
   void update(const NavOutput &out);
+ private:
+  /*多线程读写*/
+  queue<std::shared_ptr<NavOutput>> nav_msgs;
+  std::thread th_write;
+  std::mutex mtx_nav;
+  string file_path;
+  NavFileFormat fmt;
 };
 
 template<typename T>
@@ -155,10 +177,11 @@ class GnssReader : public ReaderBase<GnssData> {
 
 class NavReader : public ReaderBase<NavOutput> {
  public:
-  explicit NavReader(std::string &filename);
+  explicit NavReader(std::string &filename,NavFileFormat fmt=NavFileFormat::NavBinary);
  public:
   bool ReadNext(NavOutput &nav) override;
   double GetTime(const NavOutput &nav) const override;
+ private:NavFileFormat fmt;
 };
 class OdometerReader : public ReaderBase<Velocity> {
  public:
@@ -174,13 +197,10 @@ class BmpReader:public ReaderBase<PressureData>{
   double GetTime(const PressureData &press)const override;
 };
 
-
+/*
 Option loadOptionFromYml(char path[]);
 
-NavOutput loadNavFromYml(char path[]);
+NavOutput loadNavFromYml(char path[]);*/
 
-int readImu(ifstream &os, ImuData *pimu, IMUFileFormat is_binary);
-
-int readGnss(ifstream &os, GnssData *pgnss, GnssFileFormat fmt);
 
 #endif //LOOSELYCOUPLE2020_CPP_FILEIO_H

@@ -54,7 +54,7 @@ void DataFusionThread::run() {
 	  return;
 	}
   }
-  NavWriter writer(config.output_path);
+  NavWriter writer(config.output_config.file_path,config.output_config.format);
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	LOG(INFO) << "Align moving mode, wait for GNSS";

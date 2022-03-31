@@ -33,7 +33,7 @@ void DataFusionWindow::on_btnStart_clicked() {
   OnConvertResult(ui->editStartTime->text(), ok);
   config_.stop_time = ui->editStopTime->text().toFloat(&ok);
   OnConvertResult(ui->editStopTime->text(), ok);
-  config_.output_path = ui->editOutputPath->text().toStdString();
+  config_.output_config.file_path = ui->editOutputPath->text().toStdString();
   config_.imu_config.file_path = ui->editImuPath->text().toStdString();
   config_.imu_config.d_rate = ui->editImuRate->text().toInt(&ok);
   OnConvertResult(ui->editImuRate->text(), ok);
@@ -233,7 +233,7 @@ void DataFusionWindow::InitialUi() {
 
   ui->editStartTime->setText(QString::number(config_.start_time));
   ui->editStopTime->setText(QString::number(config_.stop_time));
-  ui->editOutputPath->setText(QString::fromStdString(config_.output_path));
+  ui->editOutputPath->setText(QString::fromStdString(config_.output_config.file_path));
 
   ui->cbxDoubleAntennaEnable->stateChanged(0);
   ui->cbxOdometerEnable->stateChanged(0);

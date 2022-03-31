@@ -13,7 +13,7 @@
 #include "fmt/format.h"
 
 #include <list>
-
+#if 0
 /*extern int GnssCheck(const GnssData &gnss){
   if (gnss.ns > 60) {
     return 0;
@@ -32,14 +32,8 @@
     return 0;
   }
 }*/
+ #endif
 
-/**
- * 移动文件指针到开始时间，需要重载各种运算符
- * @tparam T 格式
- * @param is 文件流
- * @param t 数据存储位置
- * @param gpst 要挪到的时间
- */
 
 int main(int argc, char *argv[]) {
   logInit(argv[0], "./");
@@ -104,7 +98,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  NavWriter writer(config.output_path);
+  NavWriter writer(config.output_config.file_path,config.output_config.format);
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	LOG(INFO) << "Align moving mode, wait for GNSS";
@@ -143,7 +137,6 @@ int main(int argc, char *argv[]) {
   }
 /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   LOG(INFO) << "start:" << imu.gpst << ",end:" << config.stop_time;
-//LOG(INFO) << "imu status:"<<imu_reader.IsOk()<<"\t gnss status:"<<gnss_reader.IsOk()<<"\t odo status:"<< podoReader->IsOk();
   while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
 	if (!imu_reader.ReadNext(imu))break;
 	/*第二步 时间更新*/
@@ -169,7 +162,6 @@ int main(int argc, char *argv[]) {
 	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  DataFusion::Instance().MeasureUpdateVel(odo_smooth.Update( vel.forward));
 	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.gpst;
-	  podoReader->ReadNext(vel);
 	  podoReader->ReadNext(vel);
 	}
 	if(config.pressure_config.enable and fabs(press.gpst-imu.gpst)<1.0/opt.d_rate){
@@ -216,8 +208,7 @@ int main(int argc, char *argv[]) {
   LOG_IF(INFO, config.outage_config.enable)
 		  << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
 		  << config.outage_config.stop;
-	LOG(INFO)<<"GNSS level arm:"<<DataFusion::Instance().lb_gnss.transpose();
-	LOG(INFO)<<"Odometer scale factor:"<<DataFusion::Instance().nav.kd;
+  LOG(INFO)<<"The result is saved to "<<config.output_config.file_path;
   return 0;
 }
 

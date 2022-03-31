@@ -10,12 +10,10 @@
 #include "Config.h"
 #include "yaml-cpp/yaml.h"
 #include "fmt/format.h"
-#include <fstream>
 #include <string>
 using namespace std;
 void SaveConfig(const Config &cfg, const string &path) {
   YAML::Node node;
-  node["IMU-Config"]["enable"] = cfg.imu_config.enable;
   node["IMU-Config"]["file-path"] = cfg.imu_config.file_path;
   node["IMU-Config"]["d-rate"] = cfg.imu_config.d_rate;
   node["IMU-Config"]["format"] = (int)cfg.imu_config.format;
@@ -88,7 +86,6 @@ void SaveConfig(const Config &cfg, const string &path) {
 void Config::SaveTo(const string &path) const {
   YAML::Node node;
 
-  node["IMU-Config"]["enable"] = imu_config.enable;
   node["IMU-Config"]["file-path"] = imu_config.file_path;
   node["IMU-Config"]["d-rate"] = imu_config.d_rate;
   node["IMU-Config"]["format"] = (int)imu_config.format;
@@ -113,9 +110,8 @@ void Config::SaveTo(const string &path) const {
   for (float i:odometer_config.angle_bv) node["Odometer"]["angle-bv"].push_back(i);
   for (float i:odometer_config.wheel_level_arm) node["Odometer"]["wheel-level-arm"].push_back(i);
 
-
-  node["Odometer"]["scale-factor"]= odometer_config.scale_factor;
-  node["Odometer"]["scale-factor-std"]= odometer_config.scale_factor_std;
+  node["Odometer"]["scale-factor"] = odometer_config.scale_factor;
+  node["Odometer"]["scale-factor-std"] = odometer_config.scale_factor_std;
   for (int i : gnss_config.index)
 	node["GNSS-Config"]["columns"].push_back(i);
 
@@ -149,7 +145,9 @@ void Config::SaveTo(const string &path) const {
 
   node["start-time"] = start_time;
   node["stop-time"] = stop_time;
-  node["output-path"] = output_path;
+  node["Output-Config"]["file-path"] = output_config.file_path;
+  node["Output-Config"]["project-enable"] = output_config.project_enable;
+  node["Output-Config"]["atti-project"] = output_config.atti_project[0];
 
   node.SetStyle(YAML::EmitterStyle::Block);
   node.SetTag(path);
@@ -161,10 +159,12 @@ void Config::LoadFrom(const string &path) {
   YAML::Node node = YAML::LoadFile(path);
   start_time = node["start-time"].as<float>();
   stop_time = node["stop-time"].as<float>();
-  output_path = node["output-path"].as<string>();
+
   enable_rts = node["enable-rts"].as<bool>();
 
-  output_config.enable = node["Output-Config"]["enable"].as<bool>();
+  output_config.file_path = node["Output-Config"]["file-path"].as<string>();
+  output_config.format = (NavFileFormat)node["Output-Config"]["file-format"].as<int>();
+  output_config.project_enable = node["Output-Config"]["project-enable"].as<bool>();
   output_config.pos_project[0] = node["Output-Config"]["position-project"][0].as<float>();
   output_config.pos_project[1] = node["Output-Config"]["position-project"][1].as<float>();
   output_config.pos_project[2] = node["Output-Config"]["position-project"][2].as<float>();
@@ -173,7 +173,7 @@ void Config::LoadFrom(const string &path) {
   output_config.atti_project[1] = node["Output-Config"]["attitude-project"][1].as<float>();
   output_config.atti_project[2] = node["Output-Config"]["attitude-project"][2].as<float>();
 
-  imu_config.enable = node["IMU-Config"]["enable"].as<bool>();
+
   imu_config.file_path = node["IMU-Config"]["file-path"].as<std::string>();
   imu_config.d_rate = node["IMU-Config"]["d-rate"].as<int>();
   imu_config.format = (IMUFileFormat)node["IMU-Config"]["format"].as<int>();
@@ -267,9 +267,10 @@ Option Config::GetOption() const {
 	  .kd_std = odometer_config.scale_factor_std,
 	  .gnss_std_scale = gnss_config.scale_of_std,
 	  .enable_rts = enable_rts,
-	  .output_project_enable = output_config.enable,
-	  .pos_project={output_config.pos_project[0],output_config.pos_project[1],output_config.pos_project[2]},
-	  .atti_project={output_config.atti_project[0]* (float)_deg,output_config.atti_project[1]* (float)_deg,output_config.atti_project[2]* (float)_deg}
+	  .output_project_enable = output_config.project_enable,
+	  .pos_project={output_config.pos_project[0], output_config.pos_project[1], output_config.pos_project[2]},
+	  .atti_project={output_config.atti_project[0] * (float)_deg, output_config.atti_project[1] * (float)_deg,
+					 output_config.atti_project[2] * (float)_deg}
   };
   return opt;
 }
@@ -305,12 +306,12 @@ std::string Config::ToStdString() const {
   /*TODO*/
   string res;
   res.reserve(1024);
-  res += fmt::format("imu file: {}\n",imu_config.file_path);
-  res += fmt::format("imu rate: {}\n",imu_config.d_rate);
-  res += fmt::format("imu format: {}\n",imu_config.format);
-  res += fmt::format("imu frame: {}\n",imu_config.frame);
-  res += fmt::format("gnss scale: {:3f}\n",gnss_config.scale_of_std);
-  res += fmt::format("enable pressure: {}\n",pressure_config.enable);
+  res += fmt::format("imu file: {}\n", imu_config.file_path);
+  res += fmt::format("imu rate: {}\n", imu_config.d_rate);
+  res += fmt::format("imu format: {}\n", imu_config.format);
+  res += fmt::format("imu frame: {}\n", imu_config.frame);
+  res += fmt::format("gnss scale: {:3f}\n", gnss_config.scale_of_std);
+  res += fmt::format("enable pressure: {}\n", pressure_config.enable);
   return res;
 }
 
