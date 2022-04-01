@@ -53,7 +53,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   this->opt = option;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
-  nav.kd = opt.kd_init;
+  nav.kd = opt.odo_scale;
   WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
@@ -114,11 +114,13 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
  * @return : 1 success 0 fail in time check
  */
 int DataFusion::TimeUpdate(const ImuData &imu) {
+#if RUN_IN_STM32 != 1
   if (opt.enable_rts) {
 	matp_posts.push_back(P);
 	Xds.push_back(xd);
 	navs.push_back(nav);
   }
+#endif
   if (update_flag & FLAG_HEIGHT) {
 	nav.pos[2] += xd[2];
 	xd[2] = 0;
@@ -136,10 +138,12 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
 
   Predict(phi, Q);
+#if RUN_IN_STM32 != 1
   if (opt.enable_rts) {
 	matp_pres.push_back(P);
 	matphis.push_back(phi);
   }
+#endif
   _timeUpdateIdx++;
 
   if (_timeUpdateIdx % 16 and opt.zupt_enable) {
@@ -377,6 +381,7 @@ float DataFusion::MeasureUpdateRelativeHeight(const double height) {
   base_height_is_set++;
   return (float)z;
 }
+#if RUN_IN_STM32 != 1
 //#include "glog/logging.h"
 bool DataFusion::RtsUpdate() {
   if (matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty()) {
@@ -406,6 +411,7 @@ bool DataFusion::RtsUpdate() {
   _feedBack();
   return matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty();
 }
+#endif
 NavOutput DataFusion::Output() const {
   Vec3d projpos = nav.pos;
   Vec3d projatti = nav.atti;

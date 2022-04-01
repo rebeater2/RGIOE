@@ -111,39 +111,25 @@ typedef struct {
   float at_corr;
   float gt_corr;
 } ImuPara;
-enum IMUFileFormat {
-  IMU_FILE_IMD = 1,
-  IMU_FILE_IMUTXT = 0
-};
-typedef enum {
-  GNSS_TXT_POS_7 = 0,
-  GNSS_10_LINES = 1,
-  GNSS_TXT_POS_14 = 2,
-  GNSS_BIN_POS_14 = 3,
-  RTKLIB_TXT_POS = 4,
-  GNSS_TXT_POS_VEL = 5,
-  GNSS_TXT_GGA = 6,
-  RESERVED = 6,
-} GnssFileFormat;
 typedef struct {
   unsigned short sensors;
   unsigned short gnss_mode;
 } NavInfo;
 typedef struct {
-  int week;
-  double gpst;
-  double lat;
-  double lon;
-  float height;
-  float pos_std[3];
-  float vn[3];
-  float vn_std[3];
-  float atti[3];
-  float atti_std[3];
-  NavInfo info;
-  float ab[3];
-  float gb[3];
-  float kd;
+  int week;									/*GPS week*/
+  double gpst;								/*GPS TOW*/
+  double lat;								/*Latitude*/
+  double lon;								/*Longitude*/
+  float height;								/*Height*/
+  float pos_std[3];							/*Position Standard deviation*/
+  float vn[3];								/*Velocity in NED*/
+  float vn_std[3];							/*Velocity Standard deviation*/
+  float atti[3];							/*Attitude in NED, roll pitch heading,Unit deg*/
+  float atti_std[3];						/*Attitude Standard deviation*/
+  NavInfo info;								/*Navigation Information*/
+  float ab[3];								/*accelerator bias*/
+  float gb[3];								/*gyroscope bias*/
+  float kd;									/*Odometer scale factor*/
 } NavOutput;
 /*sizeof(NavOutput)=128*/
 typedef struct {
@@ -166,31 +152,31 @@ typedef struct {
 
 typedef struct {
   ImuPara imuPara;
-  NavOutput init_epoch;
   int d_rate;
-  AlignMode align_mode;
-  int nhc_enable;
-  int zupt_enable;
-  int zupta_enable;
-  int  odo_enable;;
-  float zupt_std;
-  float zupta_std;
+  int align_mode;
+  float align_vel_threshold;
+  int enable_gnss;
   float lb_gnss[3];
+  float gnss_std_scale;
+  int nhc_enable;
+  float nhc_std[2];
+  int zupt_enable;
+  float zupt_std;
+  int zupta_enable;
+  float zupta_std;
+  int odo_enable;
   float odo_std;
+  float odo_scale;
+  float odo_scale_std;
   float lb_wheel[3];
   float angle_bv[3];
   float pos_std[3];
   float vel_std[3];
   float atti_std[3];
-  float  nhc_std[2];
-  float  kd_init;
-  float  kd_std ;
-  float gnss_std_scale;
-  int enable_rts;
-  int enable_gnss;
   int output_project_enable;
   float pos_project[3];
   float atti_project[3];
+  int enable_rts;
 } Option;
 
 typedef struct {

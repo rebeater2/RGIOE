@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
-path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube.yml"
+path = "/home/rebeater/CLionProjects/RGIOE/yaml/M39_20201215.yml"
 config = yaml.safe_load(open(path))
 
 

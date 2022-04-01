@@ -173,7 +173,6 @@ void Config::LoadFrom(const string &path) {
   output_config.atti_project[1] = node["Output-Config"]["attitude-project"][1].as<float>();
   output_config.atti_project[2] = node["Output-Config"]["attitude-project"][2].as<float>();
 
-
   imu_config.file_path = node["IMU-Config"]["file-path"].as<std::string>();
   imu_config.d_rate = node["IMU-Config"]["d-rate"].as<int>();
   imu_config.format = (IMUFileFormat)node["IMU-Config"]["format"].as<int>();
@@ -245,32 +244,33 @@ void Config::LoadFrom(const string &path) {
 Option Config::GetOption() const {
   Option opt{
 	  .imuPara= imu_config.para,
-	  .init_epoch = align_config.init_pva,
 	  .d_rate = imu_config.d_rate,
 	  .align_mode = align_config.mode,
+	  .align_vel_threshold = align_config.vel_threshold_for_moving,
+	  .enable_gnss = gnss_config.enable,
+	  .lb_gnss = {gnss_config.level_arm[0], gnss_config.level_arm[1], gnss_config.level_arm[2]},
+	  .gnss_std_scale = gnss_config.scale_of_std,
 
 	  .nhc_enable = odometer_config.nhc_enable,
+	  .nhc_std =  {odometer_config.nhc_std[0], odometer_config.nhc_std[1]},
 	  .zupt_enable = zupt_config.zupt_enable,
-	  .zupta_enable = zupt_config.zupta_enable,
-	  .odo_enable=odometer_config.enable,
-
 	  .zupt_std = zupt_config.zupt_std,
+	  .zupta_enable = zupt_config.zupta_enable,
 	  .zupta_std = zupt_config.zupta_std,
-	  .lb_gnss = {gnss_config.level_arm[0], gnss_config.level_arm[1], gnss_config.level_arm[2]},
+	  .odo_enable=odometer_config.enable,
 	  .odo_std = odometer_config.odometer_std,
+	  .odo_scale = odometer_config.scale_factor,
+	  .odo_scale_std = odometer_config.scale_factor_std,
 	  .lb_wheel = {odometer_config.wheel_level_arm[0], odometer_config.wheel_level_arm[1],
 				   odometer_config.wheel_level_arm[2]},
 	  .angle_bv = {odometer_config.angle_bv[0] * (float)_deg, odometer_config.angle_bv[1] * (float)_deg,
 				   odometer_config.angle_bv[2] * (float)_deg},
-	  .nhc_std =  {odometer_config.nhc_std[0], odometer_config.nhc_std[1]},
-	  .kd_init = odometer_config.scale_factor,
-	  .kd_std = odometer_config.scale_factor_std,
-	  .gnss_std_scale = gnss_config.scale_of_std,
-	  .enable_rts = enable_rts,
+
 	  .output_project_enable = output_config.project_enable,
 	  .pos_project={output_config.pos_project[0], output_config.pos_project[1], output_config.pos_project[2]},
 	  .atti_project={output_config.atti_project[0] * (float)_deg, output_config.atti_project[1] * (float)_deg,
-					 output_config.atti_project[2] * (float)_deg}
+					 output_config.atti_project[2] * (float)_deg},
+	  .enable_rts = enable_rts,
   };
   return opt;
 }

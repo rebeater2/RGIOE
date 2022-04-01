@@ -69,6 +69,7 @@ class Beats {
 	gnss_msg.pos_std[0] = raw.gnss_.pos_std[0];
 	gnss_msg.pos_std[1] = raw.gnss_.pos_std[1];
 	gnss_msg.pos_std[2] = raw.gnss_.pos_std[2];
+	gnss_msg.mode =
 	return gnss_msg;
   }
   navplay::imu toImuMsg() const {

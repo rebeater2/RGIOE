@@ -45,11 +45,10 @@ class AlignMoving : public AlignBase {
  private:
   Mat3d Cnb;
   GnssData gnss_pre{};
-  double vel_threshold;
   IMUSmooth smooth;
   Option option;
  public:
-  explicit AlignMoving(double vel_threshold, const Option &option);
+  explicit AlignMoving( const Option &option);
 
   double Update(const GnssData &gnss) override;
 

@@ -78,15 +78,15 @@ Outage-Config:
   step: 120
   outage: 30
 Output-Config:
-  enable: false
+  enable: true
   position-project:
     - 0.21
     - -0.05
     - -0.418
   attitude-project:
-    - 0
-    - 0
-    - 0
+    - -0.05
+    - -0.755
+    - 4.1
 Pressure-Config:
   enable: false
   file-path: " " # /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt

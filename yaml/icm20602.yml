@@ -1,20 +1,20 @@
 #!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
-  file-path:  /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd_rotate_0_0.4_90.imd
-  d-rate: 125
-  format: 1
-  parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/adis16465_parameter.yml
-  frame: 0
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.imu
+  d-rate: 50
+  format: 0
+  parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/icm20602_parameter.yml
+  frame: 1
 GNSS-Config:
   enable: true
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482.log.gnsstxt
-  format: 1
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.gpstxt.week.gpstxt
+  format: 6
   std-scale: 1
   level-arm:
-    - -0.317
-    - -0.095
-    - 0.03
+    - 0.200
+    - -0.2
+    - -0.95
   double-antenna-enable: false
   antenna-pitch: 0
   antenna-yaw: 0
@@ -29,22 +29,22 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: false
-  odometer-std: 0.1
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
-  NHC-enable: false
+  enable: true
+  odometer-std: 0.01
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.prstxt.veltxt
+  NHC-enable: true
   NHC-std:
     - 0.01
     - 0.01
   angle-bv:
-    - 0
-    - -0.8072170
-    -  2.19948
+    - 0.200
+    - 2.80451781
+    - -0.1554159
   wheel-level-arm:
     - 0
     - 0
     - 0
-  scale-factor: 0.9766354
+  scale-factor: 1.0156
   scale-factor-std: 0.01
 ZUPT-Config:
   ZUPT-enable: false
@@ -78,10 +78,7 @@ Outage-Config:
   step: 200
   outage: 150
 Output-Config:
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.post.nav
-#  0: bin 1: ascii 2: double mat
-  file-format: 1
-  project-enable: false
+  enable: false
   position-project:
     - 1
     - 1
@@ -94,6 +91,7 @@ Pressure-Config:
   enable: false
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
   height-std: 0.2
-start-time: 122371
-stop-time: 124132
-enable-rts: false
+start-time: 206957
+stop-time: 209955.040
+enable-rts: fals
+output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.rts.nav

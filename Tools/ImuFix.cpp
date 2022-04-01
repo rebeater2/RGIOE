@@ -6,25 +6,55 @@
 * @version 1.0
 **/
 #include "FileIO.h"
+#include "matrix_lib.h"
+#include "Convert.h"
 #include "fmt/format.h"
+#include "glog/logging.h"
 
 void IMUFix(){
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/04/ADI51_220307_118100.raw.imd";
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.imd";
   int rate = 125;
   double dt = 1.0 / rate;
   IMUReader reader(filename, IMU_FILE_IMD, IMU_FRAME_FRD, true, rate);
   ImuData imu;
   reader.ReadNext(imu);
   ImuData pre = imu;
-  ofstream out{filename + ".fix.imd",ios::binary};
+  ofstream out{filename + ".fix.imd",std::ios::binary};
   while (reader.IsOk()) {
     reader.ReadNext(imu);
     imu.gpst -= 1.0;
     out.write((const char *)&imu,sizeof imu);
   }
 }
+void IMURotate(){
+  double rotate_angle[3] = { 0 , 0.4 , 90 };
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd";
+  std::string out_filename = fmt::format("{}_rotate_{}_{}_{}.imd",filename,rotate_angle[0],rotate_angle[1],rotate_angle[2]);
+  ofstream out{out_filename,std::ios::binary};
+  int rate = 125;
+  Mat3d Cbc = Convert::euler_to_dcm(Vec3d{rotate_angle[0]*_deg,rotate_angle[1]* _deg,rotate_angle[2]* _deg});
+  IMUReader reader(filename, IMU_FILE_IMD, IMU_FRAME_FRD, true, rate);
+  ImuData imu;
+  reader.ReadNext(imu);
+  while (reader.IsOk()) {
+    reader.ReadNext(imu);
+    imu.gpst -= 1.0;
+	Vec3d acce{imu.acce}, gyro{imu.gyro};
+	Vec3d temp = Cbc * acce;
+	imu.acce[0] = temp.x();
+	imu.acce[1] = temp.y();
+	imu.acce[2] = temp.z();
+	temp = Cbc * gyro;
+	imu.gyro[0] = temp.x();
+	imu.gyro[1] = temp.y();
+	imu.gyro[2] = temp.z();
+    out.write((const char *)&imu,sizeof imu);
+  }
+  out.close();
+  LOG(INFO)<< "save file to "<< out_filename;
+}
 void OdoFix(){
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt";
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.veltxt";
 
   OdometerReader reader(filename);
   Velocity vel;
@@ -38,7 +68,9 @@ void OdoFix(){
 }
 
 int main(int argc, char **argv) {
-  OdoFix();
+  google::InitGoogleLogging(".");
+  google::LogToStderr();
+  IMURotate();
   return 0;
 }
 

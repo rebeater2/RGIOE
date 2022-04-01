@@ -28,48 +28,57 @@ NavOutput default_pva{0, 0, 0, 0};
 
 /*zho*/
 Option default_option{
-  .imuPara=default_imupara,
-  .init_epoch=default_pva,
-  .d_rate = 200,
-  .align_mode=AlignMode ::ALIGN_USE_GIVEN,
-  .nhc_enable=false,
-  .zupt_enable=false,
-  .zupta_enable=false,
-  .odo_enable=false,
-  .zupt_std=0.00001,
-  .zupta_std=0.1*_deg,
-  .lb_gnss={0,0,0},
-  .odo_std = 0.000001,
-  .lb_wheel={0,0,0},
-  .angle_bv={0,0,0},
-  .pos_std={0,0,0},
-  .vel_std={0,0,0},
-  .atti_std={10*_deg,10*_deg,10*_deg},
-  .nhc_std={0.00001,0.00001},
-  .kd_init=1.0,
-  .kd_std=0.001 ,
+	.imuPara=default_imupara,
+	.d_rate = 125,
+	.align_mode=AlignMode::ALIGN_USE_GIVEN,
+	.align_vel_threshold = 1.4,
+	.enable_gnss = 1,
+	.lb_gnss={0, 0, 0},
+	.gnss_std_scale = 1.0,
+
+	.nhc_enable=0,
+	.nhc_std={0.1, 0.1},
+
+	.zupt_enable=0,
+	.zupt_std=0.00001,
+	.zupta_enable = 0,
+	.zupta_std=0.1 * _deg,
+
+	.odo_enable = 0,
+	.odo_std = 0.000001,
+	.odo_scale = 1.14,
+	.odo_scale_std  = 0,
+	.lb_wheel={0, 0, 0},
+	.angle_bv={0, 0, 0},
+	.pos_std={0, 0, 0},
+	.vel_std={0, 0, 0},
+	.atti_std={10 * _deg, 10 * _deg, 10 * _deg},
+	.output_project_enable = 0,/*输出投影*/
+	.pos_project = {0, 0, 0},/*投影到目标位置*/
+	.atti_project = {0, 0, 0},/*投影到目标姿态*/
+	.enable_rts = 0
 };
 /**
  * 卡尔曼滤波初始化，
  * @warning 必须要在初始对准之后完成，如果初始对准未成功，此函数返回-1,y
  * @return error code 0： OK   -1: fail
  */
-int navInitialize(const Option *opt)  {
+int navInitialize(const Option *opt) {
   default_option = *opt;
-  if(opt->d_rate==0){
-    return 3;
+  if (opt->d_rate == 0) {
+	return 3;
   }
   df = &(DataFusion::Instance());
-  if(!align){return 1;}
-  if (align->alignFinished()){
-    df->Initialize(align->getNavEpoch(), *opt);
-    return 0;
-  }else
-    return 2;
+  if (!align) { return 1; }
+  if (align->alignFinished()) {
+	df->Initialize(align->getNavEpoch(), *opt);
+	return 0;
+  } else
+	return 2;
 }
 void timeUpdate(const ImuData *imu) {
-  if(!df){
-    df = &(DataFusion::Instance());
+  if (!df) {
+	df = &(DataFusion::Instance());
   }
   df->TimeUpdate(*imu);
 }
@@ -84,7 +93,7 @@ void getXd(double *xds) {
 
 int navAlignLevel(const ImuData *imu) {
   if (align == nullptr) {
-	static AlignMoving s_align{2, default_option};
+	static AlignMoving s_align{default_option};
 	align = &s_align;
   }
   align->Update(*imu);
@@ -93,7 +102,7 @@ int navAlignLevel(const ImuData *imu) {
 
 double navAlignGnss(const GnssData *gnss) {
   if (align == nullptr) {
-	static AlignMoving s_align{2, default_option};
+	static AlignMoving s_align{default_option};
 	align = &s_align;
   }
   return align->Update(*gnss);
@@ -105,16 +114,16 @@ void navSetVel(const Velocity *vel) {
 
 int navGetResult(NavPva *pva) {
   NavOutput nav = df->Output();
-  *pva=*((NavPva*)&nav.lat);
+  *pva = *((NavPva *)&nav.lat);
   return 0;
 }
-int navAlignUseGiven(NavOutput *nav,Option *opt) {
+int navAlignUseGiven(NavOutput *nav, Option *opt) {
   /*室内启动时，使用给定坐标对准*/
   if (align == nullptr) {
-    static AlignMoving s_align{2, *opt};
-    align = &s_align;
+	static AlignMoving s_align{ *opt};
+	align = &s_align;
   }
-  align->nav= makeNavEpoch(*nav,*opt);
+  align->nav = makeNavEpoch(*nav, *opt);
   align->flag_level_finished = true;
   align->flag_yaw_finished = true;
   return 0;

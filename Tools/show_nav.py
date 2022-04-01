@@ -7,7 +7,7 @@ path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube.yml"
 config = yaml.safe_load(open(path))
 
 def showBias():
-    navpath = config["output-path"]
+    navpath = config["Output-Config"]["file-path"]
     # df = pd.read_csv(navpath,sep=' ')
     nav = np.loadtxt(navpath)
     times = nav[:, 1]

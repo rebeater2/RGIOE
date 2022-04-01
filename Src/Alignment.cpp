@@ -42,6 +42,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 	return -1;
   }
   WGS84::Instance().Update(gnss.lat * _deg, gnss.height);
+#if RUN_IN_STM32 != 1
   if (gnss.yaw >= 0 and gnss.yaw <= 360) {
 	nav.atti[2] = gnss.yaw * _deg;
 	nav.Qbn = Convert::euler_to_quaternion(nav.atti);
@@ -53,28 +54,30 @@ double AlignMoving::Update(const GnssData &gnss) {
 	nav.vel_std = {0.4, 0.4, 0.4};
 	flag_yaw_finished = true;
   } else {
-	auto distance = WGS84::Instance().distance(gnss, gnss_pre);
-	v = (float)distance.d;
-	if (vel_threshold < distance.d and distance.d < 1e3) {
-	  nav.vn[0] = distance.dn;
-	  nav.vn[1] = distance.de;
-	  nav.vn[2] = distance.dd;
-	  nav.vel_std = {0.3, 0.3, 0.3};
-	  nav.atti[2] = atan2(distance.de, distance.dn);
-	  nav.att_std[0] = 0.1 * _deg;
-	  nav.att_std[1] = 0.1 * _deg;
-	  nav.att_std[2] = 0.5 * _deg;
-	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
-	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
-	  flag_yaw_finished = true;
-	}
+#endif
+  auto distance = WGS84::Instance().distance(gnss, gnss_pre);
+  v = (float)distance.d;
+  if (option.align_vel_threshold < distance.d and distance.d < 1e3) {
+	nav.vn[0] = distance.dn;
+	nav.vn[1] = distance.de;
+	nav.vn[2] = distance.dd;
+	nav.vel_std = {0.3, 0.3, 0.3};
+	nav.atti[2] = atan2(distance.de, distance.dn);
+	nav.att_std[0] = 0.1 * _deg;
+	nav.att_std[1] = 0.1 * _deg;
+	nav.att_std[2] = 100 * _deg;
+	nav.Qbn = Convert::euler_to_quaternion(nav.atti);
+	nav.Cbn = Convert::euler_to_dcm(nav.atti);
+	flag_yaw_finished = true;
+  }
+#if RUN_IN_STM32 != 1
   }
   nav.gpst = gnss.gpst;
-
+#endif
   nav.pos[0] = gnss.lat * _deg;
   nav.pos[1] = gnss.lon * _deg;
   nav.pos[2] = gnss.height;
-	/*补偿杆臂影响*/
+  /*补偿杆臂影响*/
   Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
 			   1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 			   -1
@@ -83,7 +86,7 @@ double AlignMoving::Update(const GnssData &gnss) {
   Mat3d Dr = vdr.asDiagonal();
   nav.pos -= Dr * nav.Cbn * lb;
   /*补偿安装角影响*/
-  Vec3d vec = Vec3d{option.angle_bv[0],option.angle_bv[1],option.angle_bv[2]};
+  Vec3d vec = Vec3d{option.angle_bv[0], option.angle_bv[1], option.angle_bv[2]};
   Mat3d Cbv = Convert::euler_to_dcm(vec);
   nav.Cbn = nav.Cbn * Cbv;
   nav.atti = Convert::dcm_to_euler(nav.Cbn);
@@ -105,7 +108,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 //#if KD_IN_KALMAN_FILTER == 1
 //  nav.kd = option.kd_init;
 //#endif
-  nav.kd = option.kd_init;
+  nav.kd = option.odo_scale;
   nav.info.gnss_mode = gnss.mode;
   nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
   nav.week = gnss.week;
@@ -113,9 +116,9 @@ double AlignMoving::Update(const GnssData &gnss) {
   return v;
 }
 
-AlignMoving::AlignMoving(double vel_threshold, const Option &opt) : option(opt), vel_threshold(vel_threshold) {
-  nav.kd = opt.kd_init;
-  gnss_pre = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+AlignMoving::AlignMoving(const Option &opt) : option(opt){
+  nav.kd = opt.odo_scale;
+  gnss_pre = {0};
 }
 
 AlignBase::AlignBase() {

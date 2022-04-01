@@ -52,7 +52,7 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
 	  Vec3d{opt.pos_std[0], opt.pos_std[1], opt.pos_std[2]},
 	  Vec3d{opt.vel_std[0], opt.vel_std[1], opt.vel_std[2]},
 	  Vec3d{opt.atti_std[0], opt.atti_std[1], opt.atti_std[2]},
-	  opt.kd_init,
+	  opt.odo_scale,
 	  nav_.info,
 	  nav_.week
   };

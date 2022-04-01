@@ -39,12 +39,13 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   Option opt{};
   uint32_t update_flag;
  /*for RTS */
+#if RUN_IN_STM32 != 1
   std::list<MatXd> matphis;
   std::list<VecXd> Xds;
   std::list<MatXd> matp_pres;
   std::list<MatXd> matp_posts;
   std::list<NavEpoch> navs;
-
+#endif
   uint32_t _timeUpdateIdx;/*时间更新计数器*/
  private:
   Mat3Xd _posH() const;
@@ -81,11 +82,13 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   int MeasureZeroVelocity();
   float MeasureUpdateRelativeHeight( double height);
 
+#if RUN_IN_STM32 != 1
   /**
-   *
+   * RTS 反向平滑
    * @return 进度: 0开始,1 完成
    */
   bool RtsUpdate();
+#endif
   NavOutput Output()const;
 };
 
