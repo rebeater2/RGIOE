@@ -22,39 +22,29 @@
 #include "StaticDetect.h"
 
 class AlignBase {
-
+ public:
+  AlignBase();
+  NavOutput getPva() const;
+  NavEpoch getNavEpoch() const;
+  bool alignFinished() const { return flag_level_finished and flag_yaw_finished; }
+  virtual double Update(const GnssData &gnss) { return 0.0; };
+  virtual void Update(const ImuData &imu) {};
  public:
   NavEpoch nav;
   bool flag_level_finished;
   bool flag_yaw_finished;
- public:
-  AlignBase();
-
-  NavOutput getPva() const;
-
-  NavEpoch getNavEpoch() const;
-
-  bool alignFinished() const { return flag_level_finished and flag_yaw_finished; }
-
-  virtual double Update(const GnssData &gnss) { return 0.0; };
-
-  virtual void Update(const ImuData &imu) {};
 };
 
 class AlignMoving : public AlignBase {
+ public:
+  explicit AlignMoving(const Option &option);
+  double Update(const GnssData &gnss) override;
+  void Update(const ImuData &imu) override;
+  int GnssCheck(const GnssData &gnss);
  private:
-  Mat3d Cnb;
   GnssData gnss_pre{};
   IMUSmooth smooth;
   Option option;
- public:
-  explicit AlignMoving( const Option &option);
-
-  double Update(const GnssData &gnss) override;
-
-  void Update(const ImuData &imu) override;
-
-  int GnssCheck(const GnssData &gnss);
 };
 
 class AlignStatic : AlignBase {
@@ -63,7 +53,6 @@ class AlignStatic : AlignBase {
 
 class AlignDoubleAntenna : AlignBase {
   double Update(const GnssData &gnss) override;
-
   void Update(const ImuData &imu) override;
 };
 
