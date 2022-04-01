@@ -7,8 +7,6 @@
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
 #define FLAG_HEIGHT 0b1000000U
-//#define FLAG_YAW 0b100000000U
-//#define VERSION 2.01
 char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
 				   "Copyright(c) 2019-2021, by Bao Linfeng, All rights reserved.\n"
 				   "This Version is for Embedded and Real-time Application\n";
