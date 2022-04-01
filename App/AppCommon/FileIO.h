@@ -31,7 +31,20 @@ using std::string;
 using std::queue;
 
 #define SEPERATE (' ')
-
+typedef enum {
+  GNSS_TXT_POS_7 = 0,
+  GNSS_10_LINES = 1,
+  GNSS_TXT_POS_14 = 2,
+  GNSS_BIN_POS_14 = 3,
+  RTKLIB_TXT_POS = 4,
+  GNSS_TXT_POS_VEL = 5,
+  GNSS_TXT_GGA = 6,
+  RESERVED = 6,
+  } GnssFileFormat;
+enum IMUFileFormat {
+  IMU_FILE_IMD = 1,
+  IMU_FILE_IMUTXT = 0
+};
 enum NavFileFormat{
   NavBinary=0,
   NavAscii,

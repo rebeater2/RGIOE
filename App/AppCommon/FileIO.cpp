@@ -8,7 +8,9 @@
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
-
+#if RUN_IN_STM32 == 1
+#error "How dou you think fstream is able to run on STM32?"
+#endif
 ostream &operator<<(ostream &os, const ImuData &imu) {
   os << fmt::format("{:.5f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
 					imu.gpst,
@@ -54,7 +56,7 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
   os << fmt::format(
-	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4cf} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
 	  output.week,
 	  output.gpst,
 	  output.lat,
