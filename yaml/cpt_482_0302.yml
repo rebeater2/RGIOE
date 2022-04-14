@@ -78,7 +78,10 @@ Outage-Config:
   step: 120
   outage: 30
 Output-Config:
-  enable: true
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/Reference/20220202_114341_ttyUSB1.post.nav
+  #  0: bin 1: ascii 2: double mat
+  file-format: 1
+  project-enable: false
   position-project:
     - 0.21
     - -0.05
@@ -94,4 +97,3 @@ Pressure-Config:
 start-time: 272815
 stop-time: 275131
 enable-rts: true
-output-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/Reference/20220202_114341_ttyUSB1.post.nav

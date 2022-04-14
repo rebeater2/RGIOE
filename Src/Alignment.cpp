@@ -18,8 +18,8 @@ void AlignMoving::Update(const ImuData &imu) {
   nav.gpst = imu.gpst;
 //    if (smooth.isStatic()) {
 #if USE_INCREMENT == 1
-  nav.atti[0] = asin(smoothed_imu.acce[1] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
-  nav.atti[1] = asin(smoothed_imu.acce[0] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
+  nav.atti[0] = 0;//asin(smoothed_imu.acce[1] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
+  nav.atti[1] = 0;//asin(smoothed_imu.acce[0] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
 #else
   /*用于加速度单位是1的场景*/
   nav.atti[0] = asin(smoothed_imu.acce[1]) * (smoothed_imu.acce[2] > 0 ? 1 : -1);

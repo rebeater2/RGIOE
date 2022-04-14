@@ -45,18 +45,13 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
   is >> gnss.gpst;
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
-//  is >> gnss.hdop >> gnss.gdop >> gnss.ns >> gnss.mode;
   gnss.yaw = -1;
-//  gnss.hdop = 0.001;
-//gnss.pos_std[0] *=  0.001;
-//  gnss.pos_std[1] *=  0.001;
-//  gnss.pos_std[2] *= 0.001;
   return is;
 }
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
   os << fmt::format(
-	  "{:4d} {:2f} {:.12f} {:.12f} {:.4cf} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
 	  output.week,
 	  output.gpst,
 	  output.lat,
@@ -368,12 +363,14 @@ bool OdometerReader::ReadNext(Velocity &vel) {
 double OdometerReader::GetTime(const Velocity &vel) const {
   return vel.gpst;
 }
-NavReader::NavReader(string &filename, NavFileFormat fmt) : fmt(fmt) {
+NavReader::NavReader(const string &filename, NavFileFormat fmt) : fmt(fmt) {
   if (fmt == NavFileFormat::NavBinary) {
 	ifs.open(filename, std::ios::binary);
   } else
 	ifs.open(filename);
   ok_ = ifs.good();
+}
+NavReader::NavReader(const char *filename,NavFileFormat fmt): NavReader(std::string(filename),fmt){
 }
 bool NavReader::ReadNext(NavOutput &nav) {
   if (!ok_) return ok_;

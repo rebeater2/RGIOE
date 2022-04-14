@@ -12,7 +12,7 @@
 #include "glog/logging.h"
 
 void IMUFix(){
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.imd";
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_02/ADI51_220307_122201.raw.imd";
   int rate = 125;
   double dt = 1.0 / rate;
   IMUReader reader(filename, IMU_FILE_IMD, IMU_FRAME_FRD, true, rate);
@@ -54,7 +54,7 @@ void IMURotate(){
   LOG(INFO)<< "save file to "<< out_filename;
 }
 void OdoFix(){
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.veltxt";
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.prstxt.veltxt";
 
   OdometerReader reader(filename);
   Velocity vel;
@@ -70,7 +70,7 @@ void OdoFix(){
 int main(int argc, char **argv) {
   google::InitGoogleLogging(".");
   google::LogToStderr();
-  IMURotate();
+  IMUFix();
   return 0;
 }
 

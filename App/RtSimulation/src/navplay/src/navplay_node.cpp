@@ -16,16 +16,23 @@
 
 #include "WGS84.h"
 #include "Convert.h"
-#include "NavTypeDef.h"
 #include "NavRawReader.h"
 #include "glog/logging.h"
 #include "fmt/format.h"
 
-#include "RawDecode.h"
+#include "AdiHandle.h"
 
 NavRawReader *preader;
 ros::Timer *timer;
 
+int ConvertVelRawToFloat(const InsCube::VelocityRaw *raw, Velocity *vel) {
+  vel->forward = ((float)((int16_t)(raw->vh_ << 8u) | raw->vl_)) / 1000.0f;
+  vel->angular = ((float)((int16_t)(raw->ah_ << 8u) | raw->al_)) / 1000.0f;
+  return 0;
+}
+/** @brief
+ * 根据时间戳回放数据
+ */
 class Beats {
  private:
   nav_msgs::Path path;
@@ -40,7 +47,8 @@ class Beats {
   ros::Publisher gnss_publisher = handle.advertise<navplay::gnss>("gnss_data", 1);
   ros::Publisher vel_publisher = handle.advertise<navplay::vel>("vel_data", 10);
   ros::Publisher rst_publisher = handle.advertise<nav_msgs::Path>("rst_data", 1, true);
-  RawDataDef raw{};
+  InsCube::RawDataDef raw{};
+  bool base_set = false;
  public:
   Beats() {
 	handle.param("real_time", real_time, true);
@@ -50,14 +58,17 @@ class Beats {
 	handle.param("base_height", base_lla[2], 1.);
 	path.header.frame_id = "ins";
 	path.header.stamp = ros::Time::now();
-	path.poses.reserve(1024*1024*10);
+	path.poses.reserve(1024 * 1024 * 10);
 	LOG(INFO) << "real time mode:" << real_time;
 	LOG(INFO) << "speed up: X" << speed_up;
 	LOG(INFO) << fmt::format("base station: {} {} {}", base_lla[0], base_lla[1], base_lla[2]);
   }
  public:
-  static void close() {
+   void close() {
 	LOG(INFO) << "all data play finished,timer closed";
+	navplay::imu imu_msg;
+	imu_msg.gpst = -1;
+	imu_publisher.publish(imu_msg);
 	timer->stop();
   }
   navplay::gnss toGnssMsg() const {
@@ -69,26 +80,27 @@ class Beats {
 	gnss_msg.pos_std[0] = raw.gnss_.pos_std[0];
 	gnss_msg.pos_std[1] = raw.gnss_.pos_std[1];
 	gnss_msg.pos_std[2] = raw.gnss_.pos_std[2];
-	gnss_msg.mode =
+	gnss_msg.mode = 1;
 	return gnss_msg;
   }
   navplay::imu toImuMsg() const {
 	navplay::imu imu_msg;
 	ImuData imu;
 	imu_msg.gpst = raw.gpst;
-	ConvertKyToDouble(&raw.imu_.raw_, &imu);
-	imu_msg.acce[0] = imu.acce[0];
-	imu_msg.acce[1] = imu.acce[1];
-	imu_msg.acce[2] = imu.acce[2];
-	imu_msg.gyro[0] = imu.gyro[0];
-	imu_msg.gyro[1] = imu.gyro[1];
-	imu_msg.gyro[2] = imu.gyro[2];
+	static InsCube::Adis16465Handle adis16465Handle;
+	adis16465Handle.ConvertRaw2D(raw.imu_.raw_, imu);
+	imu_msg.acce[1] = imu.acce[0];
+	imu_msg.acce[0] = imu.acce[1];
+	imu_msg.acce[2] = -imu.acce[2];
+	imu_msg.gyro[1] = imu.gyro[0];
+	imu_msg.gyro[0] = imu.gyro[1];
+	imu_msg.gyro[2] = -imu.gyro[2];
 	return imu_msg;
   }
   navplay::vel toVelMsg() const {
 	navplay::vel vel_msg;
-	Velocity  vel;
-	ConvertVelRawToFloat(&raw.vel_,&vel);
+	Velocity vel;
+	ConvertVelRawToFloat(&raw.vel_, &vel);
 	vel_msg.gpst = raw.gpst;
 	vel_msg.forward = vel.forward;
 	vel_msg.angular = vel.angular;
@@ -96,6 +108,16 @@ class Beats {
   }
   nav_msgs::Path toPoseMsg() {
 	geometry_msgs::PoseStamped pose_stamped;
+	if (!base_set) {
+	  base_lla[0] = raw.rst_.lat;
+	  base_lla[1] = raw.rst_.lon;
+	  base_lla[2] = raw.rst_.height;
+	  base_set = true;
+	}
+	auto is_int = [ ](double a){return fabs(a-int(a))<0.01;};
+	if (!is_int(raw.gpst)) {
+	  return path;
+	}
 	auto d = WGS84::Instance().distance(raw.rst_.lat * _deg,
 										raw.rst_.lon * _deg,
 										base_lla[0] * _deg,
@@ -116,7 +138,7 @@ class Beats {
 	pose_stamped.header.stamp = ros::Time::now();
 	pose_stamped.header.frame_id = "ins";
 	path.poses.push_back(pose_stamped);
-	path.poses.size()>10000?path.poses.clear():void(0);
+	path.poses.size() > 10000 ? path.poses.clear() : void(0);
 	return path;
   }
   void operator()(const ros::TimerEvent &event) {
@@ -125,7 +147,9 @@ class Beats {
 	  return;
 	}
 	if (gpst_start <= 0) {
-	  if (!preader->ReadNext(raw)) { close(); }
+	  if (!preader->ReadNext(raw)) {
+	    close();
+	  }
 	  gpst_start = preader->GetTime();
 	  start = ros::Time::now();
 	  return;
@@ -136,7 +160,7 @@ class Beats {
 	} else {
 	  time_elapse += 0.001 * speed_up;
 	}
-	LOG_EVERY_N(INFO, 1000) << "current elapse time:" << time_elapse<<" "<<(int)raw.gpst;
+	LOG_EVERY_N(INFO, 1000) << "current elapse time:" << time_elapse << " " << (int)raw.gpst;
 	int i = 0;
 	if (time_elapse > raw.gpst - gpst_start) {
 	  switch (raw.type_) {
@@ -146,8 +170,7 @@ class Beats {
 		  break;
 		case DATA_TYPE_VEL: vel_publisher.publish(toVelMsg());
 		  break;
-		case DATA_TYPE_RST:
-//			rst_publisher.publish(toPoseMsg());
+		case DATA_TYPE_RST: rst_publisher.publish(toPoseMsg());
 		  break;
 		default: break;
 	  }

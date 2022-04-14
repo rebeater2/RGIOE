@@ -1,9 +1,9 @@
 <launch>
     <node pkg="navplay" name="navplay_node" type="navplay_node"/>
     <param name="raw_filename" type="string"
-           value="/media/rebeater/hd_data2/workspace/raw_data/2022/20220106/5/RAW_220107_451273.RAW"/>
+           value="/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw"/>
     <param name="real_time" type="bool" value="true"/>
-    <!-- speed up is valid only when real-time option is false -->
+    <!-- @Note! speed up is valid only when real-time option is false -->
     <param name="speed_up" type="int" value="5"/>
     <!-- 基准站位置 -->
     <param name="base_lat" type="double" value="40.04456445"/>

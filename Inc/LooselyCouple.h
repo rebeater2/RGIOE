@@ -12,9 +12,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+extern Option  default_option;
 int navInitialize(const Option *opt);
-  int navGetResult(NavPva *pva) ;
+  int navGetResult(NavOutput *pva) ;
 double navAlignGnss(const GnssData *gnss);
 int navAlignUseGiven(NavOutput *nav,Option *opt);
 void getXd(double *xds);/*for debug*/

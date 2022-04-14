@@ -15,7 +15,7 @@ find_package(glog REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Boost REQUIRED)
-
+include_directories(${CMAKE_HOME_DIRECTORY}/App/AppCommon)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -152,7 +152,8 @@ include_directories(
 add_executable(${PROJECT_NAME}_node
         src/navplay_node.cpp
         src/NavRawReader.cpp
-        src/RawDecode.cpp
+        src/AdiHandle.cpp
+        src/HandleBase.cpp
         ${SOURCE}
         )
 

@@ -1,7 +1,7 @@
 #!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
-  file-path:  /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd_rotate_0_0.4_90.imd
+  file-path:  /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd.fix.imd
   d-rate: 125
   format: 1
   parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/adis16465_parameter.yml
@@ -29,8 +29,8 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: false
-  odometer-std: 0.1
+  enable: true
+  odometer-std: 0.01
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
   NHC-enable: false
   NHC-std:
@@ -56,7 +56,7 @@ ZUPT-Config:
   threshold: 0
 Align-Config:
   mode: 0
-  velocity-threshold: 1
+  velocity-threshold: 1.4
   init-PVA:
     week: 0
     gpst: 0
@@ -75,11 +75,13 @@ Outage-Config:
   enable: false
   start: 122671
   stop: 124000
-  step: 200
-  outage: 150
+  step: 120
+  outage: 30
 Output-Config:
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.post.nav
-#  0: bin 1: ascii 2: double mat
+#  0: bin, for small size
+# 1: ascii, for easily read
+# 2: double mat, for easily load by Python or MATLAB
   file-format: 1
   project-enable: false
   position-project:
@@ -96,4 +98,4 @@ Pressure-Config:
   height-std: 0.2
 start-time: 122371
 stop-time: 124132
-enable-rts: false
+enable-rts: true

@@ -28,6 +28,8 @@ target_link_libraries(ImuFix  Eigen3::Eigen pthread fmt pthread fmt glog)
 add_executable(ObtainInstallAngle  ObtainInstallAngle.cpp ../App/AppCommon/FileIO.cpp ${SOURCE})
 target_link_libraries(ObtainInstallAngle  Eigen3::Eigen pthread fmt glog)
 
-
 add_executable(SaveNavToBin SaveNavToBin.cpp ../App/AppCommon/FileIO.cpp ${SOURCE})
 target_link_libraries(SaveNavToBin  Eigen3::Eigen pthread fmt glog)
+
+add_executable(EstimateInstallAngles EstimateInstallAngles.cpp ../App/AppCommon/FileIO.cpp ${SOURCE})
+target_link_libraries(EstimateInstallAngles  Eigen3::Eigen pthread fmt glog)

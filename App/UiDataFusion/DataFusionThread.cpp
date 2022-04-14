@@ -58,7 +58,7 @@ void DataFusionThread::run() {
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	LOG(INFO) << "Align moving mode, wait for GNSS";
-	AlignMoving align{config.align_config.vel_threshold_for_moving, opt};
+	AlignMoving align{opt};
 	do {
 	  imu_reader.ReadNext(imu);
 	  align.Update(imu);

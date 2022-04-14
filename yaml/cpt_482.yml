@@ -10,7 +10,7 @@ GNSS-Config:
   enable: true
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482.log.gnsstxt
   format: 1
-  std-scale: 1
+  std-scale: 0.1
   level-arm:
     - -0.107
     - -0.145
@@ -78,7 +78,9 @@ Outage-Config:
   step: 120
   outage: 30
 Output-Config:
-  enable: true
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.nav
+  format: 1
+  project-enable: true
   position-project:
     - 0.21
     - -0.05
@@ -94,4 +96,3 @@ Pressure-Config:
 start-time: 122371
 stop-time: 124050
 enable-rts: true
-output-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.nav

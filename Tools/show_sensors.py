@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
-path = "/home/rebeater/CLionProjects/RGIOE/yaml/M39_20201215.yml"
+path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube.yml"
 config = yaml.safe_load(open(path))
 
 
@@ -18,14 +18,14 @@ config = yaml.safe_load(open(path))
 #   SENSOR_HEIGHT = 0x80U,
 # }SensorType
 def show_sensors():
-    result_path = config["output-path"]
+    result_path = config["Output-Config"]["file-path"]
     data = np.loadtxt(result_path)
     sensor_idx = {
         'imu': 0x01,
         "gnss": 0x02,
         "odometer": 0x04,
         "ZUPT": 0x08,
-        "NHC": 0x20,
+        "NHC": 0x10,
         "press": 0x80,
     }
     imu_index = []

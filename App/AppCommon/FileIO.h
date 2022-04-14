@@ -190,7 +190,8 @@ class GnssReader : public ReaderBase<GnssData> {
 
 class NavReader : public ReaderBase<NavOutput> {
  public:
-  explicit NavReader(std::string &filename,NavFileFormat fmt=NavFileFormat::NavBinary);
+  explicit NavReader(const std::string &filename,NavFileFormat fmt=NavFileFormat::NavBinary);
+  explicit NavReader(const char *filename,NavFileFormat fmt=NavFileFormat::NavBinary);
  public:
   bool ReadNext(NavOutput &nav) override;
   double GetTime(const NavOutput &nav) const override;

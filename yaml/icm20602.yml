@@ -1,11 +1,11 @@
 #!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.imu
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.imu.fix.imd
   d-rate: 50
-  format: 0
+  format: 1
   parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/icm20602_parameter.yml
-  frame: 1
+  frame: 0
 GNSS-Config:
   enable: true
   file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.gpstxt.week.gpstxt
@@ -29,10 +29,10 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: true
-  odometer-std: 0.01
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.prstxt.veltxt
-  NHC-enable: true
+  enable: false
+  odometer-std: 0.1
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.prstxt.veltxt.fix.veltxt
+  NHC-enable: false
   NHC-std:
     - 0.01
     - 0.01
@@ -44,7 +44,7 @@ Odometer:
     - 0
     - 0
     - 0
-  scale-factor: 1.0156
+  scale-factor: 1.07
   scale-factor-std: 0.01
 ZUPT-Config:
   ZUPT-enable: false
@@ -56,7 +56,7 @@ ZUPT-Config:
   threshold: 0
 Align-Config:
   mode: 0
-  velocity-threshold: 1
+  velocity-threshold: 5
   init-PVA:
     week: 0
     gpst: 0
@@ -78,7 +78,9 @@ Outage-Config:
   step: 200
   outage: 150
 Output-Config:
-  enable: false
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.post.rt.nav
+  file-format: 1
+  project-enable: false
   position-project:
     - 1
     - 1
@@ -92,6 +94,5 @@ Pressure-Config:
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
   height-std: 0.2
 start-time: 206957
-stop-time: 209955.040
-enable-rts: fals
-output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.rts.nav
+stop-time: 209428
+enable-rts: false

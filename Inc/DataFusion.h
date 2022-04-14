@@ -8,7 +8,7 @@
 #include "KalmanFilter.h"
 #include "InsCore.h"
 #include "StaticDetect.h"
-
+#include "DcmEstimator.h"
 extern Option default_option;
 extern char CopyRight[];
 template<typename T>
@@ -77,7 +77,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
 
   /**
    * forward velocity update
-   * @param vel forward velocity
+   * @param vel: forward velocity
    * @return 0
    */
   int MeasureUpdateVel(const double &vel);
@@ -108,13 +108,15 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
  */
   int MeasureZeroVelocity();
 
-  /**
-   * NHC update
-   * @return
+  /** @brief NHC update
+   * @return 0
    */
   int MeasureNHC();
- private:
 
+ public:
+  DcmEstimator estimator_{};
+ private:
+  /*base private*/
   MatXd Q0;                          	/*Matrix for Q*/
   Vec3d lb_gnss;                   	 	/*Gnss level arm in meter*/
   Vec3d lb_wheel;               	 	/*wheel level arm in meter*/
@@ -136,9 +138,11 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   IMUSmooth smooth{5e-9, 2, 10};    /*Static detector*/
   Vec3d _posZ(const Vec3d &pos);    	/* calculate delta Z*/
   int _feedBack();                   	 /*feedback for position,velocity and height*/
+
+ private:
+  /*for height update*/
   double p_height{INT32_MIN};       	 /*上时刻高程预测*/
   double gnss_height{INT32_MIN};    	/*保存上时刻高程量测*/
-  double diff_height = 0;
   int base_height_is_set = 0;        	/* set to 1 when GNSS is comming*/
 };
 

@@ -8,8 +8,9 @@
 
 #ifndef ROS_NAV_REPLAY_SRC_NAVPLAY_INCLUDE_NAVPLAY_NAVRAWREADER_H_
 #define ROS_NAV_REPLAY_SRC_NAVPLAY_INCLUDE_NAVPLAY_NAVRAWREADER_H_
-#include "NavTypeDef.h"
 #include "ReaderBase.h"
+#include "RawStruct.h"
+using namespace InsCube;
 class NavRawReader : public ReaderBase<RawDataDef> {
  public:
   explicit NavRawReader(const std::string &filename);

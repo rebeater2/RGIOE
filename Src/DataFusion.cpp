@@ -232,8 +232,12 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
 }
 
 int DataFusion::MeasureUpdateVel(const double &vel) {
-//  auto v = Vec3d;
-  return MeasureUpdateVel({vel, 0, 0});
+  Vec3d w_ib = _gyro_pre * opt.d_rate;
+  Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
+  Vec3d v_v = nav.Cbn.transpose() * (nav.vn + Cbv * (omega_ie_n + omega_en_n));
+  estimator_.Update(v_v, vel);
+//  return MeasureUpdateVel({vel, 0, 0});
+	return 0;
 }
 
 /**
@@ -414,9 +418,9 @@ NavOutput DataFusion::Output() const {
   Vec3d projpos = nav.pos;
   Vec3d projatti = nav.atti;
   if (opt.output_project_enable) {
-	Vec3d atti = Vec3d{opt.atti_project[0] , opt.atti_project[1] , opt.atti_project[2] };
+	Vec3d atti = Vec3d{opt.atti_project[0], opt.atti_project[1], opt.atti_project[2]};
 	Mat3d Cnx = Convert::euler_to_dcm(atti);
-	projatti = Convert::dcm_to_euler(   nav.Cbn * Cnx);
+	projatti = Convert::dcm_to_euler(nav.Cbn * Cnx);
 	Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
 				 1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 				 -1
@@ -440,10 +444,10 @@ NavOutput DataFusion::Output() const {
 #endif
   out.info = nav.info;
   out.week = nav.week;
-  for (int i = 0; i < 3; i++){
-    out.pos_std[i] =(float) sqrt(P(0+i,0+i));
-    out.vn_std[i] =(float) sqrt(P(3+i,3+i));
-    out.atti_std[i] = (float) sqrt(P(6+i,6+i));
+  for (int i = 0; i < 3; i++) {
+	out.pos_std[i] = (float)sqrt(P(0 + i, 0 + i));
+	out.vn_std[i] = (float)sqrt(P(3 + i, 3 + i));
+	out.atti_std[i] = (float)sqrt(P(6 + i, 6 + i));
   }
   return out;
 }

@@ -29,10 +29,10 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: true
+  enable: false
   odometer-std: 0.01
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.prstxt.veltxt
-  NHC-enable: true
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/ICM_TD/20201215_3.data.prstxt.veltxt.fix.veltxt
+  NHC-enable: false
   NHC-std:
     - 0.01
     - 0.01
@@ -44,7 +44,7 @@ Odometer:
     - 0
     - 0
     - 0
-  scale-factor: 1.0326
+  scale-factor: 1.07
   scale-factor-std: 0.01
 ZUPT-Config:
   ZUPT-enable: false
@@ -78,7 +78,10 @@ Outage-Config:
   step: 200
   outage: 150
 Output-Config:
-  enable: true
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/M39/Decode/201215155058.rts.nav
+    #  0: bin 1: ascii 2: double mat
+  file-format: 1
+  project-enable: true
   position-project:
     - 0
     - 0
@@ -94,4 +97,3 @@ Pressure-Config:
 start-time: 206957
 stop-time: 209957
 enable-rts: true
-output-path: /media/rebeater/hd_data2/workspace/raw_data/car/20201215/Rover/M39/Decode/201215155058.rt.nav

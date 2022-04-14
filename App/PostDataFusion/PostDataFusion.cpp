@@ -14,26 +14,28 @@
 
 #include <list>
 #if 0
-/*extern int GnssCheck(const GnssData &gnss){
+extern int GnssCheck(const GnssData &gnss){
   if (gnss.ns > 60) {
-    return 0;
+	return 0;
   }
-  if (gnss.ns < 15) {//低于5的抛弃
-    return 0;
+  if (gnss.ns < 25) {//低于5的抛弃
+	return 0;
   }
   if (gnss.mode == SPP) {
-    return 1;
+	return 1;
+  }
+  if (gnss.pos_std[0]> 0.1 or gnss.pos_std[2] > 0.1 or gnss.pos_std[2]> 0.3 ){
+	return 0;
   }
   if (gnss.mode == RTK_DGPS) {
-    return 2;
+	return 2;
   } else if (gnss.mode == RTK_FLOAT || gnss.mode == RTK_FIX) {
-    return 3;
+	return 3;
   } else {
-    return 0;
+	return 0;
   }
-}*/
- #endif
-
+}
+#endif
 
 int main(int argc, char *argv[]) {
   logInit(argv[0], "./");
@@ -58,7 +60,7 @@ int main(int argc, char *argv[]) {
   GnssData gnss;
   NavOutput out;
   Velocity vel;
-  PressureData  press;
+  PressureData press;
   Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
 					config.outage_config.step};// = cfg.outage_config();
   LOG(INFO) << config.outage_config.start << " " << config.outage_config.stop << " " << config.outage_config.outage
@@ -93,16 +95,16 @@ int main(int argc, char *argv[]) {
 	}
   }
   BmpReader bmp_reader{config.pressure_config.file_path};
-  if(config.pressure_config.enable and !bmp_reader.ReadUntil(config.start_time,&press)){
-    LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
-    return 1;
+  if (config.pressure_config.enable and !bmp_reader.ReadUntil(config.start_time, &press)) {
+	LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
+	return 1;
   }
 
-  NavWriter writer(config.output_config.file_path,config.output_config.format);
+  NavWriter writer(config.output_config.file_path, config.output_config.format);
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	LOG(INFO) << "Align moving mode, wait for GNSS";
-	AlignMoving align{ opt};
+	AlignMoving align{opt};
 	do {
 	  imu_reader.ReadNext(imu);
 	  align.Update(imu);
@@ -134,6 +136,7 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "initial PVA:" << DataFusion::Instance().Output();
   if (opt.odo_enable) {
 	podoReader->ReadUntil(imu.gpst, &vel);
+	podoReader->ReadNext(vel);//.gpst, &vel);
   }
 /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   LOG(INFO) << "start:" << imu.gpst << ",end:" << config.stop_time;
@@ -144,10 +147,10 @@ int main(int argc, char *argv[]) {
 	/* GNSS更新 */
 	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
 	  if (config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst)) {
-	    gnss.mode = GnssMode::INVALID;/*手动设置GNSS模式为INVALID*/
+		gnss.mode = GnssMode::INVALID;/*手动设置GNSS模式为INVALID*/
 	  }
 	  DataFusion::Instance().MeasureUpdatePos(gnss);
-	   LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss<< "at "<<imu.gpst;
+	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss << "at " << imu.gpst;
 	  gnss_reader.ReadNext(gnss);
 	  if (!gnss_reader.IsOk()) {
 		LOG(WARNING) << "Gnss read failed" << gnss;
@@ -159,15 +162,22 @@ int main(int argc, char *argv[]) {
 	  }
 	}
 	/*里程计更新*/
-	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	  DataFusion::Instance().MeasureUpdateVel(odo_smooth.Update( vel.forward));
-	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.gpst;
-	  podoReader->ReadNext(vel);
+	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.2 / opt.d_rate) {
+	  DataFusion::Instance().MeasureUpdateVel(vel.forward);
+	  Vec3d angle=  DataFusion::Instance().estimator_.GetEulerAngles().transpose();
+	  LOG_EVERY_N(INFO, 100*opt.d_rate) << fmt::format("Odo update {:.4f} {} {} {}",
+													   vel.gpst,angle[0]/_deg,angle[1]/_deg,angle[2]/_deg
+													   );
+	  do {
+		if (!podoReader->ReadNext(vel)) {
+		  LOG(WARNING) << "vel read failed" << vel.gpst;
+		}
+	  }while (vel.gpst < imu.gpst);
 	}
-	if(config.pressure_config.enable and fabs(press.gpst-imu.gpst)<1.0/opt.d_rate){
-	  double height = 44330*(1-pow(press.pressure/101325.0,0.19));
+	if (config.pressure_config.enable and fabs(press.gpst - imu.gpst) < 1.0 / opt.d_rate) {
+	  double height = 44330 * (1 - pow(press.pressure / 101325.0, 0.19));
 	  double z = DataFusion::Instance().MeasureUpdateRelativeHeight(height);
-	  LOG(INFO)<<"pressure update: "<< z << "\t" <<height;
+	  LOG(INFO) << "pressure update: " << z << "\t" << height;
 	  bmp_reader.ReadNext(press);
 	}
 	if (!opt.enable_rts) {
@@ -176,16 +186,14 @@ int main(int argc, char *argv[]) {
   }
   if (opt.enable_rts) {
 	/* RTS模式下,输出结果顺序是反的,因此用栈结构存储 */
-	LOG(INFO) << "Start RTS smooth,final state is "<<DataFusion::Instance().Output();
-	LOG(INFO) << "State vector is "<<DataFusion::Instance().xd.transpose();
+	LOG(INFO) << "Start RTS smooth,final state is " << DataFusion::Instance().Output();
+	LOG(INFO) << "State vector is " << DataFusion::Instance().xd.transpose();
 	bool finished;
 	std::list<NavOutput> result;
 	do {
 	  finished = DataFusion::Instance().RtsUpdate();
 	  out = DataFusion::Instance().Output();
 	  result.push_back(out);
-	  LOG_FIRST_N(INFO,1)<<out;
-	  LOG_FIRST_N(INFO,1)<<DataFusion::Instance().xd.transpose();
 	} while (!finished);
 	LOG(INFO) << "Saving result...";
 	while (!result.empty()) {
@@ -208,7 +216,7 @@ int main(int argc, char *argv[]) {
   LOG_IF(INFO, config.outage_config.enable)
 		  << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
 		  << config.outage_config.stop;
-  LOG(INFO)<<"The result is saved to "<<config.output_config.file_path;
+  LOG(INFO) << "The result is saved to " << config.output_config.file_path;
   return 0;
 }
 
