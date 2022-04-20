@@ -29,7 +29,7 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: true
+  enable: false
   odometer-std: 0.01
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
   NHC-enable: false
@@ -56,7 +56,7 @@ ZUPT-Config:
   threshold: 0
 Align-Config:
   mode: 0
-  velocity-threshold: 1.4
+  velocity-threshold: 1.3
   init-PVA:
     week: 0
     gpst: 0
@@ -80,7 +80,7 @@ Outage-Config:
 Output-Config:
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.post.nav
 #  0: bin, for small size
-# 1: ascii, for easily read
+# 1: ascii, for easily open with text editors
 # 2: double mat, for easily load by Python or MATLAB
   file-format: 1
   project-enable: false
@@ -96,6 +96,6 @@ Pressure-Config:
   enable: false
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
   height-std: 0.2
-start-time: 122371
+start-time: 122379
 stop-time: 124132
-enable-rts: true
+enable-rts: false
