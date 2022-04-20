@@ -108,7 +108,7 @@ class Convert {
    * [ 0 -z y ]
    * [ z 0 x ]
    * [ y -x 0 ]
-   * @param v
+   * @param v: 3-d vector
    * @return  skew matrix
    */
   static Mat3d skew(const Vec3d &v);
