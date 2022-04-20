@@ -65,6 +65,7 @@ add_message_files(
         gnss.msg
         imu.msg
         vel.msg
+        debug.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -159,6 +160,7 @@ add_executable(${PROJECT_NAME}_node
 
 add_executable(rtsim_fusion_node
         src/rtsim_fusion_node.cpp
+        ../../../AppCommon/FileIO.cpp
         ${SOURCE}
         )
 

@@ -10,7 +10,7 @@
 #define KD_IN_KALMAN_FILTER 0 /* 是否将里程计比例因子加入卡尔曼滤波状态量*/
 
 #ifndef USE_INCREMENT
-#define USE_INCREMENT 0 /*增量数据1 */
+#define USE_INCREMENT 1 /*增量数据1 */
 #endif
 
 #define ESTIMATE_GNSS_LEVEL_ARM 0   /*将杆臂误差作为状态*/
@@ -18,7 +18,7 @@
 
 #define BASE_STATE 15
 
-#if ESTIMATE_GNSS_LEVEL_ARM == 0
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
 #define STATE_GNSS_LEVEL_ARM_SIZE 3
 #define STATE_GNSS_LEVEL_ARM_START (BASE_STATE)
 #else

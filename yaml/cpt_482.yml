@@ -79,7 +79,7 @@ Outage-Config:
   outage: 30
 Output-Config:
   file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.nav
-  format: 1
+  file-format: 1
   project-enable: true
   position-project:
     - 0.21
@@ -87,7 +87,7 @@ Output-Config:
     - -0.418
   attitude-project:
     - 0
-    - -0.525
+    - -0.448
     - 3.32
 Pressure-Config:
   enable: false
