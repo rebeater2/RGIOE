@@ -35,10 +35,10 @@ void IMUSmooth::Update(const ImuData &imu) {
 	  imu_ave.acce[i] = (imu_ave.acce[i] * (width - 1) + imu.acce[i]) / width;
 	  imu_ave.gyro[i] = (imu_ave.gyro[i] * (width - 1) + imu.gyro[i]) / width;
 
-	  imu_var.acce[i] = (imu_var.acce[i] * (width - 1) +
-		  (imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / width;
-	  imu_var.gyro[i] = (imu_var.gyro[i] * (width - 1) +
-		  (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / width;
+	  imu_var.acce[i] =
+		  (imu_var.acce[i] * (width - 1) + (imu.acce[i] - imu_ave.acce[i]) * (imu.acce[i] - imu_ave.acce[i])) / width;
+	  imu_var.gyro[i] =
+		  (imu_var.gyro[i] * (width - 1) + (imu.gyro[i] - imu_ave.gyro[i]) * (imu.gyro[i] - imu_ave.gyro[i])) / width;
 	}
   }
   /* 静止判定  连续static_width 个历元的标准差 大于 static_std_threshold则认为是静止的  */
@@ -66,5 +66,9 @@ bool IMUSmooth::isStatic() const {
   return is_static_;
 }
 IMUSmooth::IMUSmooth(double threshold, int static_width, int window) : static_std_threshold(threshold),
-static_width(static_width), width(window) , is_static_(false), up_cnt(0), static_cnt(0){
+																	   static_width(static_width),
+																	   width(window),
+																	   is_static_(false),
+																	   up_cnt(0),
+																	   static_cnt(0) {
 }

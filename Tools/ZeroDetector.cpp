@@ -20,7 +20,7 @@ int main(int argc,char *argv[]){
     return 1;
   }
   ifstream is(argv[1]);
-  IMUReader reader{argv[1],IMU_FILE_IMD,IMU_FRAME_FRD,true,125};
+  IMUReader reader{argv[1],IMU_FILE_IMUTXT,IMU_FRAME_RFU,true,125};
   string s = argv[1];
   ofstream os(s+"_1.imustd");
   ImuData  imu;
