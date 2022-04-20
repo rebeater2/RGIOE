@@ -14,22 +14,24 @@
 void AlignMoving::Update(const ImuData &imu) {
   /*必须在静止时刻对准*/
   smooth.Update(imu);
+  if (!smooth.isStatic()){
+    return;
+  }
   auto smoothed_imu = smooth.getSmoothedIMU();
+  Vec3d scale = Vec3d{option.imuPara.as_ini[0], option.imuPara.as_ini[1], option.imuPara.as_ini[2]},
+	  bias = Vec3d{option.imuPara.ab_ini[0], option.imuPara.ab_ini[1], option.imuPara.ab_ini[2]},
+	  acce = Vec3d{smoothed_imu.acce};
+  Mat3d eye3 = Mat3d::Identity();
+  double dt = 1.0 / option.d_rate;
+  Mat3d scale_mat = scale.asDiagonal();
+  acce = (eye3 - scale_mat) * (acce - bias * dt);
   nav.gpst = imu.gpst;
-//    if (smooth.isStatic()) {
-#if USE_INCREMENT == 1
-  nav.atti[0] = 0;//asin(smoothed_imu.acce[1] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
-  nav.atti[1] = 0;//asin(smoothed_imu.acce[0] * 200 / WGS84::Instance().g) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
-#else
-  /*用于加速度单位是1的场景*/
-  nav.atti[0] = asin(smoothed_imu.acce[1]) * (smoothed_imu.acce[2] > 0 ? 1 : -1);
-  nav.atti[1] = asin(smoothed_imu.acce[0]) * (smoothed_imu.acce[2] > 0 ? -1 : 1);
-#endif
-//  nav.att_std = {0.3 * _deg, 0.3 * _deg, 0.3 * _deg};
+  Vec3d vm = acce.normalized();
+  nav.atti[0] = asin(vm[1]) * (vm[2] > 0 ? 1 : -1);
+  nav.atti[1] = -asin(vm[0]) * (vm[2] > 0 ? 1 : -1);
   nav.Qbn = Convert::euler_to_quaternion(nav.atti);
   nav.Cbn = Convert::euler_to_dcm(nav.atti);
   flag_level_finished = true;
-//    }
 }
 
 double AlignMoving::Update(const GnssData &gnss) {
@@ -55,21 +57,21 @@ double AlignMoving::Update(const GnssData &gnss) {
 	flag_yaw_finished = true;
   } else {
 #endif
-  auto distance = WGS84::Instance().distance(gnss, gnss_pre);
-  v = (float)distance.d;
-  if (option.align_vel_threshold < distance.d and distance.d < 1e3) {
-	nav.vn[0] = distance.dn;
-	nav.vn[1] = distance.de;
-	nav.vn[2] = distance.dd;
-	nav.vel_std = {0.3, 0.3, 0.3};
-	nav.atti[2] = atan2(distance.de, distance.dn);
-	nav.att_std[0] = 0.1 * _deg;
-	nav.att_std[1] = 0.1 * _deg;
-	nav.att_std[2] = 100 * _deg;
-	nav.Qbn = Convert::euler_to_quaternion(nav.atti);
-	nav.Cbn = Convert::euler_to_dcm(nav.atti);
-	flag_yaw_finished = true;
-  }
+	auto distance = WGS84::Instance().distance(gnss, gnss_pre);
+	v = (float)distance.d;
+	if (option.align_vel_threshold < distance.d and distance.d < 1e3) {
+	  nav.vn[0] = distance.dn;
+	  nav.vn[1] = distance.de;
+	  nav.vn[2] = distance.dd;
+	  nav.vel_std = {0.3, 0.3, 0.3};
+	  nav.atti[2] = atan2(distance.de, distance.dn);
+	  nav.att_std[0] = 0.1 * _deg;
+	  nav.att_std[1] = 0.1 * _deg;
+	  nav.att_std[2] = 1 * _deg;
+	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
+	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
+	  flag_yaw_finished = true;
+	}
 #if RUN_IN_STM32 != 1
   }
   nav.gpst = gnss.gpst;
@@ -85,8 +87,8 @@ double AlignMoving::Update(const GnssData &gnss) {
   Vec3d lb = {option.lb_gnss[0], option.lb_gnss[1], option.lb_gnss[2]};
   Mat3d Dr = vdr.asDiagonal();
   nav.pos -= Dr * nav.Cbn * lb;
-  /*补偿安装角影响*/
-  Vec3d vec = Vec3d{option.angle_bv[0], option.angle_bv[1], option.angle_bv[2]};
+  /*补偿安z-axis影响*/
+  Vec3d vec = Vec3d{0, 0, option.angle_bv[2]};
   Mat3d Cbv = Convert::euler_to_dcm(vec);
   nav.Cbn = nav.Cbn * Cbv;
   nav.atti = Convert::dcm_to_euler(nav.Cbn);
@@ -116,7 +118,14 @@ double AlignMoving::Update(const GnssData &gnss) {
   return v;
 }
 
-AlignMoving::AlignMoving(const Option &opt) : option(opt){
+AlignMoving::AlignMoving(const Option &opt) : option(opt),
+#if USE_INCREMENT == 1
+smooth{1e-10, 2, 30}
+#else
+smooth{1.6e-4, 2, 10}
+#endif
+{
+
   nav.kd = opt.odo_scale;
   gnss_pre = {0};
 }
