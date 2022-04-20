@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
 	do {
 	  imu_reader.ReadNext(imu);
 	  align.Update(imu);
+	  LOG(INFO)<<fmt::format("level attitude:{} {} {}",align.nav.atti[0]/_deg,align.nav.atti[1]/_deg,align.nav.atti[2]/_deg);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
 		logi << "aligning vel = " << align.Update(gnss);
 		if (!gnss_reader.ReadNext(gnss)) {
@@ -217,6 +218,9 @@ int main(int argc, char *argv[]) {
 		  << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
 		  << config.outage_config.stop;
   LOG(INFO) << "The result is saved to " << config.output_config.file_path;
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
+  LOG(INFO) << "Final lever arm:" << DataFusion::Instance().lb_gnss.transpose();
+#endif
   return 0;
 }
 

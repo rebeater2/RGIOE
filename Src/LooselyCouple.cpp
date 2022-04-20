@@ -14,12 +14,12 @@ DataFusion *df = nullptr;/*point to DataFusion::Instance()*/
 AlignMoving *align = nullptr;/*point to Alignment*/
 #if 1
 const ImuPara default_imupara{0.15 * _deg / _sqrt_h, 0.25 / _sqrt_h,
-							  -1500 * _mGal, 1000 * _mGal, -3000 * _mGal,
-							  1000 * _deg / _hour, -200 * _deg / _hour, 283 * _deg / _hour,
+							  -0 * _mGal, 0 * _mGal, -0 * _mGal,
+							  0 * _deg / _hour, -0 * _deg / _hour, 0 * _deg / _hour,
 							  0, 0, 0,
 							  0, 0, 0,
-							  1000 * _mGal, 1000 * _mGal, 1000 * _mGal,
-							  80 * _deg / _hour, 80 * _deg / _hour, 80 * _deg / _hour,
+							  3.6 * _mGal, 3.6 * _mGal, 3.6 * _mGal,
+							  3 * _deg / _hour, 3 * _deg / _hour, 3 * _deg / _hour,
 							  1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
 							  1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
 							  1 * _hour, 1 * _hour
@@ -31,21 +31,21 @@ Option default_option{
   .imuPara=default_imupara,
   .d_rate = 125,
   .align_mode=AlignMode::ALIGN_USE_GIVEN,
-  .align_vel_threshold = 0.1,
+  .align_vel_threshold = 1.4,
   .enable_gnss = 1,
   .lb_gnss={0, 0, 0},
   .gnss_std_scale = 1.0,
-  .nhc_enable=0,
+  .nhc_enable=1,
   .nhc_std= {0.1,0.1},
-  .zupt_enable=0,
-  .zupt_std=0.1,
-  .zupta_enable = 0,
-  .zupta_std=0.1 * _deg,
+  .zupt_enable=1,
+  .zupt_std=0.01,
+  .zupta_enable = 1,
+  .zupta_std=0.01 * _deg,
   .odo_enable = 0,
   .odo_std = 0.1,
   .odo_scale = 1.14,
   .odo_scale_std  = 0,
-  .lb_wheel={0, 0, 0},
+  .lb_wheel={-0.317, -0.095, 0.03},
   .angle_bv={0, 0, 0},
   .pos_std={1, 1, 1},
   .vel_std={2, 2, 2},
@@ -72,6 +72,7 @@ int navInitialize(const Option *opt) {
     NavEpoch epoch = align->nav;
     WGS84::Instance().Update(epoch.pos[0], epoch.pos[2]);
     df->Initialize(align->getNavEpoch(), *opt);
+    default_option = *opt;
     return 0;
   } else
     return 2;

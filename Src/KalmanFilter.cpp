@@ -84,7 +84,8 @@ void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
   dk = dk / (dk + b);
   assert(dk > 0 and dk < 1);
 #else
-  Rk = R;
+  Rk = R+ 0.005*(z.transpose()*z).x() * Mat3d::Identity();
+  Rk(2,2)=0.01 * R(2,2);
 #endif
   MatX3d K = P * H.transpose() * ((H * P * H.transpose() + Rk).inverse() + Rk);
 //  xd = xd + K * (z - H * xd);

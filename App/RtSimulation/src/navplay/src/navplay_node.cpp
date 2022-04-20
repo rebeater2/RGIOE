@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include <sensor_msgs/Imu.h>
 #include "tf/transform_broadcaster.h"
 
 #include "navplay/imu.h"
@@ -23,8 +24,8 @@
 #include "AdiHandle.h"
 
 NavRawReader *preader;
-ros::Timer *timer;
-
+ros::Timer timer{};
+double base_lla[3]{0, 0, 0};
 int ConvertVelRawToFloat(const InsCube::VelocityRaw *raw, Velocity *vel) {
   vel->forward = ((float)((int16_t)(raw->vh_ << 8u) | raw->vl_)) / 1000.0f;
   vel->angular = ((float)((int16_t)(raw->ah_ << 8u) | raw->al_)) / 1000.0f;
@@ -39,7 +40,6 @@ class Beats {
   double time_elapse = 0;
   double gpst_start = 0;
   bool real_time = true;
-  double base_lla[3]{0, 0, 0};
   int speed_up = 1;/*should be 1～5*/
   ros::Time start = ros::Time::now();
   ros::NodeHandle handle;
@@ -64,12 +64,12 @@ class Beats {
 	LOG(INFO) << fmt::format("base station: {} {} {}", base_lla[0], base_lla[1], base_lla[2]);
   }
  public:
-   void close() {
+  void close() {
 	LOG(INFO) << "all data play finished,timer closed";
 	navplay::imu imu_msg;
 	imu_msg.gpst = -1;
 	imu_publisher.publish(imu_msg);
-	timer->stop();
+	timer.stop();
   }
   navplay::gnss toGnssMsg() const {
 	navplay::gnss gnss_msg;
@@ -80,7 +80,7 @@ class Beats {
 	gnss_msg.pos_std[0] = raw.gnss_.pos_std[0];
 	gnss_msg.pos_std[1] = raw.gnss_.pos_std[1];
 	gnss_msg.pos_std[2] = raw.gnss_.pos_std[2];
-	gnss_msg.mode = 1;
+	gnss_msg.mode = raw.gnss_.mode;
 	return gnss_msg;
   }
   navplay::imu toImuMsg() const {
@@ -114,7 +114,7 @@ class Beats {
 	  base_lla[2] = raw.rst_.height;
 	  base_set = true;
 	}
-	auto is_int = [ ](double a){return fabs(a-int(a))<0.01;};
+	auto is_int = [](double a) { return fabs(a - int(a)) < 0.01; };
 	if (!is_int(raw.gpst)) {
 	  return path;
 	}
@@ -124,10 +124,9 @@ class Beats {
 										base_lla[1] * _deg,
 										raw.rst_.height,
 										base_lla[2]);
-	pose_stamped.pose.position.x = d.dn;
-	pose_stamped.pose.position.y = d.de;
-	pose_stamped.pose.position.z = d.dd;
-
+	pose_stamped.pose.position.x = d.de;
+	pose_stamped.pose.position.y = d.dn;
+	pose_stamped.pose.position.z = -d.dd;
 	Quad quad =
 		Convert::euler_to_quaternion({raw.rst_.atti[0] * _deg, raw.rst_.atti[1] * _deg, raw.rst_.atti[2] * _deg});
 //	auto quad = tf::createQuaternionFromRPY(raw.rst_.atti[0] * _deg, raw.rst_.atti[1] * _deg, raw.rst_.atti[2] * _deg);
@@ -141,6 +140,10 @@ class Beats {
 	path.poses.size() > 10000 ? path.poses.clear() : void(0);
 	return path;
   }
+  /**
+   * @brief 每1ms进入一次
+   * @param event
+   */
   void operator()(const ros::TimerEvent &event) {
 	if (!preader) {
 	  close();
@@ -148,7 +151,7 @@ class Beats {
 	}
 	if (gpst_start <= 0) {
 	  if (!preader->ReadNext(raw)) {
-	    close();
+		close();
 	  }
 	  gpst_start = preader->GetTime();
 	  start = ros::Time::now();
@@ -158,26 +161,28 @@ class Beats {
 	if (real_time) {
 	  time_elapse = (event.current_real - start).toSec();
 	} else {
+	  /*加速逻辑*/
 	  time_elapse += 0.001 * speed_up;
 	}
-	LOG_EVERY_N(INFO, 1000) << "current elapse time:" << time_elapse << " " << (int)raw.gpst;
-	int i = 0;
-	if (time_elapse > raw.gpst - gpst_start) {
-	  switch (raw.type_) {
-		case DATA_TYPE_GNSS: gnss_publisher.publish(toGnssMsg());
-		  break;
-		case DATA_TYPE_IMU: imu_publisher.publish(toImuMsg());
-		  break;
-		case DATA_TYPE_VEL: vel_publisher.publish(toVelMsg());
-		  break;
-		case DATA_TYPE_RST: rst_publisher.publish(toPoseMsg());
-		  break;
-		default: break;
-	  }
-	  if (!preader->ReadNext(raw)) {
-		close();
-	  }
+	LOG_EVERY_N(INFO, 5000) << "current elapse time:" << time_elapse << " " << (int)raw.gpst;
+//	if (time_elapse > raw.gpst - gpst_start) {
+	switch (raw.type_) {
+	  case DATA_TYPE_GNSS: gnss_publisher.publish(toGnssMsg());
+		break;
+	  case DATA_TYPE_IMU: imu_publisher.publish(toImuMsg());
+		break;
+	  case DATA_TYPE_VEL: vel_publisher.publish(toVelMsg());
+		break;
+	  case DATA_TYPE_RST: rst_publisher.publish(toPoseMsg());
+		break;
+	  case DATA_TYPE_BMP: break;/*TODO 气压计懒得写了*/
+	  default: LOG(INFO) << "Error, this format is NOT defined!" << raw.type_;
+		break;
 	}
+	if (!preader->ReadNext(raw)) {
+	  close();
+	}
+//	}
 	ros::spinOnce();
   }
 };
@@ -190,6 +195,10 @@ int main(int argc, char **argv) {
   std::string raw_filename;
   handle.param<std::string>("raw_filename", raw_filename, "");
   LOG(INFO) << "raw file name" << raw_filename;
+  handle.param<double>("base_lat", base_lla[0], 0);
+  handle.param<double>("base_lon", base_lla[1], 0);
+  handle.param<double>("base_height", base_lla[2], 0);
+  LOG(INFO) << fmt::format("Base station:", base_lla[0], base_lla[1], base_lla[2]);
   /*打开文件准备开始读*/
   preader = new NavRawReader(raw_filename);
   if (!preader->IsOk()) {
@@ -197,8 +206,9 @@ int main(int argc, char **argv) {
 	return 1;
   }
   /*开启计时器*/
-  static ros::Timer temp = handle.createTimer(ros::Duration(0.001), Beats());
-  timer = &temp;
+  static ros::Timer temp = handle.createTimer(ros::Duration(1.0 / 1000), Beats());
+//  timer = &temp;
+  timer = std::move(temp);
   geometry_msgs::Pose pos;
   ros::spin();
 }
