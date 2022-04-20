@@ -18,7 +18,7 @@ config = yaml.safe_load(open(path))
 #   SENSOR_HEIGHT = 0x80U,
 # }SensorType
 def show_sensors():
-    result_path = config["Output-Config"]["file-path"]
+    result_path = "/media/rebeater/hd_data2/workspace/raw_data/2022/顺义/20220404/RAW_INDOOR000113.rtnav"
     data = np.loadtxt(result_path)
     sensor_idx = {
         'imu': 0x01,

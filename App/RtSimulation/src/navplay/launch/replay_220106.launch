@@ -1,12 +1,14 @@
 <launch>
     <node pkg="navplay" name="navplay_node" type="navplay_node"/>
     <param name="raw_filename" type="string"
-           value="/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw"/>
-    <param name="real_time" type="bool" value="true"/>
+           value="/media/rebeater/hd_data2/workspace/raw_data/2022/顺义/20220404/RAW_INDOOR000122.ra"/>
+    <param name="real_time" type="bool" value="false"/>
     <!-- @Note! speed up is valid only when real-time option is false -->
-    <param name="speed_up" type="int" value="5"/>
+    <param name="speed_up" type="int" value="10"/>
     <!-- 基准站位置 -->
     <param name="base_lat" type="double" value="40.04456445"/>
     <param name="base_lon" type="double" value="116.68064955"/>
     <param name="base_height" type="double" value="37.4389991760"/>
+    <node pkg="navplay" name="rtsim_fusion_node" type="rtsim_fusion_node"/>
+    <node pkg="navplay" name="ShowDebugInfo" type="ShowDebugInfo.py"/>
 </launch>

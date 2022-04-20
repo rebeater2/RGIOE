@@ -14,6 +14,7 @@
 #include "navplay/imu.h"
 #include "navplay/gnss.h"
 #include "navplay/vel.h"
+#include "navplay/debug.h"
 #include "fmt/format.h"
 #include "glog/logging.h"
 
@@ -28,23 +29,58 @@ boost::circular_buffer<ImuData> imu_queue;
 boost::circular_buffer<GnssData> gnss_queue;
 boost::circular_buffer<Velocity> vel_queue;
 
-
-//初始发送fusion\gnss到rviz
-nav_msgs::Path ros_path_;
-nav_msgs::Path ros_path_gnss;
-
 #define FUSION_ENGINE RGIOE
 
 /*初始经度、纬度、高程*/
-
-bool init = false;
 double base_lla[3];
 
-extern bool GnssCheck(const GnssData &gnss);
+/**
+ * @brief Check whether gnss data is valid
+ * @param gnss: GNSS data
+ * @return true for valid
+ */
+bool GnssCheck(const GnssData &gnss) {
+  if (gnss.gpst <= 0) {
+	return false;
+  }
+  if (gnss.mode == SPP) {
+	return true;
+  }
+  if (gnss.mode == RTK_DGPS) {
+	return true;
+  } else if (gnss.mode == RTK_FLOAT || gnss.mode == RTK_FIX) {
+	return true;
+  }
+  return false;
+};
+/**
+ * output GNSS message
+ * @param os
+ * @param gnss
+ * @return
+ *//*
+ostream &operator<<(ostream &os, const GnssData &gnss) {
+  os << fmt::format("{:.3f} {:.8f} {:.8f}  {:.3f}  {:.3f} {:.3f} {:.3f} {:d} {:d}",
+					gnss.gpst,
+					gnss.lat,
+					gnss.lon,
+					gnss.height,
+					gnss.pos_std[0],
+					gnss.pos_std[1],
+					gnss.pos_std[2],
+					gnss.ns,
+					gnss.mode
+  );
+  return os;
+}*/
 
+/**
+ * @brief
+ * @param imu_msg
+ */
 void OnImuMsgCallBack(const navplay::imu::ConstPtr &imu_msg) {
-  LOG_FIRST_N(INFO, 100) << __FUNCTION__ << fmt::format("time:{}, thread_id:", imu_msg.get()->gpst)
-					   << std::this_thread::get_id();
+//  LOG_FIRST_N(INFO, 100) << __FUNCTION__ << fmt::format("time:{}, thread_id:", imu_msg.get()->gpst)
+//						 << std::this_thread::get_id();
   ImuData imu;
   imu.gpst = imu_msg->gpst - 1;
   for (int i = 0; i < 3; i++) {
@@ -77,19 +113,14 @@ void OnVelMsgCallBack(const navplay::vel::ConstPtr &vel_msg) {
   vel.forward = vel_msg->forward;
   vel_queue.push_back(vel);
 }
-static nav_msgs::Path path;
-void publishResult(ros::Publisher &pub,const NavOutput &nav){
+static nav_msgs::Path path{};
+void publishResult(ros::Publisher &pub, const NavOutput &nav) {
+  LOG_EVERY_N(INFO, 125) << fmt::format("output:{} {} {} {}", nav.gpst, nav.lat, nav.lon, nav.height);
   geometry_msgs::PoseStamped pose_stamped;
-  if (!init) {
-    base_lla[0] = nav.lat;
-    base_lla[1] = nav.lon;
-    base_lla[2] = nav.height;
-    init = true;
-  }
-  auto is_int = [ ](double a){return fabs(a-int(a))<0.01;};
+  auto is_int = [](double a) { return fabs(a - int(a)) < 0.01; };
   if (!is_int(nav.gpst)) {
-    pub.publish(path);
-    return ;
+	pub.publish(path);
+	return;
   }
   auto d = WGS84::Instance().distance(nav.lat * _deg,
 									  nav.lon * _deg,
@@ -97,12 +128,11 @@ void publishResult(ros::Publisher &pub,const NavOutput &nav){
 									  base_lla[1] * _deg,
 									  nav.height,
 									  base_lla[2]);
-  pose_stamped.pose.position.x = d.dn;
-  pose_stamped.pose.position.y = d.de;
-  pose_stamped.pose.position.z = d.dd;
-  LOG(INFO)<<fmt::format("Relative position:{} {} {}",d.dn,d.de,d.dd);
+  pose_stamped.pose.position.x = d.de;
+  pose_stamped.pose.position.y = d.dn;
+  pose_stamped.pose.position.z = -d.dd;
   Quad quad =
-  	Convert::euler_to_quaternion({nav.atti[0] * _deg, nav.atti[1] * _deg, nav.atti[2] * _deg});
+	  Convert::euler_to_quaternion({nav.atti[0] * _deg, nav.atti[1] * _deg, nav.atti[2] * _deg});
   //	auto quad = tf::createQuaternionFromRPY(nav.atti[0] * _deg, nav.atti[1] * _deg, nav.atti[2] * _deg);
   pose_stamped.pose.orientation.x = quad.x();
   pose_stamped.pose.orientation.y = quad.y();
@@ -115,6 +145,19 @@ void publishResult(ros::Publisher &pub,const NavOutput &nav){
   pub.publish(path);
 }
 
+void publishDebugInfo(ros::Publisher &pub, const NavOutput &nav) {
+  navplay::debug debug;
+  debug.gpst = nav.gpst;
+  for (int i = 0; i < 3; i++) {
+	debug.pos_std[i] = nav.pos_std[i];
+	debug.atti_std[i] = nav.atti_std[i];
+	debug.vel_std[i] = nav.atti_std[i];
+	debug.gb[i] = nav.gb[i];
+	debug.ab[i] = nav.ab[i];
+  }
+  pub.publish(debug);
+}
+
 int main(int argc, char **argv) {
   google::InitGoogleLogging("log");
   google::LogToStderr();
@@ -123,77 +166,109 @@ int main(int argc, char **argv) {
   vel_queue.set_capacity(10);
   ros::init(argc, argv, "rtsim_fusion_node");
   ros::NodeHandle handle;
+  bool save_result;
+  std::string result_path;
+  handle.param<double>("base_lat", base_lla[0], 0);
+  handle.param<double>("base_lon", base_lla[1], 0);
+  handle.param<double>("base_height", base_lla[2], 0);
+  handle.param<bool>("save_result", save_result, false);
+  handle.param<std::string>("result_path", result_path, "./result.rtnav");
+  LOG(INFO) << fmt::format("Base station:", base_lla[0], base_lla[1], base_lla[2]);
   ros::Subscriber imu_sub = handle.subscribe("imu_data", 10, OnImuMsgCallBack);
   ros::Subscriber gnss_sub = handle.subscribe("gnss_data", 10, OnGnssMsgCallBack);
   ros::Subscriber vel_sub = handle.subscribe("vel_data", 10, OnVelMsgCallBack);
   ros::Publisher rst_pub = handle.advertise<nav_msgs::Path>("PVA", 10);
-  ros::Publisher PVA_gnss = handle.advertise<nav_msgs::Path>("gnss", 100);
+  ros::Publisher debug_pub = handle.advertise<navplay::debug>("debug_info", 10);
+
   /*multi thread*/
   ros::AsyncSpinner s(3);
   s.start();
-  init = false;
-
   Option opt = default_option;
   opt.align_mode = ALIGN_MOVING;
-  opt.gnss_std_scale = 0.01;
+  opt.odo_scale = 0.976;
+  opt.odo_std = 0.01;
+  opt.nhc_enable = true;
+  opt.nhc_std[0] = 0.01;
+  opt.nhc_std[1] = 0.01;
+  opt.angle_bv[0] = 0;
+  opt.angle_bv[1] = -0.8 * _deg;
+  opt.angle_bv[2] = 2.15 * _deg;
+  opt.odo_enable = 0;
+  opt.nhc_enable = 0;
+  opt.align_vel_threshold = 0.5;
+  opt.zupt_enable = 0;
+  opt.zupt_std=0.0001;
+  opt.zupta_enable=0;
+  opt.zupta_std=0.0001;
+//  {0,-0.8 *_deg,2.1 *_deg};
+  opt.gnss_std_scale = 1;
+  opt.lb_gnss[0]=0.1;
+  opt.lb_gnss[1]=0.3;
   NavOutput nav;
   ImuData imu;
   GnssData gnss;
-  path.header.frame_id="ins";
+
+  NavWriter writer{result_path, NavFileFormat::NavAscii};
+  navInitialize(&opt);
+  path.header.frame_id = "ins";
   path.header.stamp = ros::Time::now();
-  LOG(INFO) << "Start align,mode = " << opt.align_mode;
+  LOG(INFO) << fmt::format("Start align,mode={},vel_threshold={}",
+						   opt.align_mode,
+						   opt.align_vel_threshold);//"Start align,mode = " << opt.align_mo;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
 	while (ros::ok()) {
-		if(!imu_queue.empty()){
-		  LOG(INFO) << "IMU data get";
-		  imu = imu_queue.front();
-		  imu_queue.pop_front();
-		  if (navAlignLevel(&imu)) {
-		    LOG(INFO) << "align finished!";
-		    break;
-		  };
+	  if (!imu_queue.empty()) {
+		imu = imu_queue.front();
+		imu_queue.pop_front();
+		if (navAlignLevel(&imu)) {
+		  LOG(INFO) << "align finished!";
+		  break;
 		}
+	  }
 	  if (!gnss_queue.empty()) {
-	    LOG(INFO) << "GNSS data get";
 		gnss = gnss_queue.front();
 		gnss_queue.pop_front();
-		LOG(INFO)<<"vel= "<<navAlignGnss(&gnss);
+		LOG(INFO) << "moving align: vel= " << navAlignGnss(&gnss);
 	  }
-	  LOG_FIRST_N(INFO,10) << "in align..." << opt.align_mode;
 	}
   } else {
 	LOG(ERROR) << "supported align mode" << (int)opt.align_mode;
 	return 1;
   }
-  LOG(INFO)<<"Align finished";
+  LOG(INFO) << "Align finished";
   navInitialize(&opt);
 //  PVA_pub.publish(To_fusion_path(&nav));
   while (ros::ok()) {
 	if (gnss_queue.empty()) {
 	  gnss = gnss_queue.front();
 	  gnss_queue.pop_front();
-	  LOG_EVERY_N(INFO,10) << fmt::format("GNSS update @ {} {} {} {} {} {} {}",
-							   gnss.gpst,
-							   gnss.lat,
-							   gnss.lon,
-							   gnss.height,
-							   gnss.pos_std[0],
-							   gnss.pos_std[1],
-							   gnss.pos_std[2]);//{};
-	  navSetPos(&gnss.lat, gnss.height, gnss.pos_std);
+	  LOG(INFO) << "GNSS" << gnss;
+	  if (GnssCheck(gnss))
+		navSetPos(&gnss.lat, gnss.height, gnss.pos_std);
+	}
+	if (!vel_queue.empty()) {
+	  auto vel = vel_queue.front();
+	  vel_queue.pop_front();
+	  navSetVel(&vel);
 	}
 	if (!imu_queue.empty()) {
 	  imu = imu_queue.front();
 	  imu_queue.pop_front();
 	  timeUpdate(&imu);
 	  navGetResult(&nav);
+	  if (save_result)
+		writer.update(nav);
 	  publishResult(rst_pub, nav);
-	  LOG(INFO)<<fmt::format("rst: lat:{:.5f} {:.8f} {:.8f} {:.4f} ",nav.gpst,nav.lat,nav.lon,nav.height);
-	  LOG(INFO)<<fmt::format("imu: lat:{:.5f} {:.3f} {:.3f} {:.3f} {:.3f} {:.3f} {:.3f} ",
-							imu.gpst,imu.gyro[0],imu.gyro[1],imu.gyro[2],imu.acce[0],imu.acce[1],imu.acce[2]
-							 );
+	  publishDebugInfo(debug_pub, nav);
+	  if (std::isnan(nav.lat)) {
+		LOG(INFO) << "System does not converge";
+		break;
+	  }
 	}
   }
+  LOG(INFO) << "result was save to:" << result_path;
+  ros::shutdown();
+  ros::waitForShutdown();
   LOG(INFO) << "Process finished";
   s.stop();
   return 0;

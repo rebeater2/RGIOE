@@ -27,8 +27,8 @@ void IMUFix(){
   }
 }
 void IMURotate(){
-  double rotate_angle[3] = { 0 , 0.4 , 90 };
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd";
+  double rotate_angle[3] = { 75, 0 , 0 };
+  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd.fix.imd";
   std::string out_filename = fmt::format("{}_rotate_{}_{}_{}.imd",filename,rotate_angle[0],rotate_angle[1],rotate_angle[2]);
   ofstream out{out_filename,std::ios::binary};
   int rate = 125;
@@ -70,7 +70,7 @@ void OdoFix(){
 int main(int argc, char **argv) {
   google::InitGoogleLogging(".");
   google::LogToStderr();
-  IMUFix();
+  IMURotate();
   return 0;
 }
 
