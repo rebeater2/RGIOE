@@ -128,15 +128,17 @@ istream &operator>>(istream &is, AuxiliaryData &aux) {
   return is;
 }
 ostream &operator<<(ostream &os, const GnssData &gnss) {
-  os << std::fixed << std::setprecision(0) << gnss.week << SEPERATE << std::setprecision(5) << gnss.gpst << SEPERATE
-	 << std::setprecision(12) << gnss.lat << SEPERATE << gnss.lon << SEPERATE << std::setprecision(3) << gnss.height
-	 << SEPERATE
-	 << std::setprecision(3) << gnss.pos_std[0] << SEPERATE << gnss.pos_std[1] << SEPERATE << gnss.pos_std[2]
-	 << SEPERATE
-/*	 << gnss.hdop
-	 << SEPERATE
-	 << fixed << gnss.ns << SEPERATE << gnss.mode*/
-	  ;
+  os << fmt::format("{:.3f} {:.8f} {:.8f}  {:.3f}  {:.3f} {:.3f} {:.3f} {:d} {:d}",
+					gnss.gpst,
+					gnss.lat,
+					gnss.lon,
+					gnss.height,
+					gnss.pos_std[0],
+					gnss.pos_std[1],
+					gnss.pos_std[2],
+					gnss.ns,
+					gnss.mode
+  );
   return os;
 }
 
@@ -174,16 +176,16 @@ void NavWriter::ConvertNavToDouble(const NavOutput &nav, NavDoubleList &bin) {
   bin.pos[1] = nav.lon;
   bin.pos[2] = nav.height;
   auto delta_d = WGS84::Instance().distance(
-  	nav.lat * _deg, nav.lon * _deg,
-  	base_position[0] * _deg, base_position[1] * _deg);
+	  nav.lat * _deg, nav.lon * _deg,
+	  base_position[0] * _deg, base_position[1] * _deg);
   bin.horiz[0] = delta_d.de;
   bin.horiz[1] = delta_d.dn;
   for (int i = 0; i < 3; i++) {
-    bin.vn[i] = nav.vn[i];
-    bin.atti[i] = nav.atti[i];
-    bin.pos_std[i] = nav.pos_std[i];
-    bin.atti_std[i] = nav.atti_std[i];
-    bin.vn_std[i] = nav.vn_std[i];
+	bin.vn[i] = nav.vn[i];
+	bin.atti[i] = nav.atti[i];
+	bin.pos_std[i] = nav.pos_std[i];
+	bin.atti_std[i] = nav.atti_std[i];
+	bin.vn_std[i] = nav.vn_std[i];
   }
 }
 
@@ -203,10 +205,9 @@ void NavWriter::th_write_nav() {
 	  if (fmt == NavFileFormat::NavBinary)
 		f_nav.write((char *)p_nav.get(), sizeof(NavOutput));
 	  else if (fmt == NavFileFormat::NavDoubleMatrix) {
-		ConvertNavToDouble(*p_nav,ndl);
-		f_nav.write((char *)&ndl,sizeof(NavDoubleList));
-	  }
-	  else {
+		ConvertNavToDouble(*p_nav, ndl);
+		f_nav.write((char *)&ndl, sizeof(NavDoubleList));
+	  } else {
 		f_nav << *p_nav << " " << p_nav->kd << "\n";
 	  }
 	}
@@ -370,7 +371,7 @@ NavReader::NavReader(const string &filename, NavFileFormat fmt) : fmt(fmt) {
 	ifs.open(filename);
   ok_ = ifs.good();
 }
-NavReader::NavReader(const char *filename,NavFileFormat fmt): NavReader(std::string(filename),fmt){
+NavReader::NavReader(const char *filename, NavFileFormat fmt) : NavReader(std::string(filename), fmt) {
 }
 bool NavReader::ReadNext(NavOutput &nav) {
   if (!ok_) return ok_;
