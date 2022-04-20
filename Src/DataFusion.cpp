@@ -11,9 +11,20 @@ char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
 				   "Copyright(c) 2019-2021, by Bao Linfeng, All rights reserved.\n"
 				   "This Version is for Embedded and Real-time Application\n";
 
-DataFusion::DataFusion() : Ins(), KalmanFilter() {
+DataFusion::DataFusion() : Ins(), KalmanFilter(),
+#if USE_INCREMENT == 1
+	smooth{5e-9, 2, 10}
+#else
+						   smooth{1.6e-4, 2, 10}
+#endif
+{
   P.setZero();
   Q0.setZero();
+//#if USE_INCREMENT ==1
+//  smooth=IMUSmooth{5e-9, 2, 10};
+//#else
+//  smooth=IMUSmooth{4e-6, 2, 10};
+//#endif
   /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
 /*  Option default_option = default_option{
 	  .imuPara={0, 0},
@@ -62,7 +73,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   temp = Vec3d{opt.imuPara.ab_std[0], opt.imuPara.ab_std[1], opt.imuPara.ab_std[2]};
   P.block<3, 3>(12, 12) = temp.asDiagonal();
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
-  double level_arm_std = 0.03;
+  double level_arm_std = 0.001;
   for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
 	P(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = level_arm_std;
   }
@@ -90,7 +101,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
   for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
-	Q0(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = 2 * level_arm_std * level_arm_std / 36000;
+	Q0(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = 0;//2 * level_arm_std * level_arm_std / 36000;
   }
 #endif
 #if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
@@ -144,7 +155,7 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 #endif
   _timeUpdateIdx++;
 
-  if (_timeUpdateIdx % 16 and opt.zupt_enable) {
+  if (_timeUpdateIdx % 8 and opt.zupt_enable) {
 	if (smooth.isStatic()) {
 	  MeasureZeroVelocity();
 	  nav.info.sensors |= SENSOR_ZUPT;
@@ -152,7 +163,8 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 	  nav.info.sensors &= ~SENSOR_ZUPT;
 	}
   }
-  if (_timeUpdateIdx % 32 and opt.nhc_enable) {
+  /*NHC should be disabled when odometer is enable,since  */
+  if (_timeUpdateIdx % 32 and opt.nhc_enable and !opt.odo_enable) {
 	MeasureNHC();
 	nav.info.sensors |= SENSOR_NHC;
   } else {
@@ -232,12 +244,12 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
 }
 
 int DataFusion::MeasureUpdateVel(const double &vel) {
-  Vec3d w_ib = _gyro_pre * opt.d_rate;
-  Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
-  Vec3d v_v = nav.Cbn.transpose() * (nav.vn + Cbv * (omega_ie_n + omega_en_n));
-  estimator_.Update(v_v, vel);
-//  return MeasureUpdateVel({vel, 0, 0});
-	return 0;
+  /* Vec3d w_ib = _gyro_pre * opt.d_rate;
+   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
+   Vec3d v_v = nav.Cbn.transpose() * (nav.vn + Cbv * (omega_ie_n + omega_en_n));
+   estimator_.Update(v_v, vel);*/
+  return MeasureUpdateVel({vel, 0, 0});
+//  return 0;
 }
 
 /**
@@ -282,7 +294,11 @@ Mat3Xd DataFusion::_posH() const {
   mat_h.block<3, 3>(0, 0) = eye3;
   mat_h.block<3, 3>(0, 6) = Convert::skew(nav.Cbn * lb_gnss);
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
-  mat_h.block<3, STATE_GNSS_LEVEL_ARM_SIZE>(0, STATE_GNSS_LEVEL_ARM_START) = -nav.Cbn;
+  Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
+			   1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+			   -1
+  };
+  mat_h.block<3, STATE_GNSS_LEVEL_ARM_SIZE>(0, STATE_GNSS_LEVEL_ARM_START) = -(vdr.asDiagonal() * nav.Cbn);
 #endif
   return mat_h;
 }
@@ -341,13 +357,13 @@ int DataFusion::MeasureZeroVelocity() {
   H.block<3, 3>(0, 3) = eye3;
   Vec3d z = nav.vn;
   Mat3d R = Mat3d::Zero();
-  for (int i = 0; i < 3; i++) R(i, i) = 0.001;
+  for (int i = 0; i < 3; i++) R(i, i) = opt.zupt_std * opt.zupt_std;
   Update(H, z, R);
   /*ZUPT A*/
   Vec1Xd HzuptA = Vec1Xd::Zero();
   HzuptA(0, 11) = 1;/*z轴零偏*/
   double zputa = _gyro_pre[2];
-  double Rzupta = 0.001;
+  double Rzupta = opt.zupta_std * opt.zupta_std;
   Update(HzuptA, zputa, Rzupta);
   update_flag |= FLAG_VELOCITY;
   return 0;

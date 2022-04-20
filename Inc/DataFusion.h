@@ -114,8 +114,8 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   int MeasureNHC();
 
  public:
-  DcmEstimator estimator_{};
- private:
+  DcmEstimator estimator_{};			/*DCM estimator for install angle */
+ public:
   /*base private*/
   MatXd Q0;                          	/*Matrix for Q*/
   Vec3d lb_gnss;                   	 	/*Gnss level arm in meter*/
@@ -135,7 +135,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
  private:
   Mat3Xd _posH() const;                	/* mat H for position update*/
   __attribute__((unused)) Mat3Xd _velH() const;    /* mat H for velocity update*/
-  IMUSmooth smooth{5e-9, 2, 10};    /*Static detector*/
+  IMUSmooth smooth;    /*Static detector*/
   Vec3d _posZ(const Vec3d &pos);    	/* calculate delta Z*/
   int _feedBack();                   	 /*feedback for position,velocity and height*/
 
