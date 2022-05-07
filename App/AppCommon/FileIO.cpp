@@ -4,7 +4,6 @@
 
 #include "FileIO.h"
 #include "WGS84.h"
-#include <iomanip>
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
@@ -72,26 +71,6 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
 	  output.info.gnss_mode,
 	  output.info.sensors
   );
-
-/*  os << output.week << SEPERATE << fixed << setprecision(3) << output.gpst << SEPERATE;
-  os << fixed << setprecision(12) << output.lat << SEPERATE << output.lon << SEPERATE;
-  os << fixed << setprecision(3) << output.height << SEPERATE;
-
-  os << fixed << setprecision(3) << output.vn[0] << SEPERATE << output.vn[1] << SEPERATE << output.vn[2] << SEPERATE;
-
-  os << fixed << setprecision(3) << output.atti[0]  << SEPERATE << output.atti[1]  << SEPERATE
-	 << output.atti[2]  << SEPERATE;
-
-  os << fixed << setprecision(2) << output.gb[0] << SEPERATE << output.gb[1] << SEPERATE
-	 << output.gb[2] << SEPERATE;
-
-  os << fixed << setprecision(2) << output.ab[0] << SEPERATE << output.ab[1] << SEPERATE
-	 << output.ab[2] << SEPERATE;
-
-  os << output.info.gnss_mode << SEPERATE << output.info.sensors << SEPERATE;
-#if KD_IN_KALMAN_FILTER == 1
-  os << fixed << setprecision(3) << output.kd << SEPERATE;
-#endif*/
   return os;
 }
 

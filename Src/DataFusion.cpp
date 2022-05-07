@@ -13,9 +13,9 @@ char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
 
 DataFusion::DataFusion() : Ins(), KalmanFilter(),
 #if USE_INCREMENT == 1
-	smooth{5e-9, 2, 10}
+						   smooth{5e-9, 2, 10}
 #else
-						   smooth{1.6e-4, 2, 10}
+smooth{1.6e-4, 2, 10}
 #endif
 {
   P.setZero();
@@ -314,9 +314,9 @@ Mat3Xd DataFusion::_velH() const {
   H3.block<3, 3>(0, 3) = Cnv;
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
-/*#if ESTIMATE_GNSS_LEVEL_ARM == 1
+#if ESTIMATE_GNSS_LEVEL_ARM == 1
   H3.block<STATE_GNSS_LEVEL_ARM_SIZE,STATE_GNSS_LEVEL_ARM_SIZE>(0,STATE_GNSS_LEVEL_ARM_START)=nav.Cbn;
-#endif*/
+#endif
   return H3;
 }
 /**
@@ -359,13 +359,15 @@ int DataFusion::MeasureZeroVelocity() {
   Mat3d R = Mat3d::Zero();
   for (int i = 0; i < 3; i++) R(i, i) = opt.zupt_std * opt.zupt_std;
   Update(H, z, R);
+  update_flag |= FLAG_VELOCITY;
   /*ZUPT A*/
+  if (!opt.zupta_enable) return 1;
   Vec1Xd HzuptA = Vec1Xd::Zero();
   HzuptA(0, 11) = 1;/*z轴零偏*/
-  double zputa = _gyro_pre[2];
+  double zputa = _gyro_pre[2] / dt;
   double Rzupta = opt.zupta_std * opt.zupta_std;
   Update(HzuptA, zputa, Rzupta);
-  update_flag |= FLAG_VELOCITY;
+
   return 0;
 }
 uint32_t DataFusion::EpochCounter() const {

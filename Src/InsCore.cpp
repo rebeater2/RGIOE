@@ -94,7 +94,6 @@ int Ins::_position_update() {
 }
 
 int Ins::_atti_update(const Vec3d &gyro) {
-//    ''' 位置更新 更新Qne'''
 //    ''' 姿态更新更新Qbn'''
 //# rotation vector
   Vec3d rv_b_b_delta = Convert::gyro_to_rv(gyro, _gyro_pre);

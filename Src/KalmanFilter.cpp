@@ -15,7 +15,6 @@ KalmanFilter::KalmanFilter(VecXd xd, MatXd P) : xd(std::move(xd)), P(std::move(P
   ofs.open("./debug_info.txt");
 #endif
 }
-int predict_cnt = 0;
 void KalmanFilter::Predict(const MatXd &PHI, const MatXd &Q) {
   xd = PHI * xd; /*xd保持为0*/
   P = PHI * P * PHI.transpose() + Q;
@@ -74,7 +73,6 @@ void KalmanFilter::Update(const MatXd &H, const VecXd &z, const MatXd &R) {
  * @param z
  * @param R
  */
-/*3维卡尔曼更新*/
 int counter = 0;
 void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
   counter++;
@@ -84,8 +82,7 @@ void KalmanFilter::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &R) {
   dk = dk / (dk + b);
   assert(dk > 0 and dk < 1);
 #else
-  Rk = R+ 0.005*(z.transpose()*z).x() * Mat3d::Identity();
-  Rk(2,2)=0.01 * R(2,2);
+  Rk = R;
 #endif
   MatX3d K = P * H.transpose() * ((H * P * H.transpose() + Rk).inverse() + Rk);
 //  xd = xd + K * (z - H * xd);

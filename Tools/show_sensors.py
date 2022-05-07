@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
-path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube.yml"
+path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube_05.yml"
 config = yaml.safe_load(open(path))
 
 
@@ -18,7 +18,7 @@ config = yaml.safe_load(open(path))
 #   SENSOR_HEIGHT = 0x80U,
 # }SensorType
 def show_sensors():
-    result_path = "/media/rebeater/hd_data2/workspace/raw_data/2022/顺义/20220404/RAW_INDOOR000113.rtnav"
+    result_path = config["Output-Config"]["file-path"]
     data = np.loadtxt(result_path)
     sensor_idx = {
         'imu': 0x01,
