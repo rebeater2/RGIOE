@@ -164,7 +164,7 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 	}
   }
   /*NHC should be disabled when odometer is enable,since  */
-  if (_timeUpdateIdx % 32 and opt.nhc_enable and !opt.odo_enable) {
+  if (_timeUpdateIdx % 32==1 and opt.nhc_enable and !opt.odo_enable) {
 	MeasureNHC();
 	nav.info.sensors |= SENSOR_NHC;
   } else {

@@ -9,7 +9,7 @@
 
 /**
  * 水平调平
- * @param imu
+ * @param imu 前右下坐标系，增量格式
  */
 void AlignMoving::Update(const ImuData &imu) {
   /*必须在静止时刻对准*/

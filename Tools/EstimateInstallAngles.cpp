@@ -29,7 +29,6 @@ int main(int argc,char **argv){
   auto R = V*U.transpose();
   LOG(INFO)<<"R = \n"<<svd.singularValues().transpose();
   LOG(INFO)<<"Angle = \n"<<Convert::dcm_to_euler(R).transpose()/_deg;
-
   LOG(INFO)<<"Error =\n"<<R*W;
   return 0;
 }

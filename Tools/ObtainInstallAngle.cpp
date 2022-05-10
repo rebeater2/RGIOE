@@ -18,12 +18,15 @@ using std::string;
 int main() {
   google::InitGoogleLogging(".");
   google::LogToStderr();
-  string nav_path = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.nav";
-  string out_path  = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.angle";
+  string nav_path = R"(/mnt/d/NavData/demo/demo_A15/result_of_rgioe_2022.nav)";
+  string out_path  = R"(/mnt/d/NavData/demo/demo_A15/result_of_rgioe_2022.nav.angle)";
   ofstream ofs(out_path);//  = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482_cpt.angle";
-  NavReader reader(nav_path);
-  double start_time = 122371;
-  double end = 124130;
+  NavReader reader(nav_path,NavFileFormat::NavAscii);
+  if(!reader.IsOk()){
+	LOG(FATAL) << "can not find file "<< nav_path;
+  }
+  double start_time = 456400;
+  double end = 459300;
   NavOutput nav;
   if (!reader.ReadUntil(start_time, &nav)) {
 	LOG(FATAL) << "please check the nav data and start time";

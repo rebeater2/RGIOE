@@ -50,7 +50,7 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
   os << fmt::format(
-	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:8.4f} {:8.4f} {:8.4f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
 	  output.week,
 	  output.gpst,
 	  output.lat,
@@ -270,6 +270,8 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 	case GNSS_TXT_POS_7:
 	  ss >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
 	  gnss.mode = GnssMode::SPP;
+	  gnss.yaw = -1;
+	  gnss.pitch = -1;
 	  break;
 	case RTKLIB_TXT_POS: {
 	  ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]

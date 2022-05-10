@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   string error_msg;
   ok = config.LoadImuPara(error_msg);
   Option opt = config.GetOption();
-  LOG_IF(ERROR, !ok) << error_msg;
+  LOG_IF(FATAL, !ok) <<"IMU parameter file read failed:" << error_msg;
   LOG(INFO) << config.ToStdString();
   LOG(INFO) << opt.imuPara;
   if (config.odometer_config.enable)
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 	do {
 	  imu_reader.ReadNext(imu);
 	  align.Update(imu);
-	  LOG(INFO)<<fmt::format("level attitude:{} {} {}",align.nav.atti[0]/_deg,align.nav.atti[1]/_deg,align.nav.atti[2]/_deg);
+	  LOG_EVERY_N(INFO,opt.d_rate)<<fmt::format("level attitude:{} {} {}",align.nav.atti[0]/_deg,align.nav.atti[1]/_deg,align.nav.atti[2]/_deg);
 	  if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
 		logi << "aligning vel = " << align.Update(gnss);
 		if (!gnss_reader.ReadNext(gnss)) {
