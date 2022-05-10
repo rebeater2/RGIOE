@@ -7,7 +7,6 @@
 **/
 #include <InsCore.h>
 #include <WGS84.h>
-//#include <NavLog.h>
 
 using namespace std;
 
@@ -60,17 +59,16 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
 }
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
-  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
-  omega_ie_n = WGS84::Instance().omega_ie_n(pos_mid[0]);
-
   Vec3d gn = {0, 0, WGS84::Instance().g};
   Vec3d v_g_cor = (gn - (2 * omega_ie_n + omega_en_n).cross(nav.vn)) * dt;
   Vec3d zeta_mid = (omega_en_n + omega_ie_n) * dt;
   Vec3d vf_kb_k1 = acce + 0.5 * gyro.cross(acce) + (_gyro_pre.cross(acce) + _acce_pre.cross(gyro)) / 12.0;
   Vec3d vf_kb = (eye3 - 0.5 * Convert::skew(zeta_mid)) * nav.Cbn * vf_kb_k1;
-  nav.vn = nav.vn + vf_kb + v_g_cor;/*todo 更新omega_en_n?*/
   nav.dvn = vf_kb + v_g_cor;
+  vn_mid = nav.vn + nav.dvn / 2.0;
+  nav.vn = nav.vn + nav.dvn;
   nav.vf_kb = vf_kb / dt;
+  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
   return 0;
 }
 
@@ -83,18 +81,23 @@ int Ins::_position_update() {
   nav.Qne = current_q_n_e.normalized();
   // # 位置更新完毕，重新计算omega_en_n,omega_ie_e
   LatLon ll = Convert::qne_to_lla(nav.Qne);
-  vn_mid = nav.vn + nav.dvn / 2.0;
   double h = nav.pos[2] - vn_mid[2] * dt;
-  nav.pos = {ll.latitude, ll.longitude, h};
+  Vec3d pos = {ll.latitude, ll.longitude, h};
   nav.Cne = Convert::lla_to_cne(ll);
-  omega_ie_n = WGS84::Instance().omega_ie_n(ll.latitude);
-  Vec3d temp = {nav.pos[0], nav.pos[1], pos_mid[2]};
-  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, temp);
+  /*x(k-1/2)=x(k-1)+0.5(x(k)- x(k-1))*/
+  /*等价于 pos_mid = (pos+nav.pos)/2.0 */
+  pos_mid = {
+	  pos[0] + 0.5 * (pos[0] - nav.pos[0]),
+	  pos[1] + 0.5 * (pos[1] - nav.pos[1]),
+	  0.5 * (pos[2] + nav.pos[2]),
+  };
+  nav.pos = pos;
+  omega_ie_n = WGS84::Instance().omega_ie_n(pos_mid[0]);
+  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
   return 0;
 }
 
 int Ins::_atti_update(const Vec3d &gyro) {
-//    ''' 姿态更新更新Qbn'''
 //# rotation vector
   Vec3d rv_b_b_delta = Convert::gyro_to_rv(gyro, _gyro_pre);
 //#  b-frame quaternion
@@ -131,12 +134,8 @@ int Ins::ForwardMechanization(const ImuData &imuData) {
   return 0;
 }
 int Ins::ForwardMechanization(const Vec3d &acce, const Vec3d &gyro) {
-  /*外插一个历元*/
-  omega_en_n = WGS84::Instance().omega_en_n(nav.vn, nav.pos); /*E 2.50*/
-  omega_ie_n = WGS84::Instance().omega_ie_n(nav.pos.x());
   /*外推一个周期*/
-  pos_mid = _mid_pos();
-  vn_mid = nav.vn + 0.5 * nav.dvn;
+  _extrapolate();
   /*速度更新*/
   _velocity_update(acce, gyro);
   /*位置更新*/
@@ -174,19 +173,28 @@ void Ins::InitializePva(const NavEpoch &nav_, const ImuData &imu) {
   this->nav = nav_;
   _acce_pre = Vec3d(imu.acce);
   _gyro_pre = Vec3d(imu.gyro);
+  WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
 }
 
-Vec3d Ins::_mid_pos() {
-  double h_mid = nav.pos[2] - nav.vn[2] * dt / 2;
+void Ins::_extrapolate() {
+  omega_en_n = WGS84::Instance().omega_en_n(nav.vn, nav.pos); /*E 2.50*/
+  omega_ie_n = WGS84::Instance().omega_ie_n(nav.pos[0]);
+  /*中间时刻的速度*/
+  vn_mid = nav.vn + 0.5 * nav.dvn;
+  /*中间时刻的高程*/
+  double h_mid = nav.pos[2] - nav.vn[2] * dt / 2.0;
+  /*中间时刻位置*/
   Vec3d zeta_mid = (omega_ie_n + omega_en_n) * dt / 2;
   Vec3d epsilon_mid = WGS84::Instance().omega_ie_e * dt / 2;
   Quad q_nn_mid = Convert::rv_to_quaternion(zeta_mid);
   Quad q_ee_mid = Convert::rv_to_quaternion(epsilon_mid).conjugate();
   Quad q_ne_mid = q_ee_mid * nav.Qne * q_nn_mid;
-  LatLon lat_lon_mid = Convert::qne_to_lla(q_ne_mid);
+  LatLon lat_lon_mid = Convert::qne_to_lla(q_ne_mid.normalized());
   pos_mid = {lat_lon_mid.latitude, lat_lon_mid.longitude, h_mid};
+  /*重新计算重力和角速度*/
   WGS84::Instance().Update(pos_mid[0], pos_mid[2]);
-  return pos_mid;
+  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid); /*E 2.50*/
+  omega_ie_n = WGS84::Instance().omega_ie_n(pos_mid[0]);
 }
 
 MatXd Ins::TransferMatrix(const ImuPara &para) {
@@ -211,11 +219,11 @@ MatXd Ins::TransferMatrix(const ImuPara &para) {
   phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
   for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i)
-    phi(STATE_GNSS_LEVEL_ARM_START+i, STATE_GNSS_LEVEL_ARM_START+i) = 1.0 - dt / 36000;
+	phi(STATE_GNSS_LEVEL_ARM_START+i, STATE_GNSS_LEVEL_ARM_START+i) = 1.0 - dt / 36000;
 #endif
 #if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
   for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i)
-    phi(STATE_ODOMETER_SCALE_FACTOR_START+i, STATE_ODOMETER_SCALE_FACTOR_START+i) = 1.0 - dt / 36000;
+	phi(STATE_ODOMETER_SCALE_FACTOR_START+i, STATE_ODOMETER_SCALE_FACTOR_START+i) = 1.0 - dt / 36000;
 #endif
   return phi;
 }
@@ -233,9 +241,6 @@ NavOutput Ins::Output() const {
 	out.gb[i] = (float)(nav.gb[i] / _deg * _hour);
 	out.ab[i] = (float)(nav.ab[i] / _mGal);
   }
-#if KD_IN_KALMAN_FILTER == 1
-  out.kd =(float) nav.kd;
-#endif
   out.info = nav.info;
   out.week = nav.week;
   return out;

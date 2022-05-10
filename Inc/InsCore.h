@@ -68,7 +68,7 @@ class Ins {
 
   int _atti_update(const Vec3d &gyro);
 
-  Vec3d _mid_pos();
+  void _extrapolate();
 
  public:
   Ins();
