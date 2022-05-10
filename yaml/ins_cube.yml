@@ -1,14 +1,14 @@
 #!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
-  file-path:  /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd.fix.imd
+  file-path:  /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.imd.fix.imd
   d-rate: 125
   format: 1
-  parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/adis16465_parameter.yml
+  parameter-path: /mnt/c/Users/linfe/CLionProjects/RGIOE/yaml/adis16465_parameter.yml
   frame: 0
 GNSS-Config:
   enable: true
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_04_482.log.gnsstxt
+  file-path: /mnt/d/NavData/20220307/Reference/cutecom0307_04_482.log.gnsstxt
   format: 1
   std-scale: 1
   level-arm:
@@ -29,9 +29,9 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: false
+  enable: true
   odometer-std: 0.01
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
+  file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
   NHC-enable: true
   NHC-std:
     - 0.01
@@ -78,7 +78,7 @@ Outage-Config:
   step: 120
   outage: 60
 Output-Config:
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.60_gnss_ins_nhc.nav
+  file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.rgioe.nav
 #  0: bin, for small size
 # 1: ascii, for easily open with text editors
 # 2: double mat, for easily load by Python or MATLAB
@@ -94,7 +94,7 @@ Output-Config:
     - 0
 Pressure-Config:
   enable: false
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
+  file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
   height-std: 0.2
 start-time: 122379
 stop-time: 124132

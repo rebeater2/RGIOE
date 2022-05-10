@@ -39,33 +39,7 @@ void navSetVel(const Velocity *vel);
 void navUpdate(const ImuData *imu);
 ```
 # Performance
-Test IMU : POS830 FOG
-
-ARW: 0.003, deg/s/sqrt(hr)   
-
-VRW: 0.03, m/s/sqrt(hr)   
-
-gyroscope bias stability: 0.027, deg/hr   
-
-accelerator bias stability: 15, mGal   
-
-| |x error /m|y error/m|z error/m|
-| ----- | ----- | ----- | ----- |
-|position error(m) 1-$\sigma$|0.0066|0.0116|0.0098|
-|position error(m) 2-$\sigma$|0.0194|0.0220|0.0266|
-|position error(m) rms|0.0085|0.0112|0.0133|
-|velocity error(m/s) 1-$\sigma$|0.0025|0.0018|0.0018|
-|velocity error(m/s) 2-$\sigma$|0.0058|0.0045|0.0056|
-|velocity error(m/s) rms|0.0027|0.0021|0.0028|
-|attitude error(deg) 1-$\sigma$|0.0008|0.0009|0.0238|
-|attitude error(deg) 2-$\sigma$|0.0016|0.0018|0.0270|
-|attitude error(deg) rms|0.0008|0.0009|0.0180|
-|2D error 1-$\sigma$|0.0149| | |
-|2D error 2-$\sigma$|0.0253| | |
-|2D error RMS|0.0141| | |
-|3D error 1-$\sigma$|0.0187| | |
-|3D error 2-$\sigma$|0.0326| | |
-|3D error RMS $\sigma$|0.0194| | |
+see Doc/performance.md
 
 
 

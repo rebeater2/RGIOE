@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QDesktopServices>
 #include <QTime>
+#include <QFontDatabase>
 #include "datafusionwindow.h"
 #include "ui_DataFusionWindow.h"
 
@@ -19,6 +20,7 @@ DataFusionWindow::DataFusionWindow(QMainWindow *parent) :
   google::InitGoogleLogging(".log/");
   google::LogToStderr();
   ui->setupUi(this);
+  SetFont();
   InitialUi();
 }
 
@@ -342,5 +344,16 @@ void DataFusionWindow::on_ProcessThreadFeedBack(int x) {
 }
 void DataFusionWindow::on_ProcessThreadLogFeedBack(const QString &s) {
   ShowLog(s);
+}
+void DataFusionWindow::SetFont() {
+  int fontId = QFontDatabase::addApplicationFont("./fonts/msyh.ttc");
+  QStringList fontIDs = QFontDatabase::applicationFontFamilies(fontId);
+  if (! fontIDs.isEmpty()) {
+	QFont font(fontIDs.first());
+	QApplication::setFont(font);
+  }
+  else {
+	ShowLog("Failed to load font.");
+  }
 }
 

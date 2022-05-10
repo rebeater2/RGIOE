@@ -27,6 +27,7 @@ class DataFusionWindow : public QMainWindow {
   void ShowLog(const QString &s);
   void OnConvertResult(const QString &s, bool ok);
   void InitialUi();
+  void SetFont();
   void SetWheelInfoEnable();
  public slots:
   void on_btnStart_clicked();
