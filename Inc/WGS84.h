@@ -51,8 +51,10 @@ class WGS84 {
   void Update(double lat, double h);
 
   double dN(double lat1, double lat2) const;
+  double dN(double lat1, double lat2,double h1) const;
 
-  double dE(double lat, double lon1, double lon2) const;
+  double dE(double lon1, double lon2,double lat) const;
+  double dE( double lon1, double lon2,double lat,double h) const;
 
   deltaPos distance(double lat1, double lon1, double lat2, double lon2) const;
 
