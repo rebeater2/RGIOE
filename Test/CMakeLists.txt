@@ -25,7 +25,7 @@ add_executable(test_kalman
         )
 target_link_libraries(test_kalman Eigen3::Eigen)
 
-add_executable(testOutage
-        ../Src/Outage.cpp
-        testOutage.cpp
-        )
+#add_executable(testOutage
+#        ../Src/Outage.cpp
+#        testOutage.cpp
+#        )

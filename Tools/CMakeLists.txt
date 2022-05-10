@@ -7,13 +7,14 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 
-add_definitions(-DGLOG_OUTPUT=1)
-find_package(Pangolin REQUIRED)
-include_directories(${Pangolin_INCLUDE_DIRS})
-
-
-add_executable(showTraj showTraj.cpp ${SOURCE})
-target_link_libraries(showTraj ${Pangolin_LIBRARIES} Eigen3::Eigen glog yaml-cpp fmt)
+#[[add_definitions(-DGLOG_OUTPUT=1)
+find_package(Pangolin)
+if (Pangolin_FOUND)
+    message("Found Pangolin-${Pangolin_VERSION}")
+    include_directories(${Pangolin_INCLUDE_DIRS})
+    add_executable(showTraj showTraj.cpp ${SOURCE})
+    target_link_libraries(showTraj ${Pangolin_LIBRARIES} Eigen3::Eigen glog yaml-cpp fmt)
+endif ()]]
 
 add_executable(DataGenerator DataGenerator.cpp ${SOURCE})
 target_link_libraries(DataGenerator  Eigen3::Eigen  fmt)
