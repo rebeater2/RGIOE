@@ -217,6 +217,14 @@ MatXd Ins::TransferMatrix(const ImuPara &para) {
   phi.block<3, 3>(6, 9) = -nav.Cbn * dt;
   phi.block<3, 3>(9, 9) = eye3 - eye3 * dt / para.gt_corr;/*corr time*/
   phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
+#if ESTIMATE_GYRO_SCALE_FACTOR == 1
+  phi.block<3, 3>(STATE_GYRO_SCALE_FACTOR_START, STATE_GYRO_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.at_corr;
+  phi.block<3, 3>(9, STATE_GYRO_SCALE_FACTOR_START) = -nav.Cbn * _gyro_pre.asDiagonal();
+#endif
+#if ESTIMATE_ACCE_SCALE_FACTOR == 1
+  phi.block<3, 3>(STATE_ACCE_SCALE_FACTOR_START, STATE_ACCE_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.at_corr;
+  phi.block<3, 3>(6, STATE_ACCE_SCALE_FACTOR_START) = nav.Cbn * _acce_pre.asDiagonal();
+#endif
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
   for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i)
 	phi(STATE_GNSS_LEVEL_ARM_START+i, STATE_GNSS_LEVEL_ARM_START+i) = 1.0 - dt / 36000;

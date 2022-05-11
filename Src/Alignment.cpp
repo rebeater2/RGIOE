@@ -102,14 +102,11 @@ double AlignMoving::Update(const GnssData &gnss) {
 //	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
 	nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
 	nav.ab[i] = option.imuPara.ab_ini[i];
+	nav.gs[i] = option.imuPara.gs_ini[i];
+	nav.as[i] = option.imuPara.as_ini[i];
   }
   nav.dvn = {0, 0, 0};
   nav.vf_kb = {0, 0, 0};
-  nav.gs = {0, 0, 0};
-  nav.as = {0, 0, 0};
-//#if KD_IN_KALMAN_FILTER == 1
-//  nav.kd = option.kd_init;
-//#endif
   nav.kd = option.odo_scale;
   nav.info.gnss_mode = gnss.mode;
   nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;

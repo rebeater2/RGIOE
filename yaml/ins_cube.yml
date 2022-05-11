@@ -30,7 +30,7 @@ GNSS-Config:
     - 0
 Odometer:
   enable: true
-  odometer-std: 0.01
+  odometer-std: 0.05
   file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
   NHC-enable: true
   NHC-std:
@@ -44,7 +44,7 @@ Odometer:
     - 0
     - 0
     - 0
-  scale-factor: 0.9766354
+  scale-factor: 0.9776354
   scale-factor-std: 0.01
 ZUPT-Config:
   ZUPT-enable: false

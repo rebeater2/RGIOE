@@ -50,7 +50,7 @@ ifstream &operator>>(ifstream &is, GnssData &gnss) {
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
   os << fmt::format(
-	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
+	  "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
 	  output.week,
 	  output.gpst,
 	  output.lat,
@@ -68,6 +68,12 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
 	  output.ab[0],
 	  output.ab[1],
 	  output.ab[2],
+	  output.gs[0],
+	  output.gs[1],
+	  output.gs[2],
+	  output.as[0],
+	  output.as[1],
+	  output.as[2],
 	  output.info.gnss_mode,
 	  output.info.sensors
   );
@@ -297,20 +303,20 @@ bool GnssReader::ReadNext(GnssData &gnss) {
 		 >> gnss.mode >> gnss.ns;
 	  switch (gnss.mode) {
 		case RTK_FIX:
-		  for (auto &i:gnss.pos_std)
+		  for (auto &i: gnss.pos_std)
 			i = 0.001;
 		  break;
 		case RTK_FLOAT:
-		  for (auto &i:gnss.pos_std)
+		  for (auto &i: gnss.pos_std)
 			i = 0.005;
 		  break;
 		case RTK_DGPS:
-		  for (auto &i:gnss.pos_std)
+		  for (auto &i: gnss.pos_std)
 			i = 1;
 		  gnss.mode = INVALID;
 		  break;
 		case SPP:
-		  for (auto &i:gnss.pos_std)
+		  for (auto &i: gnss.pos_std)
 			i = 1;
 		  break;
 		default: gnss.mode = INVALID;

@@ -127,8 +127,10 @@ typedef struct {
   float atti[3];							/*Attitude in NED, roll pitch heading,Unit deg*/
   float atti_std[3];						/*Attitude Standard deviation*/
   NavInfo info;								/*Navigation Information*/
-  float ab[3];								/*accelerator bias*/
   float gb[3];								/*gyroscope bias*/
+  float ab[3];								/*accelerator bias*/
+  float gs[3];								/*gyroscope scale factor*/
+  float as[3];								/*accelerator scale factor*/
   float kd;									/*Odometer scale factor*/
 } NavOutput;
 /*sizeof(NavOutput)=128*/

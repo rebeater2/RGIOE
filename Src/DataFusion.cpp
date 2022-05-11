@@ -72,6 +72,16 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   P.block<3, 3>(9, 9) = temp.asDiagonal();
   temp = Vec3d{opt.imuPara.ab_std[0], opt.imuPara.ab_std[1], opt.imuPara.ab_std[2]};
   P.block<3, 3>(12, 12) = temp.asDiagonal();
+#if ESTIMATE_GYRO_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_GYRO_SCALE_FACTOR_SIZE; ++i)
+	P(STATE_GYRO_SCALE_FACTOR_START + i, STATE_GYRO_SCALE_FACTOR_START + i) =
+		opt.imuPara.gs_std[i] * opt.imuPara.gs_std[i];
+#endif
+#if ESTIMATE_ACCE_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_ACCE_SCALE_FACTOR_SIZE; ++i)
+	P(STATE_ACCE_SCALE_FACTOR_START + i, STATE_ACCE_SCALE_FACTOR_START + i) =
+		opt.imuPara.as_std[i] * opt.imuPara.as_std[i];
+#endif
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
   double level_arm_std = 0.001;
   for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
@@ -99,6 +109,16 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   Q0(12, 12) = 2 * opt.imuPara.ab_std[0] * opt.imuPara.ab_std[0] / opt.imuPara.at_corr;
   Q0(13, 13) = 2 * opt.imuPara.ab_std[1] * opt.imuPara.ab_std[1] / opt.imuPara.at_corr;
   Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
+#if ESTIMATE_GYRO_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_GYRO_SCALE_FACTOR_SIZE; ++i)
+	Q0(STATE_GYRO_SCALE_FACTOR_START + i, STATE_GYRO_SCALE_FACTOR_START + i) =
+		2 * opt.imuPara.gs_std[i] * opt.imuPara.gs_std[i] / opt.imuPara.gt_corr;
+#endif
+#if ESTIMATE_ACCE_SCALE_FACTOR == 1
+  for (int i = 0; i < STATE_ACCE_SCALE_FACTOR_SIZE; ++i)
+	Q0(STATE_ACCE_SCALE_FACTOR_START + i, STATE_ACCE_SCALE_FACTOR_START + i) =
+		2 * opt.imuPara.as_std[i] * opt.imuPara.as_std[i] / opt.imuPara.at_corr;
+#endif
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
   for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
 	Q0(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = 0;//2 * level_arm_std * level_arm_std / 36000;
@@ -164,7 +184,7 @@ int DataFusion::TimeUpdate(const ImuData &imu) {
 	}
   }
   /*NHC should be disabled when odometer is enable,since  */
-  if (_timeUpdateIdx % 32==1 and opt.nhc_enable and !opt.odo_enable) {
+  if (_timeUpdateIdx % 32 == 1 and opt.nhc_enable and !opt.odo_enable) {
 	MeasureNHC();
 	nav.info.sensors |= SENSOR_NHC;
   } else {
@@ -280,6 +300,12 @@ int DataFusion::_feedBack() {
   nav.atti = Convert::dcm_to_euler(nav.Cbn);
   nav.gb += Vec3d{xd[9], xd[10], xd[11]};
   nav.ab += Vec3d{xd[12], xd[13], xd[14]};
+#if ESTIMATE_GYRO_SCALE_FACTOR ==  1
+  nav.gs += xd.block<STATE_GYRO_SCALE_FACTOR_SIZE,1>(STATE_GYRO_SCALE_FACTOR_START,0);
+#endif
+#if ESTIMATE_ACCE_SCALE_FACTOR ==  1
+  nav.as += xd.block<STATE_ACCE_SCALE_FACTOR_SIZE,1>(STATE_ACCE_SCALE_FACTOR_START,0);
+#endif
 #if ESTIMATE_GNSS_LEVEL_ARM
   lb_gnss += xd.block<STATE_GNSS_LEVEL_ARM_SIZE, 1>(STATE_GNSS_LEVEL_ARM_START, 0);
 #endif
@@ -456,10 +482,10 @@ NavOutput DataFusion::Output() const {
 	out.atti[i] = (float)(projatti[i] / _deg);
 	out.gb[i] = (float)(nav.gb[i] / _deg * _hour);
 	out.ab[i] = (float)(nav.ab[i] / _mGal);
+	out.gs[i] = (float)(nav.gs[i] / _ppm);
+	out.as[i] = (float)(nav.as[i] / _ppm);
   }
-#if KD_IN_KALMAN_FILTER == 1
   out.kd = (float)nav.kd;
-#endif
   out.info = nav.info;
   out.week = nav.week;
   for (int i = 0; i < 3; i++) {
