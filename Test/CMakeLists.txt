@@ -12,9 +12,9 @@ find_package(fmt REQUIRED)
 include_directories(../App/AppCommon)
 add_executable(test_ins
         ../Src/InsCore.cpp
-        ../Src/WGS84.cpp
+        ../Src/Earth.cpp
         ../Src/Convert.cpp
-        ../Src/WGS84.cpp
+        ../Src/Earth.cpp
         ../App/AppCommon/FileIO.cpp
          test_ins.cpp)
 target_link_libraries(test_ins Eigen3::Eigen fmt pthread)

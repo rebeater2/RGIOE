@@ -7,7 +7,7 @@
 **/
 
 
-#include <WGS84.h>
+#include <Earth.h>
 #include "Convert.h"
 /**
  * 等效旋转矢量转换为四元数
@@ -171,10 +171,10 @@ Vec3d Convert::gyro_to_rv(const Vec3d &gyro, const  Vec3d &gyro_pre) {
 
 Vec3d Convert::lla_to_xyz(const Eigen::Vector3d &lla) {
     Vec3d re = Vec3d::Zero();
-    double rn = WGS84::Instance().RN(lla[0]);
+    double rn = Earth::Instance().RN(lla[0]);
     re[0] = (rn + lla[2]) * cos(lla[0]) * cos(lla[1]);
     re[1] = (rn + lla[2]) * cos(lla[0]) * sin(lla[1]);
-    re[2] = (rn * (1 - WGS84::Instance().e2) + lla[2]) * sin(lla[0]);
+    re[2] = (rn * (1 - Earth::Instance().e2) + lla[2]) * sin(lla[0]);
 
 //    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"lla "<<lla.transpose();
 //    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re "<<re.transpose();

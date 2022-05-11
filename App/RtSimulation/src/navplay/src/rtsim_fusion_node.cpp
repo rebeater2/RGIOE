@@ -21,7 +21,7 @@
 #include "NavStruct.h"
 #include <thread>
 #include <nav_msgs/Path.h>
-#include <WGS84.h>
+#include <Earth.h>
 #include "Convert.h"
 #include "boost/circular_buffer.hpp"
 

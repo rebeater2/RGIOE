@@ -14,8 +14,8 @@
 void AlignMoving::Update(const ImuData &imu) {
   /*必须在静止时刻对准*/
   smooth.Update(imu);
-  if (!smooth.isStatic()){
-    return;
+  if (!smooth.isStatic()) {
+	return;
   }
   auto smoothed_imu = smooth.getSmoothedIMU();
   Vec3d scale = Vec3d{option.imuPara.as_ini[0], option.imuPara.as_ini[1], option.imuPara.as_ini[2]},
@@ -43,7 +43,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 	gnss_pre = gnss;
 	return -1;
   }
-  WGS84::Instance().Update(gnss.lat * _deg, gnss.height);
+  Earth::Instance().Update(gnss.lat * _deg, gnss.height);
 #if RUN_IN_STM32 != 1
   if (gnss.yaw >= 0 and gnss.yaw <= 360) {
 	nav.atti[2] = gnss.yaw * _deg;
@@ -57,7 +57,12 @@ double AlignMoving::Update(const GnssData &gnss) {
 	flag_yaw_finished = true;
   } else {
 #endif
-	auto distance = WGS84::Instance().distance(gnss, gnss_pre);
+	auto distance = Earth::Instance().distance(gnss.lat * _deg,
+											   gnss.lon * _deg,
+											   gnss_pre.lat * _deg,
+											   gnss_pre.lon * _deg,
+											   gnss.height,
+											   gnss_pre.height);
 	v = (float)distance.d;
 	if (option.align_vel_threshold < distance.d and distance.d < 1e3) {
 	  nav.vn[0] = distance.dn;
@@ -80,8 +85,8 @@ double AlignMoving::Update(const GnssData &gnss) {
   nav.pos[1] = gnss.lon * _deg;
   nav.pos[2] = gnss.height;
   /*补偿杆臂影响*/
-  Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
-			   1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+  Vec3d vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
+			   1.0 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 			   -1
   };
   Vec3d lb = {option.lb_gnss[0], option.lb_gnss[1], option.lb_gnss[2]};
@@ -117,7 +122,7 @@ double AlignMoving::Update(const GnssData &gnss) {
 
 AlignMoving::AlignMoving(const Option &opt) : option(opt),
 #if USE_INCREMENT == 1
-smooth{1e-10, 2, 30}
+											  smooth{1e-10, 2, 30}
 #else
 smooth{1.6e-4, 2, 10}
 #endif

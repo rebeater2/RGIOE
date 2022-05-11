@@ -70,7 +70,7 @@ int navInitialize(const Option *opt) {
   if (!align) { return 1; }
   if (align->alignFinished()) {
     NavEpoch epoch = align->nav;
-    WGS84::Instance().Update(epoch.pos[0], epoch.pos[2]);
+    Earth::Instance().Update(epoch.pos[0], epoch.pos[2]);
     df->Initialize(align->getNavEpoch(), *opt);
     default_option = *opt;
     return 0;

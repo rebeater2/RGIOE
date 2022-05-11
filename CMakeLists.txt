@@ -39,7 +39,7 @@ add_library(LooselyCouple STATIC
         Src/KalmanFilter.cpp
         Src/DataFusion.cpp
         Src/InsCore.cpp
-        Src/WGS84.cpp
+        Src/Earth.cpp
         Src/Convert.cpp
         Src/Alignment.cpp
         Src/StaticDetect.cpp

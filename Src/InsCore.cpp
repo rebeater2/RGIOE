@@ -6,7 +6,7 @@
 * @version: 1.0.0
 **/
 #include <InsCore.h>
-#include <WGS84.h>
+#include <Earth.h>
 
 using namespace std;
 
@@ -59,7 +59,7 @@ NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
 }
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
-  Vec3d gn = {0, 0, WGS84::Instance().g};
+  Vec3d gn = {0, 0, Earth::Instance().g};
   Vec3d v_g_cor = (gn - (2 * omega_ie_n + omega_en_n).cross(nav.vn)) * dt;
   Vec3d zeta_mid = (omega_en_n + omega_ie_n) * dt;
   Vec3d vf_kb_k1 = acce + 0.5 * gyro.cross(acce) + (_gyro_pre.cross(acce) + _acce_pre.cross(gyro)) / 12.0;
@@ -68,12 +68,12 @@ int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
   vn_mid = nav.vn + nav.dvn / 2.0;
   nav.vn = nav.vn + nav.dvn;
   nav.vf_kb = vf_kb / dt;
-  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
+  omega_en_n = Earth::Instance().omega_en_n(vn_mid, pos_mid);
   return 0;
 }
 
 int Ins::_position_update() {
-  Vec3d epsilon_k = WGS84::Instance().omega_ie_e * dt;
+  Vec3d epsilon_k = Earth::Instance().omega_ie_e * dt;
   Quad q_e_e_delta = Convert::rv_to_quaternion(epsilon_k).conjugate();
   Vec3d zeta_k = (omega_ie_n + omega_en_n) * dt;
   Quad q_n_n_delta = Convert::rv_to_quaternion(zeta_k);
@@ -92,8 +92,8 @@ int Ins::_position_update() {
 	  0.5 * (pos[2] + nav.pos[2]),
   };
   nav.pos = pos;
-  omega_ie_n = WGS84::Instance().omega_ie_n(pos_mid[0]);
-  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid);
+  omega_ie_n = Earth::Instance().omega_ie_n(pos_mid[0]);
+  omega_en_n = Earth::Instance().omega_en_n(vn_mid, pos_mid);
   return 0;
 }
 
@@ -163,7 +163,7 @@ void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
   eye3 = Eigen::Matrix3d::Identity(3, 3);
   dt = 1.0 / d_rate;
   nav = nav_;
-  WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
+  Earth::Instance().Update(nav.pos[0], nav.pos[2]);
 
 }
 
@@ -173,34 +173,34 @@ void Ins::InitializePva(const NavEpoch &nav_, const ImuData &imu) {
   this->nav = nav_;
   _acce_pre = Vec3d(imu.acce);
   _gyro_pre = Vec3d(imu.gyro);
-  WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
+  Earth::Instance().Update(nav.pos[0], nav.pos[2]);
 }
 
 void Ins::_extrapolate() {
-  omega_en_n = WGS84::Instance().omega_en_n(nav.vn, nav.pos); /*E 2.50*/
-  omega_ie_n = WGS84::Instance().omega_ie_n(nav.pos[0]);
+  omega_en_n = Earth::Instance().omega_en_n(nav.vn, nav.pos); /*E 2.50*/
+  omega_ie_n = Earth::Instance().omega_ie_n(nav.pos[0]);
   /*中间时刻的速度*/
   vn_mid = nav.vn + 0.5 * nav.dvn;
   /*中间时刻的高程*/
   double h_mid = nav.pos[2] - nav.vn[2] * dt / 2.0;
   /*中间时刻位置*/
   Vec3d zeta_mid = (omega_ie_n + omega_en_n) * dt / 2;
-  Vec3d epsilon_mid = WGS84::Instance().omega_ie_e * dt / 2;
+  Vec3d epsilon_mid = Earth::Instance().omega_ie_e * dt / 2;
   Quad q_nn_mid = Convert::rv_to_quaternion(zeta_mid);
   Quad q_ee_mid = Convert::rv_to_quaternion(epsilon_mid).conjugate();
   Quad q_ne_mid = q_ee_mid * nav.Qne * q_nn_mid;
   LatLon lat_lon_mid = Convert::qne_to_lla(q_ne_mid.normalized());
   pos_mid = {lat_lon_mid.latitude, lat_lon_mid.longitude, h_mid};
   /*重新计算重力和角速度*/
-  WGS84::Instance().Update(pos_mid[0], pos_mid[2]);
-  omega_en_n = WGS84::Instance().omega_en_n(vn_mid, pos_mid); /*E 2.50*/
-  omega_ie_n = WGS84::Instance().omega_ie_n(pos_mid[0]);
+  Earth::Instance().Update(pos_mid[0], pos_mid[2]);
+  omega_en_n = Earth::Instance().omega_en_n(vn_mid, pos_mid); /*E 2.50*/
+  omega_ie_n = Earth::Instance().omega_ie_n(pos_mid[0]);
 }
 
 MatXd Ins::TransferMatrix(const ImuPara &para) {
-  double g = WGS84::Instance().g;
-  double rm = WGS84::Instance().RM(nav.pos[0]);
-  double rn = WGS84::Instance().RN(nav.pos[0]);
+  double g = Earth::Instance().g;
+  double rm = Earth::Instance().RM(nav.pos[0]);
+  double rn = Earth::Instance().RN(nav.pos[0]);
   phi.setZero();
   phi.block<3, 3>(0, 0) = eye3 - Convert::skew(omega_en_n) * dt;
   phi.block<3, 3>(0, 3) = eye3 * dt;

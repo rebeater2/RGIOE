@@ -63,7 +63,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
   nav.kd = opt.odo_scale;
-  WGS84::Instance().Update(nav.pos[0], nav.pos[2]);
+  Earth::Instance().Update(nav.pos[0], nav.pos[2]);
   P.setZero();
   P.block<3, 3>(0, 0) = ini_nav.pos_std.asDiagonal();
   P.block<3, 3>(3, 3) = ini_nav.vel_std.asDiagonal();
@@ -279,8 +279,8 @@ int DataFusion::MeasureUpdateVel(const double &vel) {
 int DataFusion::_feedBack() {
   double lat = nav.pos[0];
   double h = nav.pos[2];
-  double rn = WGS84::Instance().RN(lat);
-  double rm = WGS84::Instance().RM(lat);
+  double rn = Earth::Instance().RN(lat);
+  double rm = Earth::Instance().RM(lat);
   Vec3d d_atti = Vec3d{xd[1] / (rn + h),
 					   -xd[0] / (rm + h),
 					   -xd[1] * tan(lat) / (rn + h)
@@ -465,8 +465,8 @@ NavOutput DataFusion::Output() const {
 	Vec3d atti = Vec3d{opt.atti_project[0], opt.atti_project[1], opt.atti_project[2]};
 	Mat3d Cnx = Convert::euler_to_dcm(atti);
 	projatti = Convert::dcm_to_euler(nav.Cbn * Cnx);
-	Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
-				 1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+	Vec3d vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
+				 1.0 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 				 -1
 	};
 	Vec3d outlb = {opt.pos_project[0], opt.pos_project[1], opt.pos_project[2]};

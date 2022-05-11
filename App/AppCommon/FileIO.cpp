@@ -3,7 +3,7 @@
 //
 
 #include "FileIO.h"
-#include "WGS84.h"
+#include "Earth.h"
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
@@ -160,7 +160,7 @@ void NavWriter::ConvertNavToDouble(const NavOutput &nav, NavDoubleList &bin) {
   bin.pos[0] = nav.lat;
   bin.pos[1] = nav.lon;
   bin.pos[2] = nav.height;
-  auto delta_d = WGS84::Instance().distance(
+  auto delta_d = Earth::Instance().distance(
 	  nav.lat * _deg, nav.lon * _deg,
 	  base_position[0] * _deg, base_position[1] * _deg);
   bin.horiz[0] = delta_d.de;
