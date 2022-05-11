@@ -30,14 +30,14 @@ class Earth {
 	return wgs;
   }
  public:
-  const double omega_e = 7.2921151467e-5; /*地球自转角速度 */
-  const double e2 = 0.00669437999013;/*偏心率*/
-  const double g0 = 9.7803267715;/*赤道重力加速度*/
-  const double GM = 3.986005e14;
-  const double mg = 1e-3 * g0;
-  const double ug = 1e-6 * g0;
-  double a = 6378137.0;/*长轴*/
-  double g = g0;
+  const double omega_e = 7.2921151467e-5; 				/*地球自转角速度 */
+  const double e2 = 0.00669437999013;					/*偏心率*/
+  const double g0 = 9.7803267715;						/*赤道重力加速度*/
+  const double GM = 3.986005e14;						/*万有引力常量GM=gR^2*/
+  const double mg = 1e-3 * g0;							/*1e-3 倍重力*/
+  const double ug = 1e-6 * g0;							/*ug*/
+  const double a = 6378137.0;							/*半长轴*/
+  double g = g0;										/*重力*/
   Vec3d omega_ie_e = {0, 0, omega_e};
 
   double RM(double lat) const;
@@ -56,9 +56,27 @@ class Earth {
   double dE(double lon1, double lon2,double lat) const;
   double dE( double lon1, double lon2,double lat,double h) const;
 
-  deltaPos distance(double lat1, double lon1, double lat2, double lon2) const;
+  /**
+   * 地球表面两点之间距离
+   * @param lat1 单位 rad
+   * @param lon1 单位 rad
+   * @param lat2 单位 rad
+   * @param lon2 单位 rad
+   * @return 北东地三轴向量和模长
+   */
+  Vec3d distance(double lat1, double lon1, double lat2, double lon2) const;
 
-  deltaPos distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const;
+  /**
+   * 地球表面两点之间距离
+   * @param lat1
+   * @param lon1
+   * @param lat2
+   * @param lon2
+   * @param h1 单位 m
+   * @param h2 单位 m
+   * @return m
+   */
+  Vec3d distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const;
 
 //  deltaPos distance(const GnssData &pos1, const GnssData &pos2) const;
 /*

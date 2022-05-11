@@ -63,13 +63,11 @@ double AlignMoving::Update(const GnssData &gnss) {
 											   gnss_pre.lon * _deg,
 											   gnss.height,
 											   gnss_pre.height);
-	v = (float)distance.d;
-	if (option.align_vel_threshold < distance.d and distance.d < 1e3) {
-	  nav.vn[0] = distance.dn;
-	  nav.vn[1] = distance.de;
-	  nav.vn[2] = distance.dd;
+	v = (float)distance.norm();
+	if (option.align_vel_threshold < v and v < 1e3) {
+	  nav.vn=distance;
 	  nav.vel_std = {0.3, 0.3, 0.3};
-	  nav.atti[2] = atan2(distance.de, distance.dn);
+	  nav.atti[2] = atan2(distance[1], distance[0]);
 	  nav.att_std[0] = 0.1 * _deg;
 	  nav.att_std[1] = 0.1 * _deg;
 	  nav.att_std[2] = 1 * _deg;

@@ -47,8 +47,8 @@ void ConvertNavToBin(const NavOutput &nav, NavBin &bin) {
   auto delta_d = Earth::Instance().distance(
 	  nav.lat * _deg, nav.lon * _deg,
 	  base_position[0] * _deg, base_position[1] * _deg);
-  bin.horiz[0] = delta_d.de;
-  bin.horiz[1] = delta_d.dn;
+  bin.horiz[0] = delta_d[1];
+  bin.horiz[1] = delta_d[0];
   for (int i = 0; i < 3; i++) {
 	bin.vn[i] = nav.vn[i];
 	bin.atti[i] = nav.atti[i];

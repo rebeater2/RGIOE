@@ -41,17 +41,17 @@ double Earth::dE(double lon1, double lon2, double lat) const {
   return RN(lat) * cos(lat) * (lon1 - lon2);
 }
 
-deltaPos Earth::distance(double lat1, double lon1, double lat2, double lon2) const {
+Vec3d Earth::distance(double lat1, double lon1, double lat2, double lon2) const {
   auto dn = dN(lat1, lat2);
   auto de = dE(lat1, lon1, lon2);
-  return {dn, de, 0, sqrt(dn * dn + de * de)};
+  return {dn, de, 0};
 }
 
-deltaPos Earth::distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const {
+Vec3d Earth::distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const {
   auto dn = dN(lat1, lat2, h1 / 2 + h2 / 2);
   auto de = dE(lon1, lon2, lat1 / 2 + lat2 / 2, h1 / 2 + h2 / 2);
   auto dd = h1 - h2;
-  return {dn, de, dd, sqrt(dn * dn + de * de + dd * dd)};
+  return {dn, de, dd};
 }
 
 //deltaPos WGS84::distance(const GnssData &pos1, const GnssData &pos2) const {
