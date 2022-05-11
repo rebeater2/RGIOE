@@ -8,7 +8,7 @@
 #include "Define.h"
 #include "NavStruct.h"
 #include "matrix_lib.h"
-#include "WGS84.h"
+#include "Earth.h"
 #include "Convert.h"
 
 /**

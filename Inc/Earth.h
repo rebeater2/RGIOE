@@ -8,7 +8,7 @@
 #ifndef LOOSELYCOUPLE2020_CPP_WGS84_H
 #define LOOSELYCOUPLE2020_CPP_WGS84_H
 
-#include "NavStruct.h"
+//#include "NavStruct.h"
 #include <matrix_lib.h>
 
 struct deltaPos {
@@ -18,15 +18,15 @@ struct deltaPos {
   double d;
 };
 
-class WGS84 {
+class Earth {
  private:
-  WGS84() = default;
-  ~WGS84() = default;
-  WGS84(const WGS84 &rhs) = default;
-  WGS84 &operator=(const WGS84 &rhs) {return *this;}
+  Earth() = default;
+  ~Earth() = default;
+  Earth(const Earth &rhs) = default;
+  Earth &operator=(const Earth &rhs) {return *this;}
  public:
-  static WGS84 &Instance() {
-	static WGS84 wgs;
+  static Earth &Instance() {
+	static Earth wgs;
 	return wgs;
   }
  public:
@@ -60,7 +60,7 @@ class WGS84 {
 
   deltaPos distance(double lat1, double lon1, double lat2, double lon2, double h1, double h2) const;
 
-  deltaPos distance(const GnssData &pos1, const GnssData &pos2) const;
+//  deltaPos distance(const GnssData &pos1, const GnssData &pos2) const;
 /*
     delta_d distance(NavEpoch nav1, NavEpoch nav2) const;*/
 
