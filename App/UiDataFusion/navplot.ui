@@ -1,56 +1,130 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>NavPlot</class>
+ <widget class="QMainWindow" name="NavPlot">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>968</width>
-    <height>588</height>
+    <width>1062</width>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>MainWindow</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QwtPlot" name="qwtPlot">
-     <property name="font">
-      <font>
-       <family>Serif</family>
-      </font>
-     </property>
-     <property name="autoFillBackground">
-      <bool>true</bool>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
-     </property>
-     <property name="lineWidth">
-      <number>3</number>
-     </property>
-     <property name="midLineWidth">
-      <number>2</number>
-     </property>
-     <property name="canvasBackground">
-      <brush brushstyle="Dense1Pattern">
-       <color alpha="255">
-        <red>239</red>
-        <green>235</green>
-        <blue>231</blue>
-       </color>
-      </brush>
-     </property>
-     <property name="autoReplot">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-  </layout>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QwtPlot" name="qwtPlot">
+      <property name="font">
+       <font>
+        <family>Serif</family>
+       </font>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="lineWidth">
+       <number>3</number>
+      </property>
+      <property name="midLineWidth">
+       <number>2</number>
+      </property>
+      <property name="canvasBackground">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>255</green>
+         <blue>255</blue>
+        </color>
+       </brush>
+      </property>
+      <property name="autoReplot">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1062</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>file</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionExit"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>view</string>
+    </property>
+    <addaction name="actionTrack"/>
+    <addaction name="actionAcceBias"/>
+    <addaction name="actionGyroBias"/>
+    <addaction name="actionAcce_Scale_Factor"/>
+    <addaction name="actionGyro_Scale_Factor"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionSave">
+   <property name="text">
+    <string>save</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>exit</string>
+   </property>
+  </action>
+  <action name="actionTrack">
+   <property name="text">
+    <string>track</string>
+   </property>
+  </action>
+  <action name="actionAcceBias">
+   <property name="text">
+    <string>Acce Bias</string>
+   </property>
+  </action>
+  <action name="actionGyroBias">
+   <property name="text">
+    <string>Gyro Bias</string>
+   </property>
+  </action>
+  <action name="actionAcce_Scale_Factor">
+   <property name="text">
+    <string>Acce Scale Factor</string>
+   </property>
+  </action>
+  <action name="actionGyro_Scale_Factor">
+   <property name="text">
+    <string>Gyro Scale Factor</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>open</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>

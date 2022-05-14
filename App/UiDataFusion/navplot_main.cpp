@@ -9,7 +9,9 @@
 #include "navplot.h"
 int main(int argc,char *argv[]) {
   QApplication app(argc, argv);
-  Dialog w;
+  NavPlot w;
+  if(argc >= 2)
+  	w.LoadAndPlotFigure(argv[1]);
   w.show();
   return app.exec();
 }

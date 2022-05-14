@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.19)
 set(CMAKE_CXX_STANDARD 14)
+
+#set(CMAKE_ASM_COMPILER  arm-none-eabi-gcc)
+#set(CMAKE_AR arm-none-eabi-ar)
+#set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
+#set(CMAKE_OBJDUMP arm-none-eabi-objdump)
+#set(SIZE arm-none-eabi-size)
+
 project(RGIOE)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
