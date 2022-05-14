@@ -1,0 +1,99 @@
+#!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
+IMU-Config:
+  enable: false
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.imd.fix.imd
+  d-rate: 125
+  format: 1
+  parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/adis16465_parameter.yml
+  frame: 0
+GNSS-Config:
+  enable: true
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.gnsstxt
+  format: 1
+  std-scale: 3
+  level-arm:
+    - -0.317
+    - -0.095
+    - 0.03
+  double-antenna-enable: false
+  antenna-pitch: 0
+  antenna-yaw: 0
+  columns:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+Odometer:
+  enable: true
+  odometer-std: 0.05
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.veltxt.fix.veltxt
+  NHC-enable: true
+  NHC-std:
+    - 0.05
+    - 0.05
+  angle-bv:
+    - 0
+    - -0.8
+    -  2.19
+  wheel-level-arm:
+    - 0
+    - 0
+    - 0
+  scale-factor: 0.9766354
+  scale-factor-std: 0.01
+ZUPT-Config:
+  ZUPT-enable: true
+  ZUPTA-enable: true
+  zupt-std: 0
+  zupta-std: 0
+  zupt-window: 0
+  static-wide: 0
+  threshold: 0
+Align-Config:
+  mode: 0
+  velocity-threshold: 1
+  init-PVA:
+    week: 0
+    gpst: 0
+    lat: 0
+    lon: 0
+    height: 0
+    vn:
+      - 0
+      - 0
+      - 0
+    atti:
+      - 0
+      - 0
+      - 0
+Outage-Config:
+  enable: false
+  start: 122671
+  stop: 124000
+  step: 200
+  outage: 150
+Output-Config:
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20200302/ADIs16465_01/ADI51_220302_272934.raw.post.nav
+  #  0: bin 1: ascii 2: double mat
+  file-format: 1
+  project-enable: false
+  position-project:
+    - 1
+    - 1
+    - 1
+  attitude-project:
+    - 0
+    - 0
+    - 0
+Pressure-Config:
+  enable: false
+  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_20307_122202.raw.bmptxt
+  height-std: 0.2
+start-time: 273014
+stop-time: 274766
+enable-rts: false

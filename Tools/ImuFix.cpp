@@ -12,7 +12,7 @@
 #include "glog/logging.h"
 
 void IMUFix(){
-  std::string filename = "/media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_02/ADI51_220307_122201.raw.imd";
+  std::string filename = "/mnt/d/NavData/LPS/20220501/RAW_INDOOR000013.raw.imd";
   int rate = 125;
   double dt = 1.0 / rate;
   IMUReader reader(filename, IMU_FILE_IMD, IMU_FRAME_FRD, true, rate);
@@ -70,7 +70,7 @@ void OdoFix(){
 int main(int argc, char **argv) {
   google::InitGoogleLogging(".");
   google::LogToStderr();
-  IMURotate();
+  IMUFix();
   return 0;
 }
 

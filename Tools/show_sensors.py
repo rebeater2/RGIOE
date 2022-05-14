@@ -2,8 +2,8 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
-path = "/home/rebeater/CLionProjects/RGIOE/yaml/ins_cube_05.yml"
-config = yaml.safe_load(open(path))
+# path = "../../RGIOE/yaml/ins_cube_05.yml"
+# config = yaml.safe_load(open(path))
 
 
 # typedef enum  {
@@ -18,7 +18,7 @@ config = yaml.safe_load(open(path))
 #   SENSOR_HEIGHT = 0x80U,
 # }SensorType
 def show_sensors():
-    result_path = config["Output-Config"]["file-path"]
+    result_path = R"D:\NavData\LPS\20220501\RAW_INDOOR000013.raw.rgioe.nav" # config["Output-Config"]["file-path"]
     data = np.loadtxt(result_path)
     sensor_idx = {
         'imu': 0x01,
@@ -35,17 +35,17 @@ def show_sensors():
     nhc_index = []
     press_index = []
     for i, d in enumerate(data):
-        if int(d[18]) & sensor_idx["imu"] > 0:
+        if int(d[24]) & sensor_idx["imu"] > 0:
             imu_index.append(i)
-        if int(d[18]) & sensor_idx["gnss"] > 0:
+        if int(d[24]) & sensor_idx["gnss"] > 0:
             gnss_index.append(i)
-        if int(d[18]) & sensor_idx["odometer"] > 0:
+        if int(d[24]) & sensor_idx["odometer"] > 0:
             odo_index.append(i)
-        if int(d[18]) & sensor_idx["ZUPT"] > 0:
+        if int(d[24]) & sensor_idx["ZUPT"] > 0:
             zupt_index.append(i)
-        if int(d[18]) & sensor_idx["NHC"] > 0:
+        if int(d[24]) & sensor_idx["NHC"] > 0:
             nhc_index.append(i)
-        if int(d[18]) & sensor_idx["press"] > 0:
+        if int(d[24]) & sensor_idx["press"] > 0:
             press_index.append(i)
     times = data[:, 1]
     ones = np.ones(data.shape[0], np.int)
