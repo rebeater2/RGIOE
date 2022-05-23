@@ -11,7 +11,7 @@
 #include <vector>
 class Outage {
  public:
-  std::vector<float> starts;
+  std::vector<double> starts;
   float outage;
   bool flag_enable;
  public:

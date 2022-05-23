@@ -7,17 +7,15 @@
 **/
 
 #include "Outage.h"
-
 Outage::Outage(float start, float stop, float outage, float step) : outage(outage) {
   if ((start > stop and stop > 0) or outage < 0 or step < outage) {
-    flag_enable = false;
-    return;
+	flag_enable = false;
+	return;
   }
   flag_enable = true;
-  if (stop < 0) stop = start + 4000;
-  for (float i = start; i < stop;) {
-    starts.push_back(i);
-    i += step;
+  for (double i = start; i < stop;) {  /*  double 避免float有效位数不够   */
+	starts.push_back(i);
+	i += step;
   }
 }
 
@@ -26,12 +24,12 @@ Outage::Outage(float start, float stop, float outage, float step) : outage(outag
  * */
 bool Outage::IsOutage(double gpst) {
   if (!flag_enable) {
-    return false;
+	return false;
   }
-  for (auto &s:starts) {
-    if (gpst <= s + outage) {
-      return s <= gpst;
-    }
+  for (auto &s: starts) {
+	if (gpst <= s + outage) {
+	  return s <= gpst;
+	}
   }
   return false;
 }
