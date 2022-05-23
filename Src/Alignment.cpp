@@ -68,9 +68,9 @@ double AlignMoving::Update(const GnssData &gnss) {
 	  nav.vn=distance;
 	  nav.vel_std = {0.3, 0.3, 0.3};
 	  nav.atti[2] = atan2(distance[1], distance[0]);
-	  nav.att_std[0] = 0.1 * _deg;
-	  nav.att_std[1] = 0.1 * _deg;
-	  nav.att_std[2] = 1 * _deg;
+	  nav.att_std[0] = 1 * _deg;
+	  nav.att_std[1] = 1 * _deg;
+	  nav.att_std[2] = 2 * _deg;
 	  nav.Qbn = Convert::euler_to_quaternion(nav.atti);
 	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	  flag_yaw_finished = true;
