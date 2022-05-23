@@ -42,7 +42,6 @@ MESSAGE(“QWT_LIBRARY at ${QWT_LIBRARY}”)
 #设置项目包含目录，包括将第三方库附加
 INCLUDE_DIRECTORIES(
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${Projects_QT5_Includes}
         ${QWT_INCLUDE_DIR}
 )
 

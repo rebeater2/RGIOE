@@ -17,8 +17,7 @@ To compile the executable program, you need to install the following library and
 1. [fmt](https://github.com/fmtlib/fmt.git)
 2. [yaml-cpp](https://github.com/jbeder/yaml-cpp.git)
 3. [glog](https://github.com/google/glog.git)
-4. [Qt](https://www.qt.io/)
-
+4. [Qt](https://www.qt.io/),包含qt-base,qt5-qwt,
 # Usage
 Both the executable console program and UI program is able to load the configure file in format of YAML. Some demo configure file are provided in directory `yaml` .  In terminal, you can use the following command:
 ```Plain Text

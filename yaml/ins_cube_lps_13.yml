@@ -10,7 +10,7 @@ GNSS-Config:
   enable: true
   file-path: /mnt/d/NavData/LPS/20220501/RAW_INDOOR000013.raw.gnsstxt
   format: 1
-  std-scale: 0.001
+  std-scale: 1
   level-arm:
     - -0.4
     - -0.0
@@ -72,11 +72,11 @@ Align-Config:
       - 0
       - 0
 Outage-Config:
-  enable: false
-  start: 122671
-  stop: 124132
-  step: 120
-  outage: 60
+  enable: true
+  start: 1650611962
+  stop: 1650612530
+  step: 30
+  outage: 10
 Output-Config:
   file-path: /mnt/d/NavData/LPS/20220501/RAW_INDOOR000013.raw.rgioe.nav
 #  0: bin, for small size

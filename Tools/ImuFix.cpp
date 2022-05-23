@@ -12,7 +12,7 @@
 #include "glog/logging.h"
 
 void IMUFix(){
-  std::string filename = "/mnt/d/NavData/LPS/20220501/RAW_INDOOR000013.raw.imd";
+  std::string filename = "/mnt/d/NavData/LPS/20220501/RAW_INDOOR000016.raw.imd";
   int rate = 125;
   double dt = 1.0 / rate;
   IMUReader reader(filename, IMU_FILE_IMD, IMU_FRAME_FRD, true, rate);

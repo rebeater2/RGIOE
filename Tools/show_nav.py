@@ -7,7 +7,7 @@ path = "../yaml/demo_a15.yml"
 config = yaml.safe_load(open(path))
 
 def showBias():
-    navpath = config["Output-Config"]["file-path"]
+    navpath = R"D:\NavData\LPS\20220501\RAW_INDOOR000013.raw.rgioe.nav" # config["Output-Config"]["file-path"]
     # df = pd.read_csv(navpath,sep=' ')
     nav = np.loadtxt(navpath)
     times = nav[:, 1]
