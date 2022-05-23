@@ -18,6 +18,7 @@ enum NavPlotErrorCode {
   NavPlotOK = 0,
   NavPlotFileNotFound,
   NavPlotFileBadFormat,
+  NavPlotFileNotSupported,
 };
 
 class NavPlot : public QMainWindow {
@@ -57,7 +58,7 @@ class NavPlot : public QMainWindow {
  private:
 
   Ui::NavPlot *ui;
-  std::vector<NavOutput> navdata;
+  std::list<NavOutput> navdata;
   /*后缀和格式映射*/
   std::map<string, NavFileFormat> extension_map{
 	  {"nav", NavFileFormat::NavAscii},

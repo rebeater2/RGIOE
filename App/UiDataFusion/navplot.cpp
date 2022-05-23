@@ -40,7 +40,7 @@ NavPlotErrorCode NavPlot::LoadFile_<NavBinary>(const std::string &file_path) {
   ifs.seekg(0, std::ios::beg);
   LOG(INFO) << fmt::format("Loading... [file size = {:.4f} MB] \n", (double)size / 1024.0 / 1024.0);
   navdata.clear();
-  navdata.reserve(size / (sizeof(nav) + 1));
+//  navdata.reserve(size / (sizeof(nav) + 1));
   while (!ifs.eof()) {
 	ifs.read(reinterpret_cast<char *>(&nav), sizeof(nav));
 	navdata.push_back(nav);
@@ -50,13 +50,23 @@ NavPlotErrorCode NavPlot::LoadFile_<NavBinary>(const std::string &file_path) {
 }
 template<>
 NavPlotErrorCode NavPlot::LoadFile_<NavAscii>(const std::string &file_path) {
-  /*TODO*/
+  ifstream ifs(file_path);
+  if (!ifs.good()) return NavPlotFileNotFound;
+  while (!ifs.eof()) {
+	string str;
+	NavOutput nav;
+	std::getline(ifs, str);
+	std::stringstream ss(str);
+	ss >> nav.week >> nav.gpst >> nav.lat >> nav.lon >> nav.height >> nav.vn[0] >> nav.vn[1] >> nav.vn[2] >> nav.atti[0]
+	   >> nav.atti[1] >> nav.atti[2] >> nav.gb[0] >> nav.gb[1] >> nav.gb[2] >> nav.ab[0] >> nav.ab[1] >> nav.ab[2];
+	navdata.push_back(nav);
+  }
   return NavPlotOK;
 }
 template<>
 NavPlotErrorCode NavPlot::LoadFile_<NavDoubleMatrix>(const std::string &file_path) {
   /*TODO*/
-  return NavPlotOK;
+  return NavPlotFileNotSupported;
 }
 NavPlotErrorCode NavPlot::LoadFile(const std::string &file_path, NavFileFormat fmt) {
   switch (fmt) {
@@ -81,8 +91,12 @@ void NavPlot::LoadAndPlotFigure(const std::string &file_path) {
 
   if (extension_map.find(extension) != extension_map.end()) {
 	LOG(INFO) << fmt::format("The extension is {}", extension);
-	LoadFile(file_path, extension_map[extension]);
-	ShowTrack();
+	auto err = LoadFile(file_path, extension_map[extension]);
+	if (err== NavPlotOK)
+	  ShowTrack();
+	else{
+	  LOG(ERROR)<<fmt::format("{} load failed {:d}",file_path,err);
+	}
   } else {
 	LOG(ERROR) << fmt::format("Unsupported format {}", extension);//"Unsupported extension";
 	std::string temperate;
@@ -116,7 +130,7 @@ void NavPlot::ShowTrack() {
   legend->setDefaultItemMode(QwtLegendData::Checkable);//图例可被点击
   ui->qwtPlot->insertLegend(legend, QwtPlot::RightLegend);  //右侧显示图例
   ui->qwtPlot->setAxisAutoScale(QwtPlot::xBottom, true);
-  ui->qwtPlot->setAxisAutoScale(QwtPlot::yLeft,true);
+  ui->qwtPlot->setAxisAutoScale(QwtPlot::yLeft, true);
   ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "East");
   ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "North");
   /*ui界面显示曲线*/
@@ -125,8 +139,8 @@ void NavPlot::ShowTrack() {
 //  delete curve;
 }
 void NavPlot::ShowAcceBias() {
-  if(navdata.empty()){
-	LOG(ERROR)<<"Navigation data is empty";
+  if (navdata.empty()) {
+	LOG(ERROR) << "Navigation data is empty";
 	return;
   }
   ClearFigure();
@@ -147,25 +161,25 @@ void NavPlot::ShowAcceBias() {
   }
   ui->qwtPlot->axisAutoScale(QwtPlot::xBottom);
   ui->qwtPlot->axisAutoScale(QwtPlot::yLeft);
-  ui->qwtPlot->setAxisScale(QwtPlot::xBottom,navdata.front().gpst,navdata.back().gpst);
+  ui->qwtPlot->setAxisScale(QwtPlot::xBottom, navdata.front().gpst, navdata.back().gpst);
   ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "GPS Time/s");
   ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "Accelerator Bias/mGal");
   ui->qwtPlot->replot();
   ui->qwtPlot->setAutoReplot(true);   //自动更新
 }
 void NavPlot::SetFont() {
-	int fontId = QFontDatabase::addApplicationFont("./fonts/msyh.ttc");
-	QStringList fontIDs = QFontDatabase::applicationFontFamilies(fontId);
-	if (! fontIDs.isEmpty()) {
-	  QFont font(fontIDs.first());
-	  QApplication::setFont(font);
-	}else{
-	  LOG(ERROR) <<"font file is missing";
-	}
+  int fontId = QFontDatabase::addApplicationFont("./fonts/msyh.ttc");
+  QStringList fontIDs = QFontDatabase::applicationFontFamilies(fontId);
+  if (!fontIDs.isEmpty()) {
+	QFont font(fontIDs.first());
+	QApplication::setFont(font);
+  } else {
+	LOG(ERROR) << "font file is missing";
+  }
 }
 void NavPlot::ShowGyroBias() {
-  if(navdata.empty()){
-	LOG(ERROR)<<"Navigation data is empty";
+  if (navdata.empty()) {
+	LOG(ERROR) << "Navigation data is empty";
 	return;
   }
   ClearFigure();
@@ -186,14 +200,14 @@ void NavPlot::ShowGyroBias() {
   }
   ui->qwtPlot->axisAutoScale(QwtPlot::xBottom);
   ui->qwtPlot->axisAutoScale(QwtPlot::yLeft);
-  ui->qwtPlot->setAxisScale(QwtPlot::xBottom,navdata.front().gpst,navdata.back().gpst);
+  ui->qwtPlot->setAxisScale(QwtPlot::xBottom, navdata.front().gpst, navdata.back().gpst);
   ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "GPS Time/s");
-  ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "Gyroscope Bias/mGal");
+  ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "Gyroscope Bias/(Deg/h)");
   ui->qwtPlot->replot();
   ui->qwtPlot->setAutoReplot(true);   //自动更新
 }
 void NavPlot::on_actionTrack_triggered() {
-	ShowTrack();
+  ShowTrack();
 }
 void NavPlot::ClearFigure() {
 //  for(auto &p:point){
@@ -201,13 +215,13 @@ void NavPlot::ClearFigure() {
 //  }
   delete track_curve;
   track_curve = nullptr;
-  for (auto & p:bias_curves){
+  for (auto &p: bias_curves) {
 	delete p;
-	p= nullptr;
+	p = nullptr;
   };
 }
 void NavPlot::on_actionAcceBias_triggered() {
-	ShowAcceBias();
+  ShowAcceBias();
 }
 void NavPlot::on_actionGyroBias_triggered() {
   ShowGyroBias();
@@ -227,8 +241,8 @@ void NavPlot::on_actionGyro_Scale_Factor_triggered() {
   ShowGyroScaleFactor();
 }
 void NavPlot::ShowAcceScaleFactor() {
-  if(navdata.empty()){
-	LOG(ERROR)<<"Navigation data is empty";
+  if (navdata.empty()) {
+	LOG(ERROR) << "Navigation data is empty";
 	return;
   }
   ClearFigure();
@@ -249,15 +263,15 @@ void NavPlot::ShowAcceScaleFactor() {
   }
   ui->qwtPlot->axisAutoScale(QwtPlot::xBottom);
   ui->qwtPlot->axisAutoScale(QwtPlot::yLeft);
-  ui->qwtPlot->setAxisScale(QwtPlot::xBottom,navdata.front().gpst,navdata.back().gpst);
+  ui->qwtPlot->setAxisScale(QwtPlot::xBottom, navdata.front().gpst, navdata.back().gpst);
   ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "GPS Time/s");
   ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "Accelerator Scale Factor/ppm");
   ui->qwtPlot->replot();
   ui->qwtPlot->setAutoReplot(true);   //自动更新
 }
 void NavPlot::ShowGyroScaleFactor() {
-  if(navdata.empty()){
-	LOG(ERROR)<<"Navigation data is empty";
+  if (navdata.empty()) {
+	LOG(ERROR) << "Navigation data is empty";
 	return;
   }
   ClearFigure();
@@ -278,7 +292,7 @@ void NavPlot::ShowGyroScaleFactor() {
   }
   ui->qwtPlot->axisAutoScale(QwtPlot::xBottom);
   ui->qwtPlot->axisAutoScale(QwtPlot::yLeft);
-  ui->qwtPlot->setAxisScale(QwtPlot::xBottom,navdata.front().gpst,navdata.back().gpst);
+  ui->qwtPlot->setAxisScale(QwtPlot::xBottom, navdata.front().gpst, navdata.back().gpst);
   ui->qwtPlot->setAxisTitle(QwtPlot::xBottom, "GPS Time/s");
   ui->qwtPlot->setAxisTitle(QwtPlot::yLeft, "Gyroscope Scale Factor/ppm");
   ui->qwtPlot->replot();
