@@ -122,7 +122,7 @@ int Ins::ForwardMechanization(const ImuData &imuData) {
   Vec3d acce{imuData.acce[0], imuData.acce[1], imuData.acce[2]};
   Vec3d gyro{imuData.gyro[0], imuData.gyro[1], imuData.gyro[2]};
 #else
-  Vec3d acce{imuData.acce[0] * dt * WGS84::Instance().g, imuData.acce[1] * dt * WGS84::Instance().g, imuData.acce[2] * WGS84::Instance().g * dt};
+  Vec3d acce{imuData.acce[0] * dt * Earth::Instance().g, imuData.acce[1] * dt * Earth::Instance().g, imuData.acce[2] * Earth::Instance().g * dt};
   Vec3d gyro{imuData.gyro[0] * dt, imuData.gyro[1] * dt, imuData.gyro[2] * dt};
 #endif
   Vec3d acce_ = CompensateIMU(acce, nav.ab, nav.as);
