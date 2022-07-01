@@ -127,7 +127,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
 #if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
   for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i) {
 	Q0(STATE_ODOMETER_SCALE_FACTOR_START + i, STATE_ODOMETER_SCALE_FACTOR_START + i) =
-		2 * opt.kd_std * opt.kd_std / 3600;
+		2 * opt.odo_scale_std * opt.odo_scale_std / 3600;
   }
 #endif
   lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
@@ -245,18 +245,14 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   H3.block<3, 3>(0, 3) = Cnv;
   H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
   H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
-#if KD_IN_KALMAN_FILTER == 1
-  H3.block<3, 1>(0, 15) = vel;
-#endif
   Vec3d z = v_v - nav.kd * vel;
-
   if (opt.nhc_enable) {
 	Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
 	Update(H3, z, R * R);
 	nav.info.sensors |= SensorType::SENSOR_NHC;
   } else {
 	nav.info.sensors &= ~SensorType::SENSOR_NHC;
-	Update(H3.block<STATE_CNT, 1>(0, 0), z[0], opt.odo_std * opt.odo_std);
+	Update(H3.block<1, STATE_CNT>(0, 0), z[0], opt.odo_std * opt.odo_std);
   }
 
   update_flag |= FLAG_VELOCITY;/**/
@@ -320,8 +316,8 @@ Mat3Xd DataFusion::_posH() const {
   mat_h.block<3, 3>(0, 0) = eye3;
   mat_h.block<3, 3>(0, 6) = Convert::skew(nav.Cbn * lb_gnss);
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
-  Vec3d vdr = {1.0 / (WGS84::Instance().RM(nav.pos[0]) + nav.pos[2]),
-			   1.0 / ((WGS84::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+  Vec3d vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
+			   1.0 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
 			   -1
   };
   mat_h.block<3, STATE_GNSS_LEVEL_ARM_SIZE>(0, STATE_GNSS_LEVEL_ARM_START) = -(vdr.asDiagonal() * nav.Cbn);

@@ -99,7 +99,6 @@ int main(int argc, char *argv[]) {
 	LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
 	return 1;
   }
-
   NavWriter writer(config.output_config.file_path, config.output_config.format);
   NavEpoch nav;
   if (opt.align_mode == AlignMode::ALIGN_MOVING) {
@@ -135,10 +134,12 @@ int main(int argc, char *argv[]) {
 /*第一步：初始化*/
   DataFusion::Instance().Initialize(nav, opt);
   LOG(INFO) << "initial PVA:" << DataFusion::Instance().Output();
-  if (opt.odo_enable) {
+  if (opt.odo_enable and podoReader) {
 	podoReader->ReadUntil(imu.gpst, &vel);
 	podoReader->ReadNext(vel);//.gpst, &vel);
   }
+
+   bmp_reader.ReadUntil(imu.gpst,&press);
 /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
   LOG(INFO) << "start:" << imu.gpst << ",end:" << config.stop_time;
   while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
@@ -178,7 +179,7 @@ int main(int argc, char *argv[]) {
 	if (config.pressure_config.enable and fabs(press.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  double height = 44330 * (1 - pow(press.pressure / 101325.0, 0.19));
 	  double z = DataFusion::Instance().MeasureUpdateRelativeHeight(height);
-	  LOG(INFO) << "pressure update: " << z << "\t" << height;
+	  LOG_EVERY_N(INFO, 100*opt.d_rate) << "Pressure update:" << gnss << "at " << imu.gpst;
 	  bmp_reader.ReadNext(press);
 	}
 	if (!opt.enable_rts) {

@@ -5,7 +5,6 @@
 * Create on 4/13/22 9:38 AM
 * @version 1.0
 **/
-#include <glog/logging.h>
 #include "DcmEstimator.h"
 #include "Convert.h"
 /**

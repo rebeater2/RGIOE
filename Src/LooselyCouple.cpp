@@ -84,7 +84,7 @@ void timeUpdate(const ImuData *imu) {
 #if 0
   double dt = 1. / default_option.d_rate;
   for (int i = 0; i < 3; i++) {
-    imu->acce[i] *= (WGS84::Instance().g * dt);
+    imu->acce[i] *= (Earth::Instance().g * dt);
     imu->gyro[i] *= dt;
   }
 #endif

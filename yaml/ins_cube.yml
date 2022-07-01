@@ -29,10 +29,10 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: true
-  odometer-std: 0.05
+  enable: false
+  odometer-std: 0.01
   file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.veltxt.fix.veltxt
-  NHC-enable: true
+  NHC-enable: false
   NHC-std:
     - 0.01
     - 0.01
@@ -45,10 +45,10 @@ Odometer:
     - 0
     - 0
   scale-factor: 0.9776354
-  scale-factor-std: 0.01
+  scale-factor-std: 1
 ZUPT-Config:
-  ZUPT-enable: false
-  ZUPTA-enable: false
+  ZUPT-enable: true
+  ZUPTA-enable: true
   zupt-std: 0
   zupta-std: 0
   zupt-window: 0
@@ -74,12 +74,12 @@ Align-Config:
 Outage-Config:
   enable: true
   start: 122671
-  stop: 124132
+  stop: 123719
   step: 120
-  outage: 60
+  outage: 90
 Output-Config:
   file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.rgioe.nav
-#  0: bin, for small size
+# 0: bin, for small size
 # 1: ascii, for easily open with text editors
 # 2: double mat, for easily load by Python or MATLAB
   file-format: 1
@@ -93,9 +93,9 @@ Output-Config:
     - 0
     - 0
 Pressure-Config:
-  enable: false
+  enable: true
   file-path: /mnt/d/NavData/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
-  height-std: 0.2
+  height-std: 0.01
 start-time: 122379
 stop-time: 124132
 enable-rts: false

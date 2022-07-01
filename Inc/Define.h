@@ -1,6 +1,10 @@
-//
-// Created by rebeater on 7/8/21.
-//
+/**
+* @file Define.h in RGIOE
+* @author rebeater
+* @comment  Global defines for Fusion Algorithm
+* Create on 4/13/22 9:38 AM
+* @version 1.0
+**/
 
 /**
  *this file contains Global Configure for this library,so this file should be includes before any others.
@@ -20,6 +24,7 @@
 #define STATE_GYRO_SCALE_FACTOR_START (BASE_STATE)
 #else
 #define STATE_GYRO_SCALE_FACTOR_SIZE 0
+#define STATE_GYRO_SCALE_FACTOR_START (BASE_STATE)
 #endif
 
 #if ESTIMATE_ACCE_SCALE_FACTOR == 1
@@ -27,6 +32,7 @@
 #define STATE_ACCE_SCALE_FACTOR_START (STATE_GYRO_SCALE_FACTOR_START + STATE_GYRO_SCALE_FACTOR_SIZE )
 #else
 #define STATE_ACCE_SCALE_FACTOR_SIZE 0
+#define STATE_ACCE_SCALE_FACTOR_START STATE_GYRO_SCALE_FACTOR_START
 #endif
 
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
@@ -34,6 +40,7 @@
 #define STATE_GNSS_LEVEL_ARM_START (STATE_ACCE_SCALE_FACTOR_START + STATE_ACCE_SCALE_FACTOR_SIZE)
 #else
 #define STATE_GNSS_LEVEL_ARM_SIZE 0
+#define STATE_GNSS_LEVEL_ARM_START STATE_ACCE_SCALE_FACTOR_START
 #endif
 
 #if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
@@ -41,6 +48,7 @@
 #define STATE_ODOMETER_SCALE_FACTOR_START ((STATE_GNSS_LEVEL_ARM_START)+ STATE_GNSS_LEVEL_ARM_SIZE)
 #else
 #define STATE_ODOMETER_SCALE_FACTOR_SIZE 0
+#define STATE_ODOMETER_SCALE_FACTOR_START STATE_GNSS_LEVEL_ARM_START
 #endif
 
 /*总状态量*/
@@ -48,5 +56,5 @@
 
 #define PRINT_MACRO_HELPER(x)   #x
 #define PRINT_MACRO(x)   #x "=" PRINT_MACRO_HELPER(x)
-//#pragma message(PRINT_MACRO(STATE_CNT))
+#pragma message(PRINT_MACRO(STATE_CNT))
 #endif //RGIOE_DEFINE_H
