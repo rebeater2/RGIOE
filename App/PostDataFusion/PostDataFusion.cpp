@@ -3,7 +3,7 @@
 //
 #include "DataFusion.h"
 #include "Alignment.h"
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 #include "FileIO.h"
 #include "Config.h"
 #include "NavLog.h"

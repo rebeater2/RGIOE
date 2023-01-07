@@ -49,7 +49,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
    * @param imu : IMU data
    * @return 0
    */
-  int TimeUpdate(const ImuData &imu);
+  int TimeUpdate(const RgioeImuData &imu);
 
   /**
    * position update for extend kalman filter
@@ -66,7 +66,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
    * @param gnssData
    * @return 0 for OK,1 for discarded GNSS data
    */
-  int MeasureUpdatePos(const GnssData &gnssData);
+  int MeasureUpdatePos(const RgioeGnssData &gnssData);
 
   /**
    * Velocity update, NHC or odometer measurement

@@ -19,7 +19,7 @@
 #include <thread>
 #include <fstream>
 #include <condition_variable>
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 
 using std::ostream;
 using std::istream;

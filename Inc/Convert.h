@@ -11,7 +11,7 @@
 #define LOOSELYCOUPLE2020_CPP_CONVERT_H
 
 #include <matrix_lib.h>
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 
 class Convert {
  public:

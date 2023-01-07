@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <NavStruct.h>
+#include <RgioeDataType.h>
 #include <DataFusion.h>
 #include <fmt/format.h>
 #include "FileIO.h"

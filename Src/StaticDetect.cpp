@@ -18,7 +18,7 @@ IMUSmooth::IMUSmooth() : is_static_(false), up_cnt(0), static_cnt(0) {
  * 滑动计算IMU的均值和方差
  * @param imu
  */
-void IMUSmooth::Update(const ImuData &imu) {
+void IMUSmooth::Update(const RgioeImuData &imu) {
   up_cnt++;
   if (up_cnt < width) {/*小于窗口长度*/
 	for (int i = 0; i < 3; i++) {
@@ -51,7 +51,7 @@ void IMUSmooth::Update(const ImuData &imu) {
   imu_ave.gpst = imu.gpst;
   imu_pre = imu;
 }
-ImuData IMUSmooth::getSmoothedIMU() {
+RgioeImuData IMUSmooth::getSmoothedIMU() {
   return imu_ave;
 }
 /**

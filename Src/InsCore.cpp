@@ -117,7 +117,7 @@ int Ins::_atti_update(const Vec3d &gyro) {
  * @param imuData
  * @return
  */
-int Ins::ForwardMechanization(const ImuData &imuData) {
+int Ins::ForwardMechanization(const RgioeImuData &imuData) {
 #if USE_INCREMENT == 1
   Vec3d acce{imuData.acce[0], imuData.acce[1], imuData.acce[2]};
   Vec3d gyro{imuData.gyro[0], imuData.gyro[1], imuData.gyro[2]};
@@ -167,7 +167,7 @@ void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
 
 }
 
-void Ins::InitializePva(const NavEpoch &nav_, const ImuData &imu) {
+void Ins::InitializePva(const NavEpoch &nav_, const RgioeImuData &imu) {
   eye3 = Eigen::Matrix3d::Identity(3, 3);
   dt = 0.005;
   this->nav = nav_;

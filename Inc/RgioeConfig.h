@@ -25,5 +25,5 @@
 #define ESTIMATE_ODOMETER_SCALE_FACTOR 1
 
 /*嵌入式实时模式*/
-#define RUN_IN_STM32 0
+#define RUN_IN_STM32 1
 #endif //RGIOE_INC_RGIOECONFIG_H_

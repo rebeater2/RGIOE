@@ -31,11 +31,11 @@ To use this library in C environment such as STM32 and DSP, C style functions ar
 ```cpp
 int navInitialize();
 int navOutput(NavOutput *nav_output);
-double navAlignGnss(const GnssData *gnss);
-int navAlignLevel(const ImuData *imu);
-void navSetGNSS(const GnssData *gnss);
+double navAlignGnss(const RgioeGnssData *gnss);
+int navAlignLevel(const RgioeImuData *imu);
+void navSetGNSS(const RgioeGnssData *gnss);
 void navSetVel(const Velocity *vel);
-void navUpdate(const ImuData *imu);
+void navUpdate(const RgioeImuData *imu);
 ```
 # Performance
 see Doc/performance.md

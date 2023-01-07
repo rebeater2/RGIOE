@@ -38,12 +38,12 @@ typedef enum  {
   SENSOR_CAMERA = 0x20U,
   SENSOR_LIDAR = 0x40U,
   SENSOR_HEIGHT = 0x80U,
-}SensorType;
+}RgioeSensorType;
 typedef enum {
   ALIGN_USE_GIVEN = 2,
   ALIGN_MOVING = 0,
   ALIGN_STATIONARY = 1
-} AlignMode;
+} RgioeAlignMode;
 typedef struct {
   double gpst;
   double pressure;
@@ -53,7 +53,7 @@ typedef struct {
   double gpst;
   double gyro[3];
   double acce[3];
-} ImuData;
+} RgioeImuData;
 
 typedef enum {
   INITIAL = 0,
@@ -95,7 +95,7 @@ typedef struct {
   int week;/*4*/
   int ns; /*大于128不可能！！！*/
   int mode; /*  和 NMEA的模式定义保持一致*/
-} GnssData;/*64 bytes*/
+} RgioeGnssData;/*64 bytes*/
 
 typedef struct {
   float arw;

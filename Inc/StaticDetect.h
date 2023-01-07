@@ -9,12 +9,12 @@
 #ifndef LOOSELYCOUPLE2020_CPP_SRC_STATICDETECT_H_
 #define LOOSELYCOUPLE2020_CPP_SRC_STATICDETECT_H_
 /* IMU 平均数*/
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 class IMUSmooth {
  private:
-  ImuData imu_ave{};/*均值*/
-  ImuData imu_var{};
-  ImuData imu_pre{};/*用于计算短时过0*/
+  RgioeImuData imu_ave{};/*均值*/
+  RgioeImuData imu_var{};
+  RgioeImuData imu_pre{};/*用于计算短时过0*/
   int up_cnt;
   int static_cnt;
   int width = 32;/*平均数和std窗口*/
@@ -26,9 +26,9 @@ class IMUSmooth {
   IMUSmooth();
   IMUSmooth(double threshold,int static_width,int window);
 
-  void Update(const ImuData &imu);
+  void Update(const RgioeImuData &imu);
 
-  ImuData getSmoothedIMU();
+  RgioeImuData getSmoothedIMU();
 
   double getStd();
 

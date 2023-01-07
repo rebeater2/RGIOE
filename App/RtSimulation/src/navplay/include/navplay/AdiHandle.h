@@ -8,7 +8,7 @@
 
 #ifndef INSCUBEDECODER__ADIHANDLE_H_
 #define INSCUBEDECODER__ADIHANDLE_H_
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 #include "RawStruct.h"
 #include "HandleBase.h"
 

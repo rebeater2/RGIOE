@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
-#include <NavStruct.h>
+#include <RgioeDataType.h>
   void loadYamlConfig(char *yaml_path, char *imu_path, char *gnss_path, char *out_path, Option *opt, NavOutput *nav) ;
 #ifdef __cplusplus
 }

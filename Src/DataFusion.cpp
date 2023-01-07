@@ -142,7 +142,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
  * @param imu : imu data
  * @return : 1 success 0 fail in time check
  */
-int DataFusion::TimeUpdate(const ImuData &imu) {
+int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 #if RUN_IN_STM32 != 1
   if (opt.enable_rts) {
 	matp_posts.push_back(P);
@@ -214,12 +214,12 @@ int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
  * @param gnss GNSS数据
  * @return 0：不是用当前GNSS数据，1：使用当前GNSS数据
  */
-int __attribute__((weak)) GnssCheck(const GnssData &gnss) {
+int __attribute__((weak)) GnssCheck(const RgioeGnssData &gnss) {
   return gnss.mode == SPP or gnss.mode == RTK_FIX or gnss.mode == RTK_FLOAT or gnss.mode == RTK_DGPS;
 }
-int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
+int DataFusion::MeasureUpdatePos(const RgioeGnssData &gnssData) {
   if (GnssCheck(gnssData) > 0) {
-	nav.info.sensors |= SensorType::SENSOR_GNSS;
+	nav.info.sensors |= RgioeSensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = gnssData.mode;
 	Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
 	Mat3d Rk = Mat3d::Zero();
@@ -230,13 +230,13 @@ int DataFusion::MeasureUpdatePos(const GnssData &gnssData) {
 	gnss_height = gnssData.height;
 	base_height_is_set = 1;
   } else {
-	nav.info.sensors &= ~SensorType::SENSOR_GNSS;
+	nav.info.sensors &= ~RgioeSensorType::SENSOR_GNSS;
 	nav.info.gnss_mode = GnssMode::INVALID;
   }
   return 0;
 }
 int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
-  nav.info.sensors |= SensorType::SENSOR_ODO;
+  nav.info.sensors |= RgioeSensorType::SENSOR_ODO;
   Mat3d Cnv = Cbv * nav.Cbn.transpose();
   Vec3d w_ib = _gyro_pre * opt.d_rate;
   Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
@@ -249,9 +249,9 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
   if (opt.nhc_enable) {
 	Mat3d R = Vec3d{opt.odo_std, opt.nhc_std[0], opt.nhc_std[1]}.asDiagonal();
 	Update(H3, z, R * R);
-	nav.info.sensors |= SensorType::SENSOR_NHC;
+	nav.info.sensors |= RgioeSensorType::SENSOR_NHC;
   } else {
-	nav.info.sensors &= ~SensorType::SENSOR_NHC;
+	nav.info.sensors &= ~RgioeSensorType::SENSOR_NHC;
 	Update(H3.block<1, STATE_CNT>(0, 0), z[0], opt.odo_std * opt.odo_std);
   }
 

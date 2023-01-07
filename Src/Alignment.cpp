@@ -11,7 +11,7 @@
  * 水平调平
  * @param imu 前右下坐标系，增量格式
  */
-void AlignMoving::Update(const ImuData &imu) {
+void AlignMoving::Update(const RgioeImuData &imu) {
   /*必须在静止时刻对准*/
   smooth.Update(imu);
   if (!smooth.isStatic()) {
@@ -34,7 +34,7 @@ void AlignMoving::Update(const ImuData &imu) {
   flag_level_finished = true;
 }
 
-double AlignMoving::Update(const GnssData &gnss) {
+double AlignMoving::Update(const RgioeGnssData &gnss) {
 /*  if (!(GnssCheck(gnss) > 0)) {
 	return 0;
   }*/
@@ -156,7 +156,7 @@ AlignBase::AlignBase() {
   nav.att_std = zero;
   flag_level_finished = false;
   flag_yaw_finished = false;
-  nav.info.sensors = SensorType::SENSOR_IMU;
+  nav.info.sensors = RgioeSensorType::SENSOR_IMU;
   nav.info.gnss_mode = GnssMode::INVALID;
   nav.week = 0;
 }
@@ -181,6 +181,6 @@ NavEpoch AlignBase::getNavEpoch() const {
   return nav;
 }
 
-int AlignMoving::GnssCheck(const GnssData &gnss) {
+int AlignMoving::GnssCheck(const RgioeGnssData &gnss) {
   return 1;
 };

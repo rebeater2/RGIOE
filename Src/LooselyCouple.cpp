@@ -30,7 +30,7 @@ NavOutput init_pva{0, 0, 0, 0};
 Option default_option{
   .imuPara=default_imupara,
   .d_rate = 125,
-  .align_mode=AlignMode::ALIGN_USE_GIVEN,
+  .align_mode=RgioeAlignMode::ALIGN_USE_GIVEN,
   .align_vel_threshold = 1.4,
   .enable_gnss = 1,
   .lb_gnss={0, 0, 0},
@@ -77,7 +77,7 @@ int navInitialize(const Option *opt) {
   } else
     return 2;
 }
-void timeUpdate(const ImuData *imu) {
+void timeUpdate(const RgioeImuData *imu) {
   if (!df) {
     df = &(DataFusion::Instance());
   }
@@ -103,7 +103,7 @@ void getXd(double *xds) {
 
 }
 
-int navAlignLevel(const ImuData *imu) {
+int navAlignLevel(const RgioeImuData *imu) {
   if (align == nullptr) {
     static AlignMoving s_align{ default_option};
     align = &s_align;
@@ -112,7 +112,7 @@ int navAlignLevel(const ImuData *imu) {
   return align->alignFinished();
 }
 
-double navAlignGnss(const GnssData *gnss) {
+double navAlignGnss(const RgioeGnssData *gnss) {
   if (align == nullptr) {
     static AlignMoving s_align{default_option};
     align = &s_align;

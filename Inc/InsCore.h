@@ -6,7 +6,7 @@
 #define LOOSELYCOUPLE2020_CPP_INSCORE_H
 
 #include "Define.h"
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 #include "matrix_lib.h"
 #include "Earth.h"
 #include "Convert.h"
@@ -77,10 +77,10 @@ class Ins {
  public:
   void InitializePva(const NavEpoch &nav, int d_rate);
 
-  void InitializePva(const NavEpoch &nav, const ImuData &imu);
+  void InitializePva(const NavEpoch &nav, const RgioeImuData &imu);
 
 //    Ins(NavEpoch &nav,Option &opt);
-  int ForwardMechanization(const ImuData &imuData);
+  int ForwardMechanization(const RgioeImuData &imuData);
   int ForwardMechanization(const Vec3d &acce,const Vec3d &gyro);
 
   MatXd TransferMatrix(const ImuPara &para);

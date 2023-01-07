@@ -5,7 +5,7 @@
 #ifndef LOOSELYCOUPLE2020_CPP_ALIGNMENT_H
 #define LOOSELYCOUPLE2020_CPP_ALIGNMENT_H
 
-#include "NavStruct.h"
+#include "RgioeDataType.h"
 
 
 
@@ -27,8 +27,8 @@ class AlignBase {
   NavOutput getPva() const;
   NavEpoch getNavEpoch() const;
   bool alignFinished() const { return flag_level_finished and flag_yaw_finished; }
-  virtual double Update(const GnssData &gnss) { return 0.0; };
-  virtual void Update(const ImuData &imu) {};
+  virtual double Update(const RgioeGnssData &gnss) { return 0.0; };
+  virtual void Update(const RgioeImuData &imu) {};
  public:
   NavEpoch nav;
   bool flag_level_finished;
@@ -38,22 +38,22 @@ class AlignBase {
 class AlignMoving : public AlignBase {
  public:
   explicit AlignMoving(const Option &option);
-  double Update(const GnssData &gnss) override;
-  void Update(const ImuData &imu) override;
-  int GnssCheck(const GnssData &gnss);
+  double Update(const RgioeGnssData &gnss) override;
+  void Update(const RgioeImuData &imu) override;
+  int GnssCheck(const RgioeGnssData &gnss);
  private:
-  GnssData gnss_pre{};
+  RgioeGnssData gnss_pre{};
   IMUSmooth smooth;
   Option option;
 };
 
 class AlignStatic : AlignBase {
-  void Update(const ImuData &imu) override;
+  void Update(const RgioeImuData &imu) override;
 };
 
 class AlignDoubleAntenna : AlignBase {
-  double Update(const GnssData &gnss) override;
-  void Update(const ImuData &imu) override;
+  double Update(const RgioeGnssData &gnss) override;
+  void Update(const RgioeImuData &imu) override;
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_ALIGNMENT_H
