@@ -81,7 +81,7 @@ class ZuptConfig {
 
 class AlignConfig {
  public:
-  AlignMode mode{ALIGN_MOVING};
+  RgioeAlignMode mode{ALIGN_MOVING};
   float vel_threshold_for_moving{0};
   NavOutput init_pva{0};
 };
@@ -114,7 +114,7 @@ class Config {
   void SaveTo(const std::string &path) const;
   std::string ToStdString()const;
   void LoadFrom(const std::string &path);
-  Option GetOption() const;
+  RgioeOption GetOption() const;
 };
 
 #endif //UIDATAFUSION__CONFIG_H_

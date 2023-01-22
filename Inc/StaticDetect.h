@@ -19,7 +19,7 @@ class IMUSmooth {
   int static_cnt;
   int width = 32;/*平均数和std窗口*/
   double static_std_threshold = 1e-3;
-  const int static_width = 15;/*连续阈值小于static_std_threshold的判断为静止状态*/
+  int static_width = 15;/*连续阈值小于static_std_threshold的判断为静止状态*/
   bool is_static_;
  public:
   //    IMUSmooth(){};

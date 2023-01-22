@@ -60,19 +60,19 @@ struct NavDoubleList {
   double vn_std[3];
   double atti_std[3];
 };
-ostream &operator<<(ostream &os, const ImuData &imu);
+ostream &operator<<(ostream &os, const RgioeImuData &imu);
 
 ostream &operator<<(ostream &os, const NavOutput &output);
 
-ifstream &operator>>(ifstream &is, ImuData &imu);
+ifstream &operator>>(ifstream &is, RgioeImuData &imu);
 
 
-ifstream &operator>>(ifstream &is, GnssData &gnss);
+ifstream &operator>>(ifstream &is, RgioeGnssData &gnss);
 
 ostream &operator<<(ostream &os, const ImuPara &imuPara);
 
 ostream &operator<<(ostream &os, const AuxiliaryData &aux);
-ostream &operator<<(ostream &os, const GnssData &gnss);
+ostream &operator<<(ostream &os, const RgioeGnssData &gnss);
 istream &operator>>(istream &is, AuxiliaryData &aux);
 
 
@@ -154,7 +154,7 @@ ReaderBase<T>::ReaderBase() = default;
 /**
  * 模板特化，IMU数据读取类
  */
-class IMUReader : public ReaderBase<ImuData> {
+class IMUReader : public ReaderBase<RgioeImuData> {
  public:
   explicit IMUReader(const string &filename,
 					 IMUFileFormat fmt = IMU_FILE_IMD,
@@ -165,8 +165,8 @@ class IMUReader : public ReaderBase<ImuData> {
   void SetFormat(IMUFileFormat format);
   void SetIncrement(bool increment);
   void SetRate(int rate);
-  bool ReadNext(ImuData &imu) override;
-  double GetTime(const ImuData &imu) const override;
+  bool ReadNext(RgioeImuData &imu) override;
+  double GetTime(const RgioeImuData &imu) const override;
   ~IMUReader();
  private:
   IMUFrame frame_;
@@ -177,12 +177,12 @@ class IMUReader : public ReaderBase<ImuData> {
 /** 模板特化
  * GNSS读数据类
  */
-class GnssReader : public ReaderBase<GnssData> {
+class GnssReader : public ReaderBase<RgioeGnssData> {
  public:
   explicit GnssReader(std::string &filename, GnssFileFormat format = GNSS_TXT_POS_7);
  public:
-  bool ReadNext(GnssData &gnss) override;
-  double GetTime(const GnssData &gpst) const override;
+  bool ReadNext(RgioeGnssData &gnss) override;
+  double GetTime(const RgioeGnssData &gpst) const override;
  private:
   GnssFileFormat format_;
   GnssMode mode_list[7] = {INVALID, RTK_FIX, RTK_FLOAT, SBAS, RTK_DGPS, SPP, PPP};
@@ -212,7 +212,7 @@ class BmpReader:public ReaderBase<PressureData>{
 };
 
 /*
-Option loadOptionFromYml(char path[]);
+RgioeOption loadOptionFromYml(char path[]);
 
 NavOutput loadNavFromYml(char path[]);*/
 

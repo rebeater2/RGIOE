@@ -35,7 +35,6 @@ add_compile_options(-fPIC)
 add_compile_options(-O3)
 set(PROJECT_VERSION 1.00)
 add_library(LooselyCouple STATIC
-        Src/LooselyCouple.cpp
         Src/KalmanFilter.cpp
         Src/DataFusion.cpp
         Src/InsCore.cpp

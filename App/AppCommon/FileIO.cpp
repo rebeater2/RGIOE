@@ -7,10 +7,10 @@
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"
-#if RUN_IN_STM32 == 1
+#if REAL_TIME_MODE == 1
 #error "How dou you think fstream is able to run on STM32?"
 #endif
-ostream &operator<<(ostream &os, const ImuData &imu) {
+ostream &operator<<(ostream &os, const RgioeImuData &imu) {
   os << fmt::format("{:.5f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f}",
 					imu.gpst,
 					imu.gyro[0], imu.gyro[1], imu.gyro[2],
@@ -23,10 +23,10 @@ ostream &operator<<(ostream &os, const AuxiliaryData &aux) {
   return os;
 }
 
-ifstream &operator>>(ifstream &is, ImuData &imu) {
+ifstream &operator>>(ifstream &is, RgioeImuData &imu) {
 
 #if IMU_FRAME == 0 /**/
-  is.read((char *)&imu, sizeof(ImuData));
+  is.read((char *)&imu, sizeof(RgioeImuData));
 //  is >> imu.gpst;
 //  is >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2];
 //  is >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
@@ -40,7 +40,7 @@ ifstream &operator>>(ifstream &is, ImuData &imu) {
   return is;
 }
 
-ifstream &operator>>(ifstream &is, GnssData &gnss) {
+ifstream &operator>>(ifstream &is, RgioeGnssData &gnss) {
   is >> gnss.gpst;
   is >> gnss.lat >> gnss.lon >> gnss.height;
   is >> gnss.pos_std[0] >> gnss.pos_std[1] >> gnss.pos_std[2];
@@ -112,7 +112,7 @@ istream &operator>>(istream &is, AuxiliaryData &aux) {
   is >> aux.gpst >> aux.velocity >> aux.angular >> temp;
   return is;
 }
-ostream &operator<<(ostream &os, const GnssData &gnss) {
+ostream &operator<<(ostream &os, const RgioeGnssData &gnss) {
   os << fmt::format("{:.3f} {:.8f} {:.8f}  {:.3f}  {:.3f} {:.3f} {:.3f} {:d} {:d}",
 					gnss.gpst,
 					gnss.lat,
@@ -215,7 +215,7 @@ IMUReader::~IMUReader() {
   ifs.close();
 }
 
-bool IMUReader::ReadNext(ImuData &imu) {
+bool IMUReader::ReadNext(RgioeImuData &imu) {
   if (!ok_) { return ok_; }
 //LOG(INFO)<<__FILE__<<" "<<__FUNCTION__ <<imu.gpst<<" "<<format_<<" "<<ok_;
   switch (format_) {
@@ -245,7 +245,7 @@ bool IMUReader::ReadNext(ImuData &imu) {
   ok_ = !ifs.eof();
   return ok_;
 }
-double IMUReader::GetTime(const ImuData &imu) const {
+double IMUReader::GetTime(const RgioeImuData &imu) const {
   return imu.gpst;
 }
 void IMUReader::SetFrame(IMUFrame frame) {
@@ -266,7 +266,7 @@ GnssReader::GnssReader(std::string &filename, GnssFileFormat format) {
   ok_ = ifs.good();
   format_ = format;
 }
-bool GnssReader::ReadNext(GnssData &gnss) {
+bool GnssReader::ReadNext(RgioeGnssData &gnss) {
   if (!ok_) { return ok_; }
   string buffer;
   int q;
@@ -331,7 +331,7 @@ bool GnssReader::ReadNext(GnssData &gnss) {
   ok_ = !ifs.eof() and ifs.good();
   return ok_;
 }
-double GnssReader::GetTime(const GnssData &gnss) const {
+double GnssReader::GetTime(const RgioeGnssData &gnss) const {
   return gnss.gpst;
 }
 

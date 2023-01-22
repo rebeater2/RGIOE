@@ -14,7 +14,7 @@ char *str(NavOutput *out) {
 
 int main(int argc, char *argv[]) {
     char imu_path[255], gnss_path[255], out_path[255];
-    Option opt;
+    RgioeOption opt;
     NavOutput nav;
     GnssData gnss;
     size_t sz;

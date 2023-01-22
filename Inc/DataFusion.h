@@ -9,7 +9,7 @@
 #include "InsCore.h"
 #include "StaticDetect.h"
 #include "DcmEstimator.h"
-extern Option default_option;
+extern RgioeOption default_option;
 extern char CopyRight[];
 template<typename T>
 class Singleton {
@@ -25,11 +25,9 @@ class Singleton {
   Singleton(const Singleton &rhs) = default;
   Singleton &operator=(const Singleton &rhs) {}
 };
-class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion> {
+class DataFusion : public KalmanFilter, public Ins {
  public:
- protected:
   DataFusion();
-  friend Singleton<DataFusion>;
  public:
   /**
    * the number of epoches
@@ -40,9 +38,9 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   /**
    * initial the datafusion class
    * @param ini_nav initial state
-   * @param opt option for the algorithm
+   * @param opt RgioeOption for the algorithm
    */
-  void Initialize(const NavEpoch &ini_nav, const Option &opt);
+  void Initialize(const NavEpoch &ini_nav, const RgioeOption &opt);
 
   /**
    * time update of extend kalman filter
@@ -88,7 +86,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
    * @return
    */
   float MeasureUpdateRelativeHeight(double height);
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
   /**
    * RTS 反向平滑
    * @return 进度: 0开始,1 完成
@@ -121,9 +119,9 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   Vec3d lb_gnss;                   	 	/*Gnss level arm in meter*/
   Vec3d lb_wheel;               	 	/*wheel level arm in meter*/
   Mat3d Cbv;                        	/*Cbv,DCM from body frame to vehicle frame*/
-  Option opt{};                         /*global option for data fusion*/
+  RgioeOption opt{};                         /*global RgioeOption for data fusion*/
   uint32_t update_flag;                	/*flag,set to 1 when measurement is coming*/
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
   /*for RTS */
   std::list<MatXd> matphis;             /* save mat PHI*/
   std::list<VecXd> Xds;                 /*save vector xd*/
@@ -134,7 +132,7 @@ class DataFusion : public KalmanFilter, public Ins, public Singleton<DataFusion>
   uint32_t _timeUpdateIdx;            	/*number of time updates*/
  private:
   Mat3Xd _posH() const;                	/* mat H for position update*/
-  __attribute__((unused)) Mat3Xd _velH() const;    /* mat H for velocity update*/
+   Mat3Xd _velH() const;    /* mat H for velocity update*/
   IMUSmooth smooth;    /*Static detector*/
   Vec3d _posZ(const Vec3d &pos);    	/* calculate delta Z*/
   int _feedBack();                   	 /*feedback for position,velocity and height*/

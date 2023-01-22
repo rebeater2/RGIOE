@@ -29,7 +29,7 @@ NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti) {
   return nav;
 }
 
-NavEpoch makeNavEpoch(NavOutput nav_, Option opt) {
+NavEpoch makeNavEpoch(NavOutput nav_, RgioeOption opt) {
   auto para = opt.imuPara;
   Vec3d atti = {nav_.atti[0] * _deg, nav_.atti[1] * _deg, nav_.atti[2] * _deg};
   auto vn = Vec3d{nav_.vn[0], nav_.vn[1], nav_.vn[2]};

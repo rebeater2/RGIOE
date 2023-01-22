@@ -20,33 +20,6 @@ smooth{1.6e-4, 2, 10}
 {
   P.setZero();
   Q0.setZero();
-//#if USE_INCREMENT ==1
-//  smooth=IMUSmooth{5e-9, 2, 10};
-//#else
-//  smooth=IMUSmooth{4e-6, 2, 10};
-//#endif
-  /*这里的初始化参数在Initialize的时候会被覆盖掉，修改这里不会有任何影响*/
-/*  Option default_option = default_option{
-	  .imuPara={0, 0},
-	  .init_epoch={0, 0},
-	  .d_rate = 200,
-	  .align_mode=AlignMode::ALIGN_USE_GIVEN,
-	  .nhc_enable=false,
-	  .zupt_enable=false,
-	  .zupta_enable=false,
-	  .zupt_std=0.00001,
-	  .zupta_std=0.1 * _deg,
-	  .lb_gnss={0, 0, 0},
-	  .odo_std = 0.000001,
-	  .lb_wheel={0, 0, 0},
-	  .angle_bv={0, 0, 0},
-	  .pos_std={0, 0, 0},
-	  .vel_std={0, 0, 0},
-	  .atti_std={10 * _deg, 10 * _deg, 10 * _deg},
-	  .nhc_std={0.00001, 0.00001},
-	  .kd_init=1.0,
-	  .kd_std=0.001,
-  };*/
   _timeUpdateIdx = 0;
   update_flag = 0x00;
 }
@@ -56,10 +29,10 @@ smooth{1.6e-4, 2, 10}
  * @param ini_nav
  * @param opt
  */
-void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
+void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOption) {
   /*initial P & Q0 */
   xd.setZero();
-  this->opt = option;
+  this->opt = RgioeOption;
   InitializePva(ini_nav, opt.d_rate);
   nav = ini_nav;
   nav.kd = opt.odo_scale;
@@ -143,7 +116,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const Option &option) {
  * @return : 1 success 0 fail in time check
  */
 int DataFusion::TimeUpdate(const RgioeImuData &imu) {
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
   if (opt.enable_rts) {
 	matp_posts.push_back(P);
 	Xds.push_back(xd);
@@ -167,7 +140,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
 
   Predict(phi, Q);
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
   if (opt.enable_rts) {
 	matp_pres.push_back(P);
 	matphis.push_back(phi);
@@ -423,7 +396,7 @@ float DataFusion::MeasureUpdateRelativeHeight(const double height) {
   base_height_is_set++;
   return (float)z;
 }
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
 //#include "glog/logging.h"
 bool DataFusion::RtsUpdate() {
   if (matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty()) {

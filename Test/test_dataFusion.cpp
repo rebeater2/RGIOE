@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
   }
   Config cfg(argv[1]);
   logi << "imu path:" << cfg.imu_filepath;
-  Option opt = cfg.getOption();
+  RgioeOption opt = cfg.getOption();
 
   ImuData imu;
   GnssData gnss;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 
   /*初始对准*/
   NavEpoch nav;
-  if (opt.align_mode == AlignMode::ALIGN_MOVING) {
+  if (opt.align_mode == RgioeAlignMode::ALIGN_MOVING) {
 	logi << "Align moving mode, wait for GNSS";
 	AlignMoving align{1.5, opt};
 	do {

@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
   /*multi thread*/
   ros::AsyncSpinner s(3);
   s.start();
-  Option opt = default_option;
+  RgioeOption opt = default_option;
   opt.align_mode = ALIGN_MOVING;
   opt.odo_scale = 0.976;
   opt.odo_std = 0.01;
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
   LOG(INFO) << fmt::format("Start align,mode={},vel_threshold={}",
 						   opt.align_mode,
 						   opt.align_vel_threshold);//"Start align,mode = " << opt.align_mo;
-  if (opt.align_mode == AlignMode::ALIGN_MOVING) {
+  if (opt.align_mode == RgioeAlignMode::ALIGN_MOVING) {
 	while (ros::ok()) {
 	  if (!imu_queue.empty()) {
 		imu = imu_queue.front();

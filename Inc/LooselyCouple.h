@@ -12,11 +12,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern Option  default_option;
-int navInitialize(const Option *opt);
+extern RgioeOption  default_option;
+int navInitialize(const RgioeOption *opt);
   int navGetResult(NavOutput *pva) ;
 double navAlignGnss(const RgioeGnssData *gnss);
-int navAlignUseGiven(NavOutput *nav,Option *opt);
+int navAlignUseGiven(NavOutput *nav, RgioeOption *opt);
 void getXd(double *xds);/*for debug*/
 /*接收前右下、非增量形式的惯导数据*/
 int navAlignLevel(const RgioeImuData *imu);

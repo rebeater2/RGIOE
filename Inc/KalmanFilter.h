@@ -23,7 +23,7 @@
 
 /*保存P和z,for debug*/
 #ifndef KALMAN_DEBUG
-#define KALMAN_DEBUG 1
+#define KALMAN_DEBUG 0
 #endif
 
 #define ENABLE_AKF 0

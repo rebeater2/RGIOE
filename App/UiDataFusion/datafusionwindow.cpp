@@ -101,12 +101,12 @@ void DataFusionWindow::on_btnStart_clicked() {
 	config_.zupt_config.zupta_std = ui->editZuptaStd->text().toFloat(&ok);
 	OnConvertResult(ui->editZuptaStd->text(), ok);
   }
-  config_.align_config.mode = (AlignMode)ui->cbxAlignMode->currentIndex();
-  if (config_.align_config.mode == AlignMode::ALIGN_MOVING) {
+  config_.align_config.mode = (RgioeAlignMode)ui->cbxAlignMode->currentIndex();
+  if (config_.align_config.mode == RgioeAlignMode::ALIGN_MOVING) {
 	config_.align_config.vel_threshold_for_moving = ui->editVelThresholdInMoving->text().toFloat(&ok);
 	OnConvertResult(ui->editVelThresholdInMoving->text(), ok);
   }
-  if (config_.align_config.mode == AlignMode::ALIGN_USE_GIVEN) {
+  if (config_.align_config.mode == RgioeAlignMode::ALIGN_USE_GIVEN) {
 	/*Do nothing*/
   }
   config_.outage_config.enable = ui->cbxOutageEnable->isChecked();
@@ -224,7 +224,7 @@ void DataFusionWindow::InitialUi() {
   ui->editZuptaStd->setText(QString::number(config_.zupt_config.zupta_std));
   ui->cbxZuptaEnable->setCheckState(config_.zupt_config.zupta_enable ? Qt::Checked : Qt::Unchecked);
 
-  ui->cbxAlignMode->setCurrentIndex((AlignMode)config_.align_config.mode);
+  ui->cbxAlignMode->setCurrentIndex((RgioeAlignMode)config_.align_config.mode);
   ui->editVelThresholdInMoving->setText(QString::number(config_.align_config.vel_threshold_for_moving));
 
   ui->cbxOutageEnable->setCheckState(config_.outage_config.enable ? Qt::Checked : Qt::Unchecked);
@@ -304,7 +304,7 @@ void DataFusionWindow::on_btnOpenZuptDetector_clicked() {
   LOG(INFO) << "Open ZUPT detector";
 }
 void DataFusionWindow::on_cbxAlignMode_currentIndexChanged(int x) {
-  switch ((AlignMode)x) {
+  switch ((RgioeAlignMode)x) {
 	case ALIGN_MOVING:ui->editVelThresholdInMoving->setEnabled(true);
 	  ui->btnEditInitialState->setEnabled(false);
 	  break;

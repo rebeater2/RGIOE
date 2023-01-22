@@ -3,7 +3,7 @@
     <param name="raw_filename" type="string"
            value="/media/rebeater/hd_data2/workspace/raw_data/2022/顺义/20220404/RAW_INDOOR000122.ra"/>
     <param name="real_time" type="bool" value="false"/>
-    <!-- @Note! speed up is valid only when real-time option is false -->
+    <!-- @Note! speed up is valid only when real-time RgioeOption is false -->
     <param name="speed_up" type="int" value="10"/>
     <!-- 基准站位置 -->
     <param name="base_lat" type="double" value="40.04456445"/>

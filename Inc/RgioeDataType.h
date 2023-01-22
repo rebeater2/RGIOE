@@ -80,7 +80,7 @@ typedef struct {
   double lon;
   float height; /*32*/
   float pos_std[3];
-#if RUN_IN_STM32 == 0
+#if REAL_TIME_MODE == 0
   float vn[3];
   float vn_std[3];
   double gpst;
@@ -150,7 +150,7 @@ typedef struct {
   UseGiven = 0,
   Moving = 1,
   Static = 2
-} AlignMode;*/
+} RgioeAlignMode;*/
 
 typedef struct {
   ImuPara imuPara;
@@ -179,7 +179,7 @@ typedef struct {
   float pos_project[3];
   float atti_project[3];
   int enable_rts;
-} Option;
+} RgioeOption;
 
 typedef struct {
   unsigned char year;

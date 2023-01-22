@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   logi << "gnss path:" << cfg.gnss_config.file_path;
   string s;bool ok;
   ok = cfg.LoadImuPara(s);
-  Option opt = cfg.GetOption();
+  RgioeOption opt = cfg.GetOption();
   LOG_IF(ERROR,!ok)<<s;
 
   ImuData imu;

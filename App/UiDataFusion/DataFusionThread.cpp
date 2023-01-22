@@ -15,7 +15,7 @@
 
 void DataFusionThread::run() {
   LOG(INFO) << "Start DataFusion Thread,Config:\n" << config.ToStdString();
-  Option opt = config.GetOption();
+  RgioeOption opt = config.GetOption();
   ImuData imu;
   GnssData gnss;
   NavOutput out;
@@ -56,7 +56,7 @@ void DataFusionThread::run() {
   }
   NavWriter writer(config.output_config.file_path,config.output_config.format);
   NavEpoch nav;
-  if (opt.align_mode == AlignMode::ALIGN_MOVING) {
+  if (opt.align_mode == RgioeAlignMode::ALIGN_MOVING) {
 	LOG(INFO) << "Align moving mode, wait for GNSS";
 	AlignMoving align{opt};
 	do {

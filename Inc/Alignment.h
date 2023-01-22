@@ -37,17 +37,18 @@ class AlignBase {
 
 class AlignMoving : public AlignBase {
  public:
-  explicit AlignMoving(const Option &option);
+  explicit AlignMoving(const RgioeOption &RgioeOption);
   double Update(const RgioeGnssData &gnss) override;
   void Update(const RgioeImuData &imu) override;
   int GnssCheck(const RgioeGnssData &gnss);
  private:
   RgioeGnssData gnss_pre{};
   IMUSmooth smooth;
-  Option option;
+  RgioeOption option;
 };
 
-class AlignStatic : AlignBase {
+class AlignStatic : public AlignBase {
+ public:
   void Update(const RgioeImuData &imu) override;
 };
 

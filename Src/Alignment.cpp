@@ -32,6 +32,12 @@ void AlignMoving::Update(const RgioeImuData &imu) {
   nav.Qbn = Convert::euler_to_quaternion(nav.atti);
   nav.Cbn = Convert::euler_to_dcm(nav.atti);
   flag_level_finished = true;
+  if (option.align_mode == ALIGN_USE_GIVEN){
+      nav.atti[2] = 0;
+      nav.Qbn = Convert::euler_to_quaternion(nav.atti);
+      nav.Cbn = Convert::euler_to_dcm(nav.atti);
+      flag_yaw_finished = true;
+  }
 }
 
 double AlignMoving::Update(const RgioeGnssData &gnss) {
@@ -44,7 +50,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
 	return -1;
   }
   Earth::Instance().Update(gnss.lat * _deg, gnss.height);
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
   if (gnss.yaw >= 0 and gnss.yaw <= 360) {
 	nav.atti[2] = gnss.yaw * _deg;
 	nav.Qbn = Convert::euler_to_quaternion(nav.atti);
@@ -75,7 +81,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
 	  nav.Cbn = Convert::euler_to_dcm(nav.atti);
 	  flag_yaw_finished = true;
 	}
-#if RUN_IN_STM32 != 1
+#if REAL_TIME_MODE != 1
   }
   nav.gpst = gnss.gpst;
 #endif
@@ -118,9 +124,9 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
   return v;
 }
 
-AlignMoving::AlignMoving(const Option &opt) : option(opt),
+AlignMoving::AlignMoving(const RgioeOption &opt) : option(opt),
 #if USE_INCREMENT == 1
-											  smooth{1e-10, 2, 30}
+                                                   smooth{1e-10, 2, 30}
 #else
 smooth{1.6e-4, 2, 10}
 #endif

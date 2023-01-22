@@ -215,7 +215,7 @@ void Config::LoadFrom(const string &path) {
   zupt_config.static_wide = node["ZUPT-Config"]["static-wide"].as<int>();
   zupt_config.threshold = node["ZUPT-Config"]["threshold"].as<float>();
 
-  align_config.mode = (AlignMode)node["Align-Config"]["mode"].as<int>();
+  align_config.mode = (RgioeAlignMode)node["Align-Config"]["mode"].as<int>();
   align_config.vel_threshold_for_moving = node["Align-Config"]["velocity-threshold"].as<float>();
   align_config.init_pva.week = node["Align-Config"]["init-PVA"]["week"].as<int>();
   align_config.init_pva.gpst = node["Align-Config"]["init-PVA"]["gpst"].as<double>();
@@ -241,8 +241,8 @@ void Config::LoadFrom(const string &path) {
   pressure_config.press_height_std = node["Pressure-Config"]["height-std"].as<float>();
 
 }
-Option Config::GetOption() const {
-  Option opt{
+RgioeOption Config::GetOption() const {
+  RgioeOption opt{
 	  .imuPara= imu_config.para,
 	  .d_rate = imu_config.d_rate,
 	  .align_mode = align_config.mode,

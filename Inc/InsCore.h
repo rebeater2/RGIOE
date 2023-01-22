@@ -46,7 +46,7 @@ typedef struct {
 
 NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti);
 
-NavEpoch makeNavEpoch(NavOutput nav_, Option opt);
+NavEpoch makeNavEpoch(NavOutput nav_, RgioeOption opt);
 /* 机械编排主类 */
 class Ins {
  public:
@@ -72,14 +72,13 @@ class Ins {
 
  public:
   Ins();
-
   ~Ins();
  public:
   void InitializePva(const NavEpoch &nav, int d_rate);
 
   void InitializePva(const NavEpoch &nav, const RgioeImuData &imu);
 
-//    Ins(NavEpoch &nav,Option &opt);
+//    Ins(NavEpoch &nav,RgioeOption &opt);
   int ForwardMechanization(const RgioeImuData &imuData);
   int ForwardMechanization(const Vec3d &acce,const Vec3d &gyro);
 
