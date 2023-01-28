@@ -119,7 +119,7 @@ int Ins::_atti_update(const Vec3d &gyro) {
  */
 int Ins::ForwardMechanization(const RgioeImuData &imuData) {
 #if USE_INCREMENT == 1
-  Vec3d acce{imuData.acce[0], imuData.acce[1], imuData.acce[2]};
+  Vec3d acce{imuData.acce[0] * Earth::Instance().g, imuData.acce[1]* Earth::Instance().g, imuData.acce[2]* Earth::Instance().g};
   Vec3d gyro{imuData.gyro[0], imuData.gyro[1], imuData.gyro[2]};
 #else
   Vec3d acce{imuData.acce[0] * dt * Earth::Instance().g, imuData.acce[1] * dt * Earth::Instance().g, imuData.acce[2] * Earth::Instance().g * dt};

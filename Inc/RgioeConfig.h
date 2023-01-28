@@ -13,15 +13,15 @@
 #define USE_INCREMENT 1
 
 /*将加速度计比例因子作为状态向量*/
-#define ESTIMATE_ACCE_SCALE_FACTOR 1
+#define ESTIMATE_ACCE_SCALE_FACTOR 0
 
 /*将陀螺仪比例因子作为状态向量*/
-#define ESTIMATE_GYRO_SCALE_FACTOR 1
+#define ESTIMATE_GYRO_SCALE_FACTOR 0
 
 /*将杆臂误差作为状态*/
-#define ESTIMATE_GNSS_LEVEL_ARM 1
+#define ESTIMATE_GNSS_LEVEL_ARM 0
 
 /*将里程计比例因子作为状态*/
-#define ESTIMATE_ODOMETER_SCALE_FACTOR 1
+#define ESTIMATE_ODOMETER_SCALE_FACTOR 0
 
 #endif //RGIOE_INC_RGIOECONFIG_H_

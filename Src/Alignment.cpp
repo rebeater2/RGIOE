@@ -25,6 +25,7 @@ void AlignMoving::Update(const RgioeImuData &imu) {
   double dt = 1.0 / option.d_rate;
   Mat3d scale_mat = scale.asDiagonal();
   acce = (eye3 - scale_mat) * (acce - bias * dt);
+  nav.gb = Vec3d {smoothed_imu.gyro} * option.d_rate;
   nav.gpst = imu.gpst;
   Vec3d vm = acce.normalized();
   nav.atti[0] = asin(vm[1]) * (vm[2] > 0 ? 1 : -1);
@@ -33,6 +34,13 @@ void AlignMoving::Update(const RgioeImuData &imu) {
   nav.Cbn = Convert::euler_to_dcm(nav.atti);
   flag_level_finished = true;
   if (option.align_mode == ALIGN_USE_GIVEN){
+      nav.pos[0] = 0 * _deg;
+      nav.pos[1] = 0 * _deg;
+      nav.pos[2] = 0;
+      nav.Qne = Convert::lla_to_qne({nav.pos[0],nav.pos[1]}),
+      nav.pos_std = {0,0,0};
+      nav.vn = {0,0,0};
+      nav.vel_std = {0,0,0};
       nav.atti[2] = 0;
       nav.Qbn = Convert::euler_to_quaternion(nav.atti);
       nav.Cbn = Convert::euler_to_dcm(nav.atti);
@@ -126,7 +134,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
 
 AlignMoving::AlignMoving(const RgioeOption &opt) : option(opt),
 #if USE_INCREMENT == 1
-                                                   smooth{1e-10, 2, 30}
+     smooth{1e-5, 150, 30}
 #else
 smooth{1.6e-4, 2, 10}
 #endif
@@ -190,3 +198,6 @@ NavEpoch AlignBase::getNavEpoch() const {
 int AlignMoving::GnssCheck(const RgioeGnssData &gnss) {
   return 1;
 };
+void AlignStatic::Update(const RgioeImuData &imu) {
+    AlignBase::Update(imu);
+}

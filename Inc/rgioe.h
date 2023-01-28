@@ -21,7 +21,9 @@ extern "C" {
 #include "RgioeConfig.h"
 #include "RgioeDataType.h"
 
-#define RGIOE_DATA_BUFFER_SIZE  1024
+#define RGIOE_REALTIME_DEBUG 0
+
+extern const uint32_t rgioe_buffer_size;
 
 typedef enum {
   RGIOE_OK = 0,
@@ -43,6 +45,11 @@ rgioe_error_t rgioe_get_atti(void *rgioe_dev,float atti[3], float *std);
 rgioe_error_t rgioe_get_pos(void *rgioe_dev,double pos[3], float *std);
 
 rgioe_error_t rgioe_get_vel(void *rgioe_dev,float vel[3],float *std);
+
+#if RGIOE_REALTIME_DEBUG == 1
+rgioe_error_t rgioe_set_trace(void *rgioe_dev,int (*trace)(const char *fmt, ...));
+#endif
+
 
 #ifdef __cplusplus
 };

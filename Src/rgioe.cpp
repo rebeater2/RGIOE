@@ -53,24 +53,35 @@ RgioeOption default_option{
 };
 #endif
 
-
-
 /** <h2> global variables*/
-typedef struct {
+struct RgioeData_t {
   DataFusion df;
   AlignMoving am;
-  float time_delay;
-} RgioeData_t;
+  float time_delay{};
+#if RGIOE_REALTIME_DEBUG == 1
+  int (*trace)(const char *fmt, ...);
+#endif
+};
+
+const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
 
 /**
  * <h2> Initialize function
  * @param rgioe_dev pointer to RgioeData_t to get access to global variables
- * @param opt necessary options
+ * @param opt pointer to necessary options
  * @return Error Code as defined by rgioe_error_t
  */
 rgioe_error_t rgioe_init(void *rgioe_dev, const RgioeOption *opt) {
     auto rd = static_cast<RgioeData_t *>(rgioe_dev);
+#if RGIOE_REALTIME_DEBUG == 1
+    rd->trace("rgioe: buffer size %d\n",rgioe_buffer_size);
+#endif
+
     rd->df = DataFusion();
+#if RGIOE_REALTIME_DEBUG == 1
+    rd->trace("rgioe: DataFusion created\n");
+#endif
+
     if (opt) {
         rd->df.opt = *opt;
     } else {
@@ -80,7 +91,10 @@ rgioe_error_t rgioe_init(void *rgioe_dev, const RgioeOption *opt) {
         return RGIOE_NULL_INPUT;
 #endif
     }
-    rd->am = AlignMoving(*opt);
+    rd->am = AlignMoving(rd->df.opt);
+#if RGIOE_REALTIME_DEBUG == 1
+    rd->trace("rgioe: AlignMoving created, return OK\n");
+#endif
     return RGIOE_OK;
 }
 
@@ -88,7 +102,7 @@ rgioe_error_t rgioe_init(void *rgioe_dev, const RgioeOption *opt) {
  * <h2> Time update function
  * @param rgioe_dev pointer to RgioeData_t to get access to global variables
  * @param timestamp current timestamp for estimate time-delay
-* @param imu_inc IMU data in increment format, acce: m/s, gyro: rad
+* @param imu_inc IMU data in increment format, acce: g*s, gyro: rad
 * @return Error Code as defined by rgioe_error_t
 */
 rgioe_error_t rgioe_timeupdate(void *rgioe_dev, double timestamp, RgioeImuData *imu_inc) {
@@ -96,12 +110,15 @@ rgioe_error_t rgioe_timeupdate(void *rgioe_dev, double timestamp, RgioeImuData *
     if (imu_inc == nullptr) {
         return RGIOE_NULL_INPUT;
     }
-    rd->time_delay = (float)(timestamp - imu_inc->gpst);
+    rd->time_delay = (float) (timestamp - imu_inc->gpst);
 
     /* align and initialize */
     if (!rd->am.alignFinished()) {
         rd->am.Update(*imu_inc);
         if (rd->am.alignFinished()) {
+#if RGIOE_REALTIME_DEBUG == 1
+            rd->trace("%s: align finished -- %d\n",__FUNCTION__,__LINE__);
+#endif
             rd->df.Initialize(rd->am.getNavEpoch(), rd->df.opt);
         }
         return RGIOE_IN_INITIALIZE;
@@ -136,13 +153,13 @@ rgioe_error_t rgioe_gnssupdate(void *rgioe_dev, double timestamp, RgioeGnssData 
  * @param std Attitude Std in rad
  * @return Error Code as defined by rgioe_error_t
  */
-rgioe_error_t rgioe_get_atti(void *rgioe_dev,float atti[3], float *std){
+rgioe_error_t rgioe_get_atti(void *rgioe_dev, float atti[3], float *std) {
     auto rd = static_cast<RgioeData_t *>(rgioe_dev);
     NavOutput result = rd->df.Output();
-    for (int i = 0; i < 3; ++i){
+    for (int i = 0; i < 3; ++i) {
         atti[i] = result.atti[i];
     }
-    if (std){
+    if (std) {
         for (int i = 0; i < 3; ++i) {
             std[i] = result.atti_std[i];
         }
@@ -157,13 +174,13 @@ rgioe_error_t rgioe_get_atti(void *rgioe_dev,float atti[3], float *std){
  * @param std
  * @return
  */
-rgioe_error_t rgioe_get_pos(void *rgioe_dev,double pos[3], float *std){
+rgioe_error_t rgioe_get_pos(void *rgioe_dev, double pos[3], float *std) {
     auto rd = static_cast<RgioeData_t *>(rgioe_dev);
     NavOutput result = rd->df.Output();
     pos[0] = result.lat;
     pos[1] = result.lon;
     pos[2] = result.height;
-    if (std){
+    if (std) {
         for (int i = 0; i < 3; ++i) {
             std[i] = result.atti_std[i];
         }
@@ -177,16 +194,24 @@ rgioe_error_t rgioe_get_pos(void *rgioe_dev,double pos[3], float *std){
  * @param std m/s
  * @return
  */
-rgioe_error_t rgioe_get_vel(void *rgioe_dev,float vel[3],float *std){
+rgioe_error_t rgioe_get_vel(void *rgioe_dev, float vel[3], float *std) {
     auto rd = static_cast<RgioeData_t *>(rgioe_dev);
     NavOutput result = rd->df.Output();
-    for (int i = 0; i < 3; ++i){
+    for (int i = 0; i < 3; ++i) {
         vel[i] = result.vn[i];
     }
-    if (std){
+    if (std) {
         for (int i = 0; i < 3; ++i) {
             std[i] = result.vn_std[i];
         }
     }
     return RGIOE_OK;
 }
+
+#if RGIOE_REALTIME_DEBUG == 1
+rgioe_error_t rgioe_set_trace(void *rgioe_dev,int (*trace)(const char *fmt, ...)) {
+    auto rd = static_cast<RgioeData_t *>(rgioe_dev);
+    rd->trace = trace;
+    return RGIOE_OK;
+}
+#endif
