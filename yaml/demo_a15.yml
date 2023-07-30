@@ -1,13 +1,13 @@
 IMU-Config:
   enable: false
-  file-path: /mnt/d/NavData/demo/demo_A15/A15_imu.bin
+  file-path: D:/Geek/DemoData/demo/demo_A15/A15_imu.bin
   d-rate: 200
   format: 1
-  parameter-path: /mnt/d/NavData/demo/demo_A15/imu_A15_parameter.yml
+  parameter-path: D:/Geek/DemoData/demo/demo_A15/imu_A15_parameter.yml
   frame: 0
 GNSS-Config:
   enable: false
-  file-path: /mnt/d/NavData/demo/demo_A15/gnss_rtk.gps
+  file-path: D:/Geek/DemoData/demo/demo_A15/gnss_rtk.gps
   format: 0
   std-scale: 1
   level-arm:
@@ -77,7 +77,7 @@ Outage-Config:
   step: 120
   outage: 90
 Output-Config:
-  file-path: /mnt/d/NavData/demo/demo_A15/result_of_rgioe_2022.nav
+  file-path: D:/Geek/DemoData/demo/demo_A15/result_of_rgioe_2023.nav
   #  0: bin, for small size
   # 1: ascii, for easily open with text editors
   # 2: double mat, for easily load by Python or MATLAB

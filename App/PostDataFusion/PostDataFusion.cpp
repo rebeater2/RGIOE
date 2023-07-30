@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
     if (opt.enable_rts) {
         /* RTS模式下,输出结果顺序是反的,因此用栈结构存储 */
         LOG(INFO) << "Start RTS smooth,final state is " << df.Output();
-        LOG(INFO) << "State vector is " << df.xd.transpose();
+//        LOG(INFO) << "State vector is " << df.Xd.transpose();
         bool finished;
         std::list<NavOutput> result;
         do {

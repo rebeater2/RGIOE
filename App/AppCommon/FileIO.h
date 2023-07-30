@@ -20,6 +20,7 @@
 #include <fstream>
 #include <condition_variable>
 #include "RgioeDataType.h"
+#include <atomic>
 
 using std::ostream;
 using std::istream;
@@ -42,6 +43,7 @@ typedef enum {
   RESERVED = 6,
   } GnssFileFormat;
 enum IMUFileFormat {
+    IMU_FILE_WHU_BIN = 2,
   IMU_FILE_IMD = 1,
   IMU_FILE_IMUTXT = 0
 };

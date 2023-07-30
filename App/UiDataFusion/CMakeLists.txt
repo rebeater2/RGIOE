@@ -31,14 +31,20 @@ MESSAGE("=======Searching for QT5======")
 find_package(Qt5 COMPONENTS Core Widgets Gui REQUIRED)
 message("found ${Qt5_VERSION} at ${Qt5_DIR}")
 
-MESSAGE("=======Searching for QWT======")
-message("Qt include dir:${QT5_INCLUDE_DIR}")
-FIND_PATH(QWT_INCLUDE_DIR NAMES qwt.h PATHS ${QT5_INCLUDE_DIR} PATH_SUFFIXES qwt)
-MESSAGE(QWT_INCLUDE_DIR at ${QWT_INCLUDE_DIR})
-FIND_LIBRARY(QWT_LIBRARY NAMES qwt-qt5 PATHS /usr/lib /usr/local/lib)
-#set( QWT_LIBRARY /usr/lib/libqwt-qt5.so)
-MESSAGE(“QWT_LIBRARY at ${QWT_LIBRARY}”)
-
+if(WIN32)
+    set(QT5_INCLUDE_DIR ${Qt5_DIR}/../../../include)
+    find_path(QWT_INCLUDE_DIR NAMES qwt.h PATHS ${QT5_INCLUDE_DIR} PATH_SUFFIXES qwt)
+    set(QT5_INCLUDE_DIR ${Qt5_DIR}/../../../include)
+    find_library(QWT_LIBRARY NAMES libqwt.dll.a PATHS ${Qt5_DIR}/../../../lib)
+else()
+    MESSAGE("=======Searching for QWT======")
+    message("Qt include dir:${QT5_INCLUDE_DIR}")
+    FIND_PATH(QWT_INCLUDE_DIR NAMES qwt.h PATHS ${QT5_INCLUDE_DIR} PATH_SUFFIXES qwt)
+    MESSAGE(QWT_INCLUDE_DIR at ${QWT_INCLUDE_DIR})
+    FIND_LIBRARY(QWT_LIBRARY NAMES qwt-qt5 PATHS /usr/lib /usr/local/lib)
+    #set( QWT_LIBRARY /usr/lib/libqwt-qt5.so)
+    MESSAGE(“QWT_LIBRARY at ${QWT_LIBRARY}”)
+endif()
 #设置项目包含目录，包括将第三方库附加
 INCLUDE_DIRECTORIES(
         ${CMAKE_CURRENT_SOURCE_DIR}
@@ -91,7 +97,7 @@ add_custom_command(TARGET UiDataFusion PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E
         make_directory ${font_path}
         COMMAND ${CMAKE_COMMAND} -E
-        copy ${CMAKE_CURRENT_SOURCE_DIR}/fonts/*.ttc ${font_path}
+        copy ${CMAKE_CURRENT_SOURCE_DIR}/fonts/msyh.ttc ${font_path}
         )
 #find_package(yaml-cpp REQUIRED)
 #[[

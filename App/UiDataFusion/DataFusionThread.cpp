@@ -16,8 +16,8 @@
 void DataFusionThread::run() {
   LOG(INFO) << "Start DataFusion Thread,Config:\n" << config.ToStdString();
   RgioeOption opt = config.GetOption();
-  ImuData imu;
-  GnssData gnss;
+  RgioeImuData imu;
+  RgioeGnssData gnss;
   NavOutput out;
   Velocity vel;
   Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
@@ -87,8 +87,9 @@ void DataFusionThread::run() {
   SendLog("Align finished");
   Timer timer;
   /*第一步：初始化*/
-  DataFusion::Instance().Initialize(nav, opt);
-  LOG(INFO) << "initial PVA:" << DataFusion::Instance().Output();
+  DataFusion df;
+  df.Initialize(nav, opt);
+  LOG(INFO) << "initial PVA:" << df.Output();
   if (config.odometer_config.enable){
     podoReader->ReadUntil(imu.gpst,&vel);
   }
@@ -98,26 +99,26 @@ void DataFusionThread::run() {
   while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
 	if (!imu_reader.ReadNext(imu))break;
 	/*第二步 时间更新*/
-	DataFusion::Instance().TimeUpdate(imu);
+	df.TimeUpdate(imu);
 	smooth.Update(imu);
 	/*GNSS更新*/
 	if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 1.0 / opt.d_rate) {
 	  if (!(config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst)))
-		DataFusion::Instance().MeasureUpdatePos(gnss);
+		df.MeasureUpdatePos(gnss);
 	  LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss;
 	  gnss_reader.ReadUntil(imu.gpst,&gnss);
 	}
 	/*里程计更新*/
 	if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.0 / opt.d_rate) {
-	  DataFusion::Instance().MeasureUpdateVel(vel.forward);
+	  df.MeasureUpdateVel(vel.forward);
 	  LOG_EVERY_N(INFO, 50 * 100) << "Odo update:" << vel.forward;
 	  podoReader->ReadUntil(imu.gpst,&vel);
 	}
 	if (opt.zupt_enable and smooth.isStatic()) {
 	  /*TODO : this will be implemented soon,...maybe*/
-//	  DataFusion::Instance().MeasureUpdateStatic();
+//	  df.MeasureUpdateStatic();
 	}
-	out = DataFusion::Instance().Output();
+	out = df.Output();
 	writer.update(out);
 //	usleep(500);
 	/*进度打印*/
@@ -130,10 +131,10 @@ void DataFusionThread::run() {
   double time_writing = static_cast<double> (timer.elapsed()) / 1000.0;
   delete podoReader;
   LOG(INFO) << "\n\tSummary:\n"
-			<< "\tAll epochs:" << DataFusion::Instance().EpochCounter() << '\n'
+			<< "\tAll epochs:" << df.EpochCounter() << '\n'
 			<< "\tTime for Computing:" << time_resolve << "s" << '\n'
 			<< "\tTime for File Writing:" << time_writing << 's' << '\n'
-			<< "\tFinal PVA:" << DataFusion::Instance().Output() << '\n';
+			<< "\tFinal PVA:" << df.Output() << '\n';
   SendLog("Finished,total time:" + QString::number(time_resolve));
   SendStatus(100);
 }

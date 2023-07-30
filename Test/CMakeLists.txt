@@ -8,6 +8,8 @@ file(GLOB_RECURSE SOURCE
 
 #add_definitions(-DUSE_INCREMENT=1)
 #define USE_INCREMENT 1c
+
+set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}../../App/bin)
 find_package(fmt REQUIRED)
 include_directories(../App/AppCommon)
 add_executable(test_ins

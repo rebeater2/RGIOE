@@ -42,7 +42,8 @@ add_library(LooselyCouple STATIC
         Src/Convert.cpp
         Src/Alignment.cpp
         Src/StaticDetect.cpp
-        Src/StaticDetect.cpp Inc/StaticDetect.h)
+        Src/Recorder/Recorder.cpp
+        Inc/StaticDetect.h)
 set_target_properties(LooselyCouple PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
@@ -67,7 +68,6 @@ endif (Qt5_FOUND)
 
 find_package(yaml-cpp REQUIRED)
 find_package(glog REQUIRED)
-find_package(lapack REQUIRED)
 add_subdirectory(App/PostDataFusion)
 #add_subdirectory(App/RtSimulation/src)
 add_subdirectory(Tools)

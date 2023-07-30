@@ -52,6 +52,6 @@ rgioe_error_t rgioe_set_trace(void *rgioe_dev,int (*trace)(const char *fmt, ...)
 
 
 #ifdef __cplusplus
-};
+}
 #endif
 #endif //INSCUBEBSP_CORE_SRC_APP_ALGORITHM_RGIOE_INC_RGIOE_H_

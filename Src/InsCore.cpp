@@ -119,7 +119,7 @@ int Ins::_atti_update(const Vec3d &gyro) {
  */
 int Ins::ForwardMechanization(const RgioeImuData &imuData) {
 #if USE_INCREMENT == 1
-  Vec3d acce{imuData.acce[0] * Earth::Instance().g, imuData.acce[1]* Earth::Instance().g, imuData.acce[2]* Earth::Instance().g};
+  Vec3d acce{imuData.acce[0], imuData.acce[1], imuData.acce[2]};
   Vec3d gyro{imuData.gyro[0], imuData.gyro[1], imuData.gyro[2]};
 #else
   Vec3d acce{imuData.acce[0] * dt * Earth::Instance().g, imuData.acce[1] * dt * Earth::Instance().g, imuData.acce[2] * Earth::Instance().g * dt};
@@ -197,44 +197,7 @@ void Ins::_extrapolate() {
   omega_ie_n = Earth::Instance().omega_ie_n(pos_mid[0]);
 }
 
-MatXd Ins::TransferMatrix(const ImuPara &para) {
-  double g = Earth::Instance().g;
-  double rm = Earth::Instance().RM(nav.pos[0]);
-  double rn = Earth::Instance().RN(nav.pos[0]);
-  phi.setZero();
-  phi.block<3, 3>(0, 0) = eye3 - Convert::skew(omega_en_n) * dt;
-  phi.block<3, 3>(0, 3) = eye3 * dt;
 
-  phi.block<3, 3>(3, 0) = Vec3d(-g / (rm + nav.pos[2]), -g / (rn + nav.pos[2]),
-								2 * g / (sqrt(rm * rn) + nav.pos[2])).asDiagonal() * dt;
-
-  Vec3d omega_in_n2 = omega_en_n + 2 * omega_ie_n;
-  phi.block<3, 3>(3, 3) = eye3 - Convert::skew(omega_in_n2) * dt;
-  phi.block<3, 3>(3, 6) = Convert::skew(nav.vf_kb) * dt;
-  Vec3d omega_in_n = omega_en_n + omega_ie_n;
-  phi.block<3, 3>(6, 6) = eye3 - Convert::skew(omega_in_n) * dt;
-  phi.block<3, 3>(3, 12) = nav.Cbn * dt;
-  phi.block<3, 3>(6, 9) = -nav.Cbn * dt;
-  phi.block<3, 3>(9, 9) = eye3 - eye3 * dt / para.gt_corr;/*corr time*/
-  phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
-#if ESTIMATE_GYRO_SCALE_FACTOR == 1
-  phi.block<3, 3>(STATE_GYRO_SCALE_FACTOR_START, STATE_GYRO_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.at_corr;
-  phi.block<3, 3>(9, STATE_GYRO_SCALE_FACTOR_START) = -nav.Cbn * _gyro_pre.asDiagonal();
-#endif
-#if ESTIMATE_ACCE_SCALE_FACTOR == 1
-  phi.block<3, 3>(STATE_ACCE_SCALE_FACTOR_START, STATE_ACCE_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.at_corr;
-  phi.block<3, 3>(6, STATE_ACCE_SCALE_FACTOR_START) = nav.Cbn * _acce_pre.asDiagonal();
-#endif
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
-  for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i)
-	phi(STATE_GNSS_LEVEL_ARM_START+i, STATE_GNSS_LEVEL_ARM_START+i) = 1.0 - dt / 36000;
-#endif
-#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
-  for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i)
-	phi(STATE_ODOMETER_SCALE_FACTOR_START+i, STATE_ODOMETER_SCALE_FACTOR_START+i) = 1.0 - dt / 36000;
-#endif
-  return phi;
-}
 
 NavOutput Ins::Output() const {
   static NavOutput out;
