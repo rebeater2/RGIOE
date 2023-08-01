@@ -12,6 +12,7 @@ include_directories(../AppCommon)
 
 add_definitions(-DGLOG_OUTPUT)
 add_definitions(-DUSE_YAML=1)
+add_definitions(-DENABLE_FUSION_RECORDER)
 
 find_package(fmt REQUIRED)
 add_executable( PostDataFusion

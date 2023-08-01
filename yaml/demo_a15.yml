@@ -2,7 +2,7 @@ IMU-Config:
   enable: false
   file-path: D:/Geek/DemoData/demo/demo_A15/A15_imu.bin
   d-rate: 200
-  format: 1
+  format: 2
   parameter-path: D:/Geek/DemoData/demo/demo_A15/imu_A15_parameter.yml
   frame: 0
 GNSS-Config:

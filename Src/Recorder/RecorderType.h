@@ -83,6 +83,16 @@ RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x20, meas_pos,
                  }
 
 )
+RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x22, align,
+                 {
+                     float atti[3];
+                     float vn[3];
+                     float pos[3];
+                     float v_norm;
+                     uint8_t level_align_finished;
+                     uint8_t yaw_align_finished;
+                 }
+)
 
 RECORDER_MSG_DEF(RECORDER_SET_SENSOR, 0x21, imu,
                   {

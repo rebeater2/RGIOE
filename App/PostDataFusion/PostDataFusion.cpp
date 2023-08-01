@@ -42,7 +42,10 @@ extern int GnssCheck(const GnssData &gnss){
 #endif
 
 int main(int argc, char *argv[]) {
-    logInit(argv[0], "./");
+    logInit(argv[0], "./log/");
+#ifdef ENABLE_FUSION_RECORDER
+    Recorder::GetInstance().Initialize(argv[0]);
+#endif
     cout << CopyRight;
     if (argc < 2) {
         loge << CopyRight << endl;

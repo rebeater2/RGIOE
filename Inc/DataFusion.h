@@ -10,7 +10,7 @@
 #include "StaticDetect.h"
 #include "DcmEstimator.h"
 
-#define ENABLE_FUSION_RECORDER
+
 
 #ifdef ENABLE_FUSION_RECORDER
 #include "Recorder/Recorder.h"
@@ -154,9 +154,6 @@ public:
     uint32_t update_flag;                    /*flag,set to 1 when measurement is coming*/
 #if REAL_TIME_MODE != 1
     /*for RTS */
-#ifdef ENABLE_FUSION_RECORDER
-    Recorder recorder;
-#endif
 
     std::list<MatXX> matphis;             /* save mat PHI*/
     std::list<Vec1X> Xds;                 /*save vector xd*/

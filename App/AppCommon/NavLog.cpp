@@ -16,7 +16,7 @@ void logInit(char *argv, const char *path) {
 // Set color messages logged to stderr (if supported by terminal).
 //    DECLARE_bool(colorlogtostderr);
 
-    google::SetLogDestination(0, path);
+//    google::SetLogDestination(0, path);
 #else
     std::cout << "glog is disabled, log to console..." << std::endl;
 #endif

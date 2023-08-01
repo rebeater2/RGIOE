@@ -68,3 +68,30 @@ void Recorder::WriteHeader() {
     std::cout << "header size:" << (float) (pheader - header_buffer) / 1024.0f << "kb";
     ofs.flush();
 }
+
+Recorder &Recorder::GetInstance() {
+    static Recorder recorder;
+    return recorder;
+}
+
+void Recorder::Initialize(const char *argv0) {
+    char filename[128];
+    int offset = 0;
+    if(!argv0){
+       offset += sprintf(filename,"recorder");
+    }else{
+        offset += sprintf(filename,"%s",argv0);
+    }
+    time_t t = time(nullptr);
+    struct tm* stime=localtime(&t);
+    sprintf(filename+offset,"_%04d%02d%02d_%02d%02d%02d.rcd",
+            stime->tm_year+1900,
+            stime->tm_mon + 1,
+            stime->tm_mday,
+            stime->tm_hour,
+            stime->tm_min,
+            stime->tm_sec
+            );
+    OpenFile(filename);
+    WriteHeader();
+}

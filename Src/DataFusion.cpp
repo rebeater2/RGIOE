@@ -24,10 +24,6 @@ smooth{1.6e-4, 2, 10}
     Q0.setZero();
     _timeUpdateIdx = 0;
     update_flag = 0x00;
-#ifdef ENABLE_FUSION_RECORDER
-    recorder.OpenFile("Fusion.rcd");
-    recorder.WriteHeader();
-#endif
 }
 
 /**
@@ -120,7 +116,6 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
 
 }
 
-#include "glog/logging.h"
 
 /**
  * time update
@@ -142,7 +137,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         state.data.xd[i] = kf.Xd[i];
     }
     CHECKSUM_RECORDER_CRC32(&state);
-    recorder.Record<recorder_msg_kalman_t>(&state);
+    Recorder::GetInstance().Record<recorder_msg_kalman_t>(&state);
 #endif
 
 /*    if (update_flag & FLAG_HEIGHT) {
@@ -195,11 +190,10 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         kalman.data.gyro_scale[i] = nav.gs[i] / _ppm;
     }
     for (int i = 0; i < STATE_CNT; ++i) {
-        kalman.data.xd[i] = kf.Xd[i];
         kalman.data.matP[i] = kf.P(i, i);
     }
     CHECKSUM_RECORDER_CRC32(&kalman);
-    recorder.Record<recorder_msg_kalman_t>(&kalman);
+    Recorder::GetInstance().Record<recorder_msg_kalman_t>(&kalman);
     recorder_msg_imu_t imu_data = CREATE_RECORDER_MSG(imu);
     imu_data.timestamp = *(uint64_t *) &nav.gpst;
     for (int i = 0; i < 3; ++i) {
@@ -207,7 +201,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         imu_data.data.acce[i] = imu.acce[i];
     }
     CHECKSUM_RECORDER_CRC32(&imu_data);
-    recorder.Record<recorder_msg_imu_t>(&imu_data);
+    Recorder::GetInstance().Record<recorder_msg_imu_t>(&imu_data);
 #endif
     return 0;
 }
@@ -230,7 +224,7 @@ int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
         measPos.data.r[i] = Rk(i,i);
     }
     CHECKSUM_RECORDER_CRC32(&measPos);
-    recorder.Record<recorder_msg_meas_pos_t>(&measPos);
+    Recorder::GetInstance().Record<recorder_msg_meas_pos_t>(&measPos);
 #endif
     kf.Update(H, z, Rk);
     update_flag |= FLAG_POSITION;

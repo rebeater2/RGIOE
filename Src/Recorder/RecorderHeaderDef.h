@@ -36,12 +36,6 @@
 {RECORDER_TYPE_float,"matP_12"},\
 {RECORDER_TYPE_float,"matP_13"},\
 {RECORDER_TYPE_float,"matP_14"},\
-{RECORDER_TYPE_float,"matP_15"},\
-{RECORDER_TYPE_float,"matP_16"},\
-{RECORDER_TYPE_float,"matP_17"},\
-{RECORDER_TYPE_float,"matP_18"},\
-{RECORDER_TYPE_float,"matP_19"},\
-{RECORDER_TYPE_float,"matP_20"},\
 {RECORDER_TYPE_float,"acce_bias_x"},\
 {RECORDER_TYPE_float,"acce_bias_y"},\
 {RECORDER_TYPE_float,"acce_bias_z"},\
@@ -92,6 +86,24 @@
 {RECORDER_TYPE_float,"r_3"},\
 }
 
+#define align_ITEM_DEF \
+{                       \
+{RECORDER_TYPE_float,"atti_0"},\
+{RECORDER_TYPE_float,"atti_1"},\
+{RECORDER_TYPE_float,"atti_2"},\
+{RECORDER_TYPE_float,"vn_0"},\
+{RECORDER_TYPE_float,"vn_1"},\
+{RECORDER_TYPE_float,"vn_2"},\
+{RECORDER_TYPE_float,"pos_0"},\
+{RECORDER_TYPE_float,"pos_1"},\
+{RECORDER_TYPE_float,"pos_2"},\
+{RECORDER_TYPE_float,"v_norm"},\
+{RECORDER_TYPE_uint8_t,"level_finished"},\
+{RECORDER_TYPE_uint8_t,"yaw_finished"}\
+}
+
+
+
 
 #define HEADERCONFIG(target) \
  do {                        \
@@ -99,6 +111,7 @@
  RECORDER_ADD_DATASET(target,recorder_msg_kalman_id,"ekf",KALMAN_DATA_ITEMS);  \
  RECORDER_ADD_DATASET(target,recorder_msg_state_id,"state",STATE_ITEMS);  \
  RECORDER_ADD_DATASET(target,recorder_msg_meas_pos_id,"meas_pos",meas_pos_ITEM_DEF);  \
+ RECORDER_ADD_DATASET(target,recorder_msg_align_id,"align",align_ITEM_DEF);  \
     }while(0)                         \
     \
 

@@ -6,6 +6,9 @@
 #include "Alignment.h"
 #include "matrix_lib.h"
 #include "Convert.h"
+#if ENABLE_FUSION_RECORDER
+#include "Recorder/Recorder.h"
+#endif
 
 /**
  * 水平调平
@@ -129,6 +132,21 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
   nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
   nav.week = gnss.week;
   gnss_pre = gnss;
+#if ENABLE_FUSION_RECORDER
+    recorder_msg_align_t recorder = CREATE_RECORDER_MSG(align);
+    recorder.timestamp = *(uint64_t *) &nav.gpst;
+    for(int i = 0; i < 3;++i){
+        recorder.data.atti[i] = nav.atti[i];
+        recorder.data.vn[i] = nav.vn[i];
+        recorder.data.pos[i] = nav.pos[i];
+    }
+    recorder.data.level_align_finished = flag_level_finished;
+    recorder.data.yaw_align_finished = flag_yaw_finished;
+    recorder.data.v_norm = v;
+    CHECKSUM_RECORDER_CRC32(&recorder);
+    Recorder::GetInstance().Record<recorder_msg_kalman_t>(&recorder);
+
+#endif
   return v;
 }
 
