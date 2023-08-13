@@ -7,7 +7,7 @@
 #include "matrix_lib.h"
 #include "Convert.h"
 #if ENABLE_FUSION_RECORDER
-#include "Recorder/Recorder.h"
+#include "Recorder/RecorderType.h"
 #endif
 
 /**
@@ -144,7 +144,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     recorder.data.yaw_align_finished = flag_yaw_finished;
     recorder.data.v_norm = v;
     CHECKSUM_RECORDER_CRC32(&recorder);
-    Recorder::GetInstance().Record<recorder_msg_kalman_t>(&recorder);
+    Recorder::GetInstance().Record(&recorder);
 
 #endif
   return v;

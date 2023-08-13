@@ -1,15 +1,18 @@
 //
 // Created by linfe on 2023/7/22.
 //
+#include "comm_crc.h"
+#include "DataLoader.h"
+
+#include "glog/logging.h"
 
 #include <fstream>
-#include "DataLoader.h"
-#include "glog/logging.h"
-#include "RecorderType.h"
-#include "comm_crc.h"
 
 
-DataLoader::DataLoader() {
+DataLoader::DataLoader() :
+recorder_version{0},
+file_length{0},
+file_offset{0} {
 
 }
 
@@ -17,6 +20,7 @@ void DataLoader::LoadFile(const std::string &filename) {
     std::ifstream ifs(filename, std::ios::binary);
     if (!ifs.good()) {
         LOG(INFO) << "No such file " << filename;
+        return;
     }
     uint8_t *file_buffer;
     std::ifstream t;
@@ -25,11 +29,16 @@ void DataLoader::LoadFile(const std::string &filename) {
     file_length = ifs.tellg();           // report location (this is the length)
     ifs.seekg(0, std::ios::beg);    // go back to the beginning
     file_buffer = new uint8_t[file_length];    // allocate memory for a buffer of appropriate dimension
-    ifs.read((char *) file_buffer, file_length);       // read the whole file into the buffer
+    ifs.read((char *) file_buffer, (long long) file_length);       // read the whole file into the buffer
     ifs.close();                    // close file handle
-    LOG(INFO) << "file size:" << file_length;
+    LOG(INFO) << "file size:" << file_length / 1024 / 1024 << "Mb";
     file_offset = _loadHeader(file_buffer);
-    uint8_t *pdata = file_buffer;
+    header_size = file_offset;
+    if (!file_offset) {
+        errorCode = DATALOADER_NO_HEADER;
+        return;
+    }
+    uint8_t *pdata;
     while (file_offset < file_length) {
         pdata = file_buffer + file_offset;
         if (*(uint32_t *) pdata != RECORDER_HEADER) {
@@ -39,7 +48,7 @@ void DataLoader::LoadFile(const std::string &filename) {
         uint32_t msg_length = *(uint32_t *) (pdata + offsetof(recorder_elements_header, length));
 #ifdef ENABLE_CRC_CHECK
         if (crc32_checksum(pdata, msg_length - 4) != 0) {
-            LOG(ERROR) << "crc check failed";
+            error_strings.emplace_back("CRC check failed");
             continue;
         }
 #endif
@@ -51,12 +60,23 @@ void DataLoader::LoadFile(const std::string &filename) {
 
 
 void DataLoader::AddData(uint32_t msg_id, void *pdata) {
-    /*TODO loader目前有bug， 结构体没有对齐的情况下不好搞，不知道数据有没有闲置空间,建议强制对齐*/
-    /*TODO 速度可以提一提*/
     auto *msg_header = (recorder_elements_header *) pdata;
     if (data_cfgs.find(msg_id) == data_cfgs.end()) {
-        LOG(INFO) << "current id is not configured:" << msg_id;
+        error_strings.emplace_back("current id is not configured:" + std::to_string(msg_id));
         return;
+    }
+    if(data.find(msg_id) == data.end()){
+        DataSet dataSet;
+        dataSet.data_set_name = data_cfgs[msg_id].dataset_name;
+        dataSet.sub_data_cnt = data_cfgs[msg_id].item_cnt;
+        dataSet.data_set = msg_id;
+        dataSet.data.reserve(dataSet.sub_data_cnt);
+        for (int i = 0; i < data_cfgs[msg_id].item_config.size(); ++i) {
+            dataSet.data.emplace_back();
+            dataSet.data[i].reserve(921600);
+            dataSet.subset_name.emplace_back(data_cfgs[msg_id].item_config[i].name);
+        }
+        data.insert(std::make_pair(msg_id, dataSet));
     }
 
     data[msg_id].time.push_back((*(double *) &msg_header->timestamp));
@@ -65,6 +85,7 @@ void DataLoader::AddData(uint32_t msg_id, void *pdata) {
         data[msg_id].data[i].push_back(result[i]);
     }
 }
+
 /**
  * convert byte stream to floats
  * @param items
@@ -137,6 +158,19 @@ uint32_t DataLoader::_loadHeader(uint8_t *file_buffer) {
         return 0;
     }
     pbuff += 4;
+    uint32_t header_length = *(uint32_t *) pbuff;
+    pbuff += 4;
+    if (crc32_checksum(file_buffer, header_length - 4) != 0) {
+        error_strings.emplace_back( "file header was damaged");
+        errorCode = DATALOADER_HEADER_CHECKFAILED;
+        return 0;
+    }
+    LOG(INFO) << "header length " << header_length;
+
+    recorder_version = *(float *) pbuff;
+    pbuff += 4;
+    LOG(INFO) << "recorder version:" << recorder_version;
+
     uint32_t dataset_cnt = *(uint32_t *) pbuff;
     pbuff += 4;
     LOG(INFO) << "datasets:" << dataset_cnt;
@@ -148,22 +182,24 @@ uint32_t DataLoader::_loadHeader(uint8_t *file_buffer) {
         pbuff += 4;
         memcpy(config.dataset_name, pbuff, RECORDER_MAX_ITEM_NAME_SIZE);
         pbuff += RECORDER_MAX_ITEM_NAME_SIZE;
-        for(int j = 0; j < config.item_cnt; ++j){
-            DataItemConfig item;
+        for (int j = 0; j < config.item_cnt; ++j) {
+            DataItemConfig item{};
             item.type = static_cast<RecorderBaseType>(*(uint32_t *) pbuff);
             pbuff += 4;
             memcpy(item.name, pbuff, RECORDER_MAX_ITEM_NAME_SIZE);
             pbuff += RECORDER_MAX_ITEM_NAME_SIZE;
             config.item_config.push_back(item);
         }
-        data_cfgs.insert(std::make_pair(dataset_id,config));
+        data_cfgs.insert(std::make_pair(dataset_id, config));
     }
-    if(*(uint32_t*)pbuff != RECORDER_HEADER_END_MARK){
-        LOG(INFO) << "header read error";
+    pbuff += 4; // skip crc32
+    if (*(uint32_t *) pbuff != RECORDER_HEADER_END_MARK) {
+        error_strings.emplace_back("Header endmark not found");
+        errorCode = DATALOADER_HEADER_ENDMARK_NOT_FOUND;
         data_cfgs.clear();
         return 0;
     }
-    for(auto dataset_config:data_cfgs){
+/*    for (auto dataset_config: data_cfgs) {
         DataSet dataSet;
         dataSet.data_set_name = dataset_config.second.dataset_name;
         dataSet.sub_data_cnt = dataset_config.second.item_cnt;
@@ -174,10 +210,39 @@ uint32_t DataLoader::_loadHeader(uint8_t *file_buffer) {
             dataSet.data[i].reserve(921600);
             dataSet.subset_name.emplace_back(dataset_config.second.item_config[i].name);
         }
-        data.insert(std::make_pair( dataset_config.first,dataSet));
-    }
+        data.insert(std::make_pair(dataset_config.first, dataSet));
+    }*/
 
     return pbuff - file_buffer;
 }
+
+std::string DataLoader::GetSummaryString() const {
+    char buff[4096];
+    int offset = 0;
+/*    offset += sprintf(buff + offset,"\nHeader(size %llu) info:\n",header_size);
+    for(const auto & cfg:data_cfgs){
+        offset += sprintf(buff + offset,"%-16s(0X%X)\n",cfg.second.dataset_name,cfg.first);
+        for(auto item:cfg.second.item_config){
+            offset += sprintf(buff + offset,"|___%-16s\t %x\n",item.name,item.type);
+        }
+    }//*/
+    offset += sprintf(buff + offset,"Valid dataset(%llu) incuding:\n",data.size());
+    offset += sprintf(buff + offset,"\t%16s %10s %8s %8s\n","dataset","ID","size","subsets");
+    for(const auto &d:data){
+        offset += sprintf(buff + offset,"\t%16s %10x %8llu %8d\n",d.second.data_set_name.c_str(),d.first,d.second.time.size(),d.second.sub_data_cnt);
+    }
+    if(!error_strings.empty()){
+        offset += sprintf(buff + offset,"Errors:\n");
+        for(auto &error:error_strings){
+            offset += sprintf(buff + offset,"%s\n",error.c_str());
+        }
+    }
+    return std::string{buff};
+}
+
+DATALOADER_ERROR_CODE DataLoader::GetErrorCode() const {
+    return errorCode;
+}
+
 
 DataLoader::~DataLoader() = default;

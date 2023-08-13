@@ -5,13 +5,15 @@
 #ifndef STATICGRAPH_DATALOADER_H
 #define STATICGRAPH_DATALOADER_H
 
+#include "Recorder.h"
+
 #include <string>
 #include <map>
 #include <vector>
-#include "Recorder.h"
+#include <list>
+
+/* disable CRC check will load faster*/
 #define ENABLE_CRC_CHECK
-
-
 
 struct DataItemCfg {
     RecorderBaseType type;
@@ -35,6 +37,12 @@ public:
     std::vector<double> time;
 };
 
+enum DATALOADER_ERROR_CODE{
+    DATALOADER_OK = 0,
+    DATALOADER_NO_HEADER = 1,
+    DATALOADER_HEADER_CHECKFAILED = 2,
+    DATALOADER_HEADER_ENDMARK_NOT_FOUND = 2,
+};
 
 class DataLoader {
 public:
@@ -43,16 +51,21 @@ public:
 
 public:
     void LoadFile(const std::string &filename);
+    [[nodiscard]] int GetProgress()const;
+    [[nodiscard]] std::string GetSummaryString() const;
+    [[nodiscard]] DATALOADER_ERROR_CODE GetErrorCode() const;
+private:
     uint32_t _loadHeader(uint8_t *file_buffer);
     void AddData(uint32_t msg_id,void *pdata);
-
-    int GetProgress()const;
-
 public:
     std::map<uint32_t,DataSet> data;
     std::map<uint32_t ,DataSetConfig> data_cfgs;
+    float recorder_version;
 private:
-    uint64_t file_length,file_offset = 0;
+    uint64_t file_length,file_offset,header_size;
+    DATALOADER_ERROR_CODE errorCode;
+    std::list<std::string> error_strings;
+
 private:
     static std::vector<float> structMember2Float(const std::vector<DataItemConfig>& types, void *pdata);
 };

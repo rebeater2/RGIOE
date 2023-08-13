@@ -163,6 +163,8 @@ void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
   eye3 = Eigen::Matrix3d::Identity(3, 3);
   dt = 1.0 / d_rate;
   nav = nav_;
+  _gyro_pre.setZero();
+  _gyro_pre.setZero();
   Earth::Instance().Update(nav.pos[0], nav.pos[2]);
 
 }

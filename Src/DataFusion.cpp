@@ -3,7 +3,7 @@
 //
 
 #include "DataFusion.h"
-#include "Recorder/Recorder.h"
+#include "Recorder/RecorderType.h"
 
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
@@ -132,12 +132,12 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 #endif
 #ifdef ENABLE_FUSION_RECORDER
     recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
-    state.timestamp = *(uint64_t *) &nav.gpst;
+    state.timestamp = nav.gpst;
     for(int i = 0; i < STATE_CNT;++i){
         state.data.xd[i] = kf.Xd[i];
     }
     CHECKSUM_RECORDER_CRC32(&state);
-    Recorder::GetInstance().Record<recorder_msg_kalman_t>(&state);
+    Recorder::GetInstance().Record(&state);
 #endif
 
 /*    if (update_flag & FLAG_HEIGHT) {
@@ -182,7 +182,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     }
 #ifdef ENABLE_FUSION_RECORDER
     recorder_msg_kalman_t kalman = CREATE_RECORDER_MSG(kalman);
-    kalman.timestamp = *(uint64_t *) &nav.gpst;
+    kalman.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
         kalman.data.acce_bias[i] = nav.ab[i] / _mGal;
         kalman.data.acce_scale[i] = nav.as[i] / _ppm;
@@ -193,15 +193,15 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         kalman.data.matP[i] = kf.P(i, i);
     }
     CHECKSUM_RECORDER_CRC32(&kalman);
-    Recorder::GetInstance().Record<recorder_msg_kalman_t>(&kalman);
+    Recorder::GetInstance().Record(&kalman);
     recorder_msg_imu_t imu_data = CREATE_RECORDER_MSG(imu);
-    imu_data.timestamp = *(uint64_t *) &nav.gpst;
+    imu_data.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
         imu_data.data.gyro[i] = imu.gyro[i];
         imu_data.data.acce[i] = imu.acce[i];
     }
     CHECKSUM_RECORDER_CRC32(&imu_data);
-    Recorder::GetInstance().Record<recorder_msg_imu_t>(&imu_data);
+    Recorder::GetInstance().Record(&imu_data);
 #endif
     return 0;
 }
@@ -218,13 +218,13 @@ int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
 
 #ifdef ENABLE_FUSION_RECORDER
     recorder_msg_meas_pos_t measPos = CREATE_RECORDER_MSG(meas_pos);
-    measPos.timestamp = *(uint64_t *) &nav.gpst;
+    measPos.timestamp = nav.gpst;
     for(int i = 0; i < 3;++i){
         measPos.data.z[i] = z[i];
         measPos.data.r[i] = Rk(i,i);
     }
     CHECKSUM_RECORDER_CRC32(&measPos);
-    Recorder::GetInstance().Record<recorder_msg_meas_pos_t>(&measPos);
+    Recorder::GetInstance().Record(&measPos);
 #endif
     kf.Update(H, z, Rk);
     update_flag |= FLAG_POSITION;
@@ -563,6 +563,19 @@ NavOutput DataFusion::Output() const {
         out.vn_std[i] = (float) sqrt(kf.P(3 + i, 3 + i));
         out.atti_std[i] = (float) sqrt(kf.P(6 + i, 6 + i));
     }
+#ifdef ENABLE_FUSION_RECORDER
+    static Vec3d first_pos = nav.pos;
+    recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
+    result.timestamp = nav.gpst;
+    Vec3d rpos = Earth::Instance().distance(nav.pos[0],nav.pos[1],first_pos[0],first_pos[1],nav.pos[2],first_pos[2]);
+    for(int i = 0; i < 3; ++i){
+        result.data.pos[i] = (float) rpos[i];
+        result.data.vn[i] = (float) nav.vn[i];
+        result.data.atti[i] = (float)nav.atti[i];
+    }
+    CHECKSUM_RECORDER_CRC32(&result);
+    Recorder::GetInstance().Record(&result);
+#endif
     return out;
 }
 

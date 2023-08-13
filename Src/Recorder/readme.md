@@ -8,28 +8,29 @@ main functions:
 rcd file definition:
 header:
 
-|offset|size(byte)|type|introduction|
-| ----- | ----- | ----- | ----- |
-|0|4|0XBB55BB66L|start of header|
-|4|4|uint32\_t|M: number of datasets|
-|8|4|uint32\_t|ID of dataset\[0\]|
-|12|4|uint32\_t|N0: number of subdatasets for dataset\[0\]|
-|16|16|char\[16\]|name of datasets\[0\]|
-|32|4|enum `RecorderBaseType`|type id for dataset\[0\].item\[0\]|
-|36|16|char\[16\]|name of datasets\[0\].item\[0\]|
-|52|4|enum `RecorderBaseType`|type id for dataset\[0\].item\[1\]|
-|36|16|char\[16\]|name of datasets\[0\].item\[1\]|
-|......|......|......|......|
-|32+20\*(N0-1)|4|enum `RecorderBaseType`|type id for dataset\[0\].item\[N-1\]|
-|36+20\*(N0-1)|16|char\[16\]|name of datasets\[0\].item\[N-1\]|
-|52+20\*(N0-1)|4|uint32\_t|ID of dataset\[1\]|
-|56+20\*(N0-1)|4|uint32\_t|N1: number of subdatasets for dataset\[1\]|
-|60+20\*(N0-1)|16|char\[16\]|name of datasets\[1\]|
-|......|......|......|......|
-|72+20*(N0-1) + 20(N0-1)...*|4| |ID of dataset\[M-1\]|
-|88+20*(N0-1) + 20(N0-1)...*|4| |N: number of subdatasets for dataset\[M-1\]|
-|72+20*(N0-1) + 20(N0-1)...*|16| |name of datasets\[M-1\]|
-| |uint32\_t|0XBB77BB88L|end of header|
+|offset|size(byte)|type| introduction                                |
+| ----- | ----- | ----- |---------------------------------------------|
+|0|4|0XBB55BB66L| start of header                             |
+|4|4|uint32\_t| M: number of datasets                       |
+|4|4|uint32\_t| Version of recorder                         |
+|8|4|uint32\_t| ID of dataset\[0\]                          |
+|12|4|uint32\_t| N0: number of subdatasets for dataset\[0\]  |
+|16|16|char\[16\]| name of datasets\[0\]                       |
+|32|4|enum `RecorderBaseType`| type id for dataset\[0\].item\[0\]          |
+|36|16|char\[16\]| name of datasets\[0\].item\[0\]             |
+|52|4|enum `RecorderBaseType`| type id for dataset\[0\].item\[1\]          |
+|36|16|char\[16\]| name of datasets\[0\].item\[1\]             |
+|......|......|......| ......                                      |
+|32+20\*(N0-1)|4|enum `RecorderBaseType`| type id for dataset\[0\].item\[N-1\]        |
+|36+20\*(N0-1)|16|char\[16\]| name of datasets\[0\].item\[N-1\]           |
+|52+20\*(N0-1)|4|uint32\_t| ID of dataset\[1\]                          |
+|56+20\*(N0-1)|4|uint32\_t| N1: number of subdatasets for dataset\[1\]  |
+|60+20\*(N0-1)|16|char\[16\]| name of datasets\[1\]                       |
+|......|......|......| ......                                      |
+|72+20*(N0-1) + 20(N0-1)...*|4| | ID of dataset\[M-1\]                        |
+|88+20*(N0-1) + 20(N0-1)...*|4| | N: number of subdatasets for dataset\[M-1\] |
+|72+20*(N0-1) + 20(N0-1)...*|16| | name of datasets\[M-1\]                     |
+| |uint32\_t|0XBB77BB88L| end of header                               |
 
 body:
 

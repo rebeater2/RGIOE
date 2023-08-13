@@ -7,7 +7,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "stdint.h"
+#ifndef CRC32_ENABLE_TABLE
+#define CRC32_ENABLE_TABLE 1
+#endif
+#include <stdint.h>
+
+#define REVERT_CRC32(crc32) \
+    ((((crc32) & 0xff) << 24u) | (((crc32) & 0xff00) << 8u) | (((crc32) & 0xff0000) >> 8u) | ((((crc32) & 0xff000000)>>24)))
+
 uint32_t crc32_checksum(const uint8_t *indata, uint32_t num_bytes);
 #ifdef __cplusplus
 };

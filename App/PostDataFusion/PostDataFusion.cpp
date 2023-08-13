@@ -46,7 +46,6 @@ int main(int argc, char *argv[]) {
 #ifdef ENABLE_FUSION_RECORDER
     Recorder::GetInstance().Initialize(argv[0]);
 #endif
-    cout << CopyRight;
     if (argc < 2) {
         loge << CopyRight << endl;
         return 1;
@@ -235,6 +234,9 @@ int main(int argc, char *argv[]) {
     LOG(INFO) << "The result is saved to " << config.output_config.file_path;
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
     LOG(INFO) << "Final lever arm:" << df.lb_gnss.transpose();
+#endif
+#ifdef ENABLE_FUSION_RECORDER
+    LOG(INFO)<<"Recorder was saved to " <<Recorder::GetInstance().GetRcdFilename();
 #endif
     return 0;
 }

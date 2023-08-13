@@ -6,84 +6,71 @@
 #ifndef RGIOE_RECORDERTYPE_H
 #define RGIOE_RECORDERTYPE_H
 
-#define _1_PACKED __attribute__ ((packed))
-#define _4_PACKED __attribute__ ((aligned (4)))
+#include "Recorder.h"
 
-#define MSG_ID(set, id)  ((set << 16u) | (id & 0xffU))
-#define RECORDER_HEADER   0XAA55AA55L           // start of elements header
-#define RECORDER_END_MARK 0XAA66AA66L           // end of elements
-
-#define RECORDER_MAX_ITEM_NAME_SIZE 16          // Maximum number of characters
-#define RECORDER_HEADER_START_MARK  0XBB55BB66L // start of log header
-#define RECORDER_HEADER_END_MARK  0XBB77BB88    // end of log header
-#define RECORDER_HEADER_MAX_LENGTH (4096)       // Maximum size of log header in bytes
-
-#define RECORDER_MSG_DEF(set, id, name, fmt) \
-typedef struct  {                            \
-uint32_t header;                              \
-uint32_t msg_id ;                             \
-uint64_t timestamp;             \
-uint32_t length;                \
-struct fmt  data;                 \
-uint32_t check_sum;             \
-uint32_t end_mark;              \
-} recorder_msg_##name##_t ;     \
-enum{recorder_msg_##name##_id = MSG_ID(set,id)};
-
-#define GET_RECORDER_MSG_ID(name)  recorder_msg_##name##_id
-
-#define CREATE_RECORDER_MSG(name) \
-{                                  \
-   .header =    RECORDER_HEADER,                 \
-   .msg_id = GET_RECORDER_MSG_ID(name),        \
-   .length = sizeof(recorder_msg_##name##_t) ,   \
-   .end_mark = RECORDER_END_MARK\
-}
-
-#define CHECKSUM_RECORDER_CRC32(data)  \
-do {                               \
-uint32_t crc32 = crc32_checksum((uint8_t*)data,(data)->length - 8);\
-(data)->check_sum = ((crc32 & 0xff) << 24u) | ((crc32 & 0xff00) << 8u) | ((crc32 & 0xff0000) >> 8u) | (((crc32 & 0xff000000)>>24));   \
-}while(0)
-
-
-#define PACK_DATA(__D) \
-{                      \
-   __D                    \
-}
-
-
-#define RECORDER_SET_POSE 0x01
-
-#define RECORDER_SET_SENSOR 0x02
-
-#define RECORDER_SET_DEBUG 0x03
-
+#define RECORDER_MSG_DEBUG 0x16
+#define RECORDER_MSG_SENSOR 0x17
+#define RECORDER_MSG_RESULT 0x18
 #pragma pack(1)
-
-RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x18, kalman,
-                  {
-                      float matP[15];
-                      float acce_bias[3];
-                      float acce_scale[3];
-                      float gyro_bias[3];
-                      float gyro_scale[3];
-                      float pos_obs[3];
-                  }
-)
-RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x19, state,
+RECORDER_MSG_DEF(RECORDER_MSG_SENSOR, 0x21, imu,
                  {
-                     float xd[15];
+                     float acce[3];
+                     float gyro[3];
                  }
 )
-RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x20, meas_pos,
+#define RECORDER_imu_ITEMS \
+{               \
+{RECORDER_TYPE_float,"acce_raw_x"},\
+{RECORDER_TYPE_float,"acce_raw_y"},\
+{RECORDER_TYPE_float,"acce_raw_z"},\
+{RECORDER_TYPE_float,"gyro_raw_x"},\
+{RECORDER_TYPE_float,"gyro_raw_y"},\
+{RECORDER_TYPE_float,"gyro_raw_z"} ,\
+}
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x21, kalman,
                  {
-                     float z[3];
-                     float r[3];
+                     float matP[15];
+                     float acce_bias[3];
+                     float acce_scale[3];
+                     float gyro_bias[3];
+                     float gyro_scale[3];
+                     uint8_t update_flag;
+                     uint32_t feedback_cnt;
                  }
-
 )
-RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x22, align,
+#define RECORDER_kalman_ITEMS \
+{               \
+{RECORDER_TYPE_float,"matP_0"},\
+{RECORDER_TYPE_float,"matP_1"},\
+{RECORDER_TYPE_float,"matP_2"},\
+{RECORDER_TYPE_float,"matP_3"},\
+{RECORDER_TYPE_float,"matP_4"},\
+{RECORDER_TYPE_float,"matP_5"},\
+{RECORDER_TYPE_float,"matP_6"},\
+{RECORDER_TYPE_float,"matP_7"},\
+{RECORDER_TYPE_float,"matP_8"},\
+{RECORDER_TYPE_float,"matP_9"},\
+{RECORDER_TYPE_float,"matP_10"},\
+{RECORDER_TYPE_float,"matP_11"},\
+{RECORDER_TYPE_float,"matP_12"},\
+{RECORDER_TYPE_float,"matP_13"},\
+{RECORDER_TYPE_float,"matP_14"},\
+{RECORDER_TYPE_float,"acce_bias_x"},\
+{RECORDER_TYPE_float,"acce_bias_y"},\
+{RECORDER_TYPE_float,"acce_bias_z"},\
+{RECORDER_TYPE_float,"acce_scale_x"},\
+{RECORDER_TYPE_float,"acce_scale_y"},\
+{RECORDER_TYPE_float,"acce_scale_z"},\
+{RECORDER_TYPE_float,"gyro_bias_x"},\
+{RECORDER_TYPE_float,"gyro_bias_y"},\
+{RECORDER_TYPE_float,"gyro_bias_z"},\
+{RECORDER_TYPE_float,"gyro_scale_x"},\
+{RECORDER_TYPE_float,"gyro_scale_y"},\
+{RECORDER_TYPE_float,"gyro_scale_z"},\
+{RECORDER_TYPE_uint8_t,"update_flag"},\
+{RECORDER_TYPE_uint32_t,"feedback_cnt"},\
+}
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x22, align,
                  {
                      float atti[3];
                      float vn[3];
@@ -94,41 +81,99 @@ RECORDER_MSG_DEF(RECORDER_SET_DEBUG, 0x22, align,
                  }
 )
 
-RECORDER_MSG_DEF(RECORDER_SET_SENSOR, 0x21, imu,
-                  {
-                      float gyro[3];
-                      float acce[3];
-                      float gyro_fix[3];
-                      float acce_fix[3];
-                  }
+
+
+#define RECORDER_align_ITEMS \
+{                       \
+{RECORDER_TYPE_float,"atti_0"},\
+{RECORDER_TYPE_float,"atti_1"},\
+{RECORDER_TYPE_float,"atti_2"},\
+{RECORDER_TYPE_float,"vn_0"},\
+{RECORDER_TYPE_float,"vn_1"},\
+{RECORDER_TYPE_float,"vn_2"},\
+{RECORDER_TYPE_float,"pos_0"},\
+{RECORDER_TYPE_float,"pos_1"},\
+{RECORDER_TYPE_float,"pos_2"},\
+{RECORDER_TYPE_float,"v_norm"},\
+{RECORDER_TYPE_uint8_t,"level_finished"},\
+{RECORDER_TYPE_uint8_t,"yaw_finished"}\
+}
+
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x23, meas_pos,
+                 {
+                     float z[3];
+                     float r[3];
+                 }
 )
+#define RECORDER_meas_pos_ITEMS \
+{               \
+{RECORDER_TYPE_float,"z_0"},\
+{RECORDER_TYPE_float,"z_1"},\
+{RECORDER_TYPE_float,"z_2"},\
+{RECORDER_TYPE_float,"r_0"},\
+{RECORDER_TYPE_float,"r_1"},\
+{RECORDER_TYPE_float,"r_2"},\
+}
 
-enum RecorderBaseType {
-    RECORDER_TYPE_uint8_t = 0,
-    RECORDER_TYPE_int8_t = 1,
-    RECORDER_TYPE_uint16_t = 2,
-    RECORDER_TYPE_int16_t = 3,
-    RECORDER_TYPE_uint32_t = 4,
-    RECORDER_TYPE_int32_t = 5,
-    RECORDER_TYPE_uint64_t = 6,
-    RECORDER_TYPE_int64_t = 7,
-    RECORDER_TYPE_float = 8,
-    RECORDER_TYPE_double = 9,
-};
-
-struct DataItemConfig {
-    RecorderBaseType type;
-    char name[RECORDER_MAX_ITEM_NAME_SIZE];
-};
-
-typedef struct {
-    uint32_t header;
-    uint32_t msg_id;
-    uint64_t timestamp;
-    uint32_t length;
-    uint32_t data;
-    uint32_t check_sum;
-    uint32_t end_mark;
-} recorder_elements_header;
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x24, state,
+                 {
+                     float xd[21];
+                 }
+)
+#define RECORDER_state_ITEMS \
+{               \
+{RECORDER_TYPE_float,"Xd_0"},\
+{RECORDER_TYPE_float,"Xd_1"},\
+{RECORDER_TYPE_float,"Xd_2"},\
+{RECORDER_TYPE_float,"Xd_3"},\
+{RECORDER_TYPE_float,"Xd_4"},\
+{RECORDER_TYPE_float,"Xd_5"},\
+{RECORDER_TYPE_float,"Xd_6"},\
+{RECORDER_TYPE_float,"Xd_7"},\
+{RECORDER_TYPE_float,"Xd_8"},\
+{RECORDER_TYPE_float,"Xd_9"},\
+{RECORDER_TYPE_float,"Xd_10"},\
+{RECORDER_TYPE_float,"Xd_11"},\
+{RECORDER_TYPE_float,"Xd_12"},\
+{RECORDER_TYPE_float,"Xd_13"},\
+{RECORDER_TYPE_float,"Xd_14"},\
+{RECORDER_TYPE_float,"Xd_15"},\
+{RECORDER_TYPE_float,"Xd_16"},\
+{RECORDER_TYPE_float,"Xd_17"},\
+{RECORDER_TYPE_float,"Xd_18"},\
+{RECORDER_TYPE_float,"Xd_19"},\
+{RECORDER_TYPE_float,"Xd_20"},\
+}
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x25, result,
+                 {
+                     float pos[3];
+                     float vn[3];
+                     float atti[3];
+                 }
+)
+#define RECORDER_result_ITEMS \
+{               \
+{RECORDER_TYPE_float,"pos_x"},\
+{RECORDER_TYPE_float,"pos_y"},\
+{RECORDER_TYPE_float,"pos_z"},\
+{RECORDER_TYPE_float,"vn_x"},\
+{RECORDER_TYPE_float,"vn_y"},\
+{RECORDER_TYPE_float,"vn_z"},\
+{RECORDER_TYPE_float,"atti_x"},\
+{RECORDER_TYPE_float,"atti_y"},\
+{RECORDER_TYPE_float,"atti_z"},\
+}
 #pragma pack()
+
+
+#define RECORDER_HEADERCONFIG \
+ {                        \
+ RECORDER_ADD_DATASET(imu,RECORDER_imu_ITEMS); \
+ RECORDER_ADD_DATASET(kalman,RECORDER_kalman_ITEMS); \
+ RECORDER_ADD_DATASET(align,RECORDER_align_ITEMS); \
+ RECORDER_ADD_DATASET(meas_pos,RECORDER_meas_pos_ITEMS); \
+ RECORDER_ADD_DATASET(state,RECORDER_state_ITEMS); \
+ RECORDER_ADD_DATASET(result,RECORDER_result_ITEMS); \
+}
+
 #endif //RGIOE_RECORDERTYPE_H
