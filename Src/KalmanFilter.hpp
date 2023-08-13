@@ -11,7 +11,6 @@
 #define LOOSELYCOUPLE2020_CPP_KALMANFILTER_H
 
 
-
 #include "Eigen/Dense"
 
 #ifndef SEQUENCED
@@ -48,9 +47,10 @@ public:
     void Update(const Mat2Xd &H, const Vec2d &z, const Mat2d &R);*/
 
     template<int obs_dim>
-    void Update(const Eigen::Matrix<fp,obs_dim, dim> &H,const Eigen::Matrix<fp,obs_dim,1> &Z,const Eigen::Matrix<fp,obs_dim,obs_dim> &R);
+    void Update(const Eigen::Matrix<fp, obs_dim, dim> &H, const Eigen::Matrix<fp, obs_dim, 1> &Z,
+                const Eigen::Matrix<fp, obs_dim, obs_dim> &R);
 
-    void RTSUpdate(const MatXX &phi,const MatXX &matP);
+    void RTSUpdate(const MatXX &phi, const MatXX &matP);
 
     void Reset();
 
@@ -71,16 +71,18 @@ public:
 };
 
 template<int dim, typename fp>
-void KalmanFilter<dim,fp>::Reset() {
+void KalmanFilter<dim, fp>::Reset() {
     Xd.setZero();
 }
+
 template<int dim, typename fp>
-KalmanFilter<dim,fp>::KalmanFilter() {
+KalmanFilter<dim, fp>::KalmanFilter() {
     Xd = Vec1X::Zero();
     P = MatXX::Zero();
 }
+
 template<int dim, typename fp>
-KalmanFilter<dim,fp>::~KalmanFilter() {
+KalmanFilter<dim, fp>::~KalmanFilter() {
 }
 
 template<int dim, typename fp>
@@ -89,9 +91,10 @@ void KalmanFilter<dim, fp>::Update(const Eigen::Matrix<fp, obs_dim, dim> &H, con
                                    const Eigen::Matrix<fp, obs_dim, obs_dim> &R) {
     Eigen::Matrix<fp, dim, obs_dim> K = P * H.transpose() * ((H * P * H.transpose() + R).inverse() + R);
     Xd = K * obs;
-    MatXX temp = (Eigen::Matrix<fp,dim,dim>::Identity() - K * H);
+    MatXX temp = (Eigen::Matrix<fp, dim, dim>::Identity() - K * H);
     P = temp * P * temp.transpose() + K * R * K.transpose();
 }
+
 /**
  * RTS smooth algorithm TODO
  * @tparam dim the dimension of Kalman Filter
@@ -100,21 +103,23 @@ void KalmanFilter<dim, fp>::Update(const Eigen::Matrix<fp, obs_dim, dim> &H, con
  * @param matP error state matrix
  */
 template<int dim, typename fp>
-void KalmanFilter<dim, fp>::RTSUpdate(const MatXX &phi,const MatXX &matP) {
+void KalmanFilter<dim, fp>::RTSUpdate(const MatXX &phi, const MatXX &matP) {
     /*TODO*/
 /*    auto matA = matp * matphi.transpose() * matp1.inverse();
     P = matp + matA * (P - matp1) * matA.transpose();
     Xd = xdc + matA * Xd;*/
 }
-template<int dim,typename fp>
-void KalmanFilter<dim,fp>::Predict(const MatXX &PHI, const MatXX &Q) {
+
+template<int dim, typename fp>
+void KalmanFilter<dim, fp>::Predict(const MatXX &PHI, const MatXX &Q) {
     Xd = PHI * Xd; /*xd保持为0*/
     P = PHI * P * PHI.transpose() + Q;
 }
 
 template<int dim, typename fp>
-KalmanFilter<dim,fp>::KalmanFilter(Vec1X xd, MatXX P) : Xd(std::move(xd)), P(std::move(P)) {
+KalmanFilter<dim, fp>::KalmanFilter(Vec1X xd, MatXX P) : Xd(std::move(xd)), P(std::move(P)) {
 }
+
 #if 0
 template<int dim, typename fp>
 void KalmanFilter<dim,fp>::Update(const Vec1Xd &H, double z, double R) {
@@ -198,28 +203,28 @@ void KalmanFilter<dim,fp>::Update(const Mat3Xd &H, const Vec3d &z, const Mat3d &
   double inno, temp2, rk;
   auto I = MatXd::Identity(STATE_CNT, STATE_CNT);
   for (int i = 0; i < z.rows(); i++) {
-	Hi = H.row(i);
-	inno = (z.row(i) - Hi * xd_)(0, 0);
-	/*constrain Rk*/
+    Hi = H.row(i);
+    inno = (z.row(i) - Hi * xd_)(0, 0);
+    /*constrain Rk*/
 #if ENABLE_AKF == 1
-	if (inno < rmin) {
-	  rk = (1 - dk) * R(i, i) + dk * rmin;
-	} else if (inno > rmax) {
-	  rk = rmax;
-	} else {
-	  rk = (1 - dk) * R(i, i) + dk * inno;
-	}
-	dk = dk / (dk + b);
+    if (inno < rmin) {
+      rk = (1 - dk) * R(i, i) + dk * rmin;
+    } else if (inno > rmax) {
+      rk = rmax;
+    } else {
+      rk = (1 - dk) * R(i, i) + dk * inno;
+    }
+    dk = dk / (dk + b);
 #else
-	rk = R(i,i);
+    rk = R(i,i);
 #endif
-	temp1 = P_ * Hi.transpose();
-	temp2 = (Hi * temp1)(0, 0) + rk;
-	K_ = temp1 / temp2;
+    temp1 = P_ * Hi.transpose();
+    temp2 = (Hi * temp1)(0, 0) + rk;
+    K_ = temp1 / temp2;
 
-	xd_ = xd_ + K_ * inno;
-	i_kh = I - K_ * Hi;
-	P_ = i_kh * P_ * i_kh.transpose() + K_ * rk * K_.transpose();
+    xd_ = xd_ + K_ * inno;
+    i_kh = I - K_ * Hi;
+    P_ = i_kh * P_ * i_kh.transpose() + K_ * rk * K_.transpose();
   }
   xd = xd_;
   P = P_;

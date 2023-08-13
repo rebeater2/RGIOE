@@ -2,8 +2,11 @@
 #define NAV_LOG_H__
 
 #include "Define.h"
+
 #if GLOG_OUTPUT == 1
+
 #include <glog/logging.h>
+
 using namespace google;
 #else
 

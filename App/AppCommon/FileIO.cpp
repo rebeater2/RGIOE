@@ -228,7 +228,7 @@ bool IMUReader::ReadNext(RgioeImuData &imu) {
     switch (format_) {
         case IMU_FILE_IMD:
             ifs.read((char *) &imu, sizeof(imu));
-            for(int i = 0; i < 3; ++i){
+            for (int i = 0; i < 3; ++i) {
                 imu.acce[i] *= (Earth::Instance().g * dt);
                 imu.gyro[i] *= dt;
             }
@@ -237,7 +237,7 @@ bool IMUReader::ReadNext(RgioeImuData &imu) {
             ifs >> imu.gpst >> imu.gyro[0] >> imu.gyro[1] >> imu.gyro[2] >> imu.acce[0] >> imu.acce[1] >> imu.acce[2];
             break;
         case IMU_FILE_WHU_BIN:
-            ifs.read((char *)&imu,sizeof(RgioeImuData));
+            ifs.read((char *) &imu, sizeof(RgioeImuData));
             break;
         default:
             ok_ = false;

@@ -8,10 +8,10 @@
 #include "ui_gnssformat.h"
 
 gnssformat::gnssformat(QWidget *parent) :
-	QDialog(parent), ui(new Ui::gnssformat) {
-  ui->setupUi(this);
+        QDialog(parent), ui(new Ui::gnssformat) {
+    ui->setupUi(this);
 }
 
 gnssformat::~gnssformat() {
-  delete ui;
+    delete ui;
 }

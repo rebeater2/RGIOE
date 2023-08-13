@@ -5,6 +5,7 @@
 #ifndef REAL_TIME_MODE
 #define REAL_TIME_MODE 0
 #endif
+
 #include "DataFusion.h"
 #include "Alignment.h"
 #include "RgioeDataType.h"
@@ -17,6 +18,7 @@
 #include "fmt/format.h"
 
 #include <list>
+
 #if 0
 extern int GnssCheck(const GnssData &gnss){
   if (gnss.ns > 60) {
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
     Velocity vel;
     PressureData press;
     Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
-        config.outage_config.step};// = cfg.outage_config();
+                      config.outage_config.step};// = cfg.outage_config();
     LOG(INFO) << config.outage_config.start << " " << config.outage_config.stop << " " << config.outage_config.outage
               << " " << config.outage_config.step;
 
@@ -229,14 +231,14 @@ int main(int argc, char *argv[]) {
               << "\tTime for File Writing:" << time_writing << 's' << '\n'
               << "\tFinal PVA:" << df.Output() << '\n';
     LOG_IF(INFO, config.outage_config.enable)
-            << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
-            << config.outage_config.stop;
+                    << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
+                    << config.outage_config.stop;
     LOG(INFO) << "The result is saved to " << config.output_config.file_path;
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
     LOG(INFO) << "Final lever arm:" << df.lb_gnss.transpose();
 #endif
 #ifdef ENABLE_FUSION_RECORDER
-    LOG(INFO)<<"Recorder was saved to " <<Recorder::GetInstance().GetRcdFilename();
+    LOG(INFO) << "Recorder was saved to " << Recorder::GetInstance().GetRcdFilename();
 #endif
     return 0;
 }

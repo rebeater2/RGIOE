@@ -12,14 +12,15 @@ namespace Ui { class gnssformat; }
 QT_END_NAMESPACE
 
 class gnssformat : public QDialog {
- Q_OBJECT
+Q_OBJECT
 
- public:
-  explicit gnssformat(QWidget *parent = nullptr);
-  ~gnssformat() override;
+public:
+    explicit gnssformat(QWidget *parent = nullptr);
 
- private:
-  Ui::gnssformat *ui;
+    ~gnssformat() override;
+
+private:
+    Ui::gnssformat *ui;
 };
 
 #endif //RGIOE_APP_UIDATAFUSION_GNSSFORMAT_H_

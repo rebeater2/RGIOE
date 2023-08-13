@@ -9,6 +9,7 @@
 
 #include <Earth.h>
 #include "Convert.h"
+
 /**
  * 等效旋转矢量转换为四元数
  * @param rotation_vector

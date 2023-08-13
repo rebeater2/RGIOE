@@ -133,7 +133,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 #ifdef ENABLE_FUSION_RECORDER
     recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
     state.timestamp = nav.gpst;
-    for(int i = 0; i < STATE_CNT;++i){
+    for (int i = 0; i < STATE_CNT; ++i) {
         state.data.xd[i] = kf.Xd[i];
     }
     CHECKSUM_RECORDER_CRC32(&state);
@@ -219,9 +219,9 @@ int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
 #ifdef ENABLE_FUSION_RECORDER
     recorder_msg_meas_pos_t measPos = CREATE_RECORDER_MSG(meas_pos);
     measPos.timestamp = nav.gpst;
-    for(int i = 0; i < 3;++i){
+    for (int i = 0; i < 3; ++i) {
         measPos.data.z[i] = z[i];
-        measPos.data.r[i] = Rk(i,i);
+        measPos.data.r[i] = Rk(i, i);
     }
     CHECKSUM_RECORDER_CRC32(&measPos);
     Recorder::GetInstance().Record(&measPos);
@@ -567,11 +567,12 @@ NavOutput DataFusion::Output() const {
     static Vec3d first_pos = nav.pos;
     recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
     result.timestamp = nav.gpst;
-    Vec3d rpos = Earth::Instance().distance(nav.pos[0],nav.pos[1],first_pos[0],first_pos[1],nav.pos[2],first_pos[2]);
-    for(int i = 0; i < 3; ++i){
+    Vec3d rpos = Earth::Instance().distance(nav.pos[0], nav.pos[1], first_pos[0], first_pos[1], nav.pos[2],
+                                            first_pos[2]);
+    for (int i = 0; i < 3; ++i) {
         result.data.pos[i] = (float) rpos[i];
         result.data.vn[i] = (float) nav.vn[i];
-        result.data.atti[i] = (float)nav.atti[i];
+        result.data.atti[i] = (float) nav.atti[i];
     }
     CHECKSUM_RECORDER_CRC32(&result);
     Recorder::GetInstance().Record(&result);
