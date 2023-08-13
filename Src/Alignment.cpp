@@ -17,6 +17,7 @@
  * 水平调平
  * @param imu 前右下坐标系，增量格式
  */
+#include "glog/logging.h"
 void AlignMoving::Update(const RgioeImuData &imu) {
     /*必须在静止时刻对准*/
     smooth.Update(imu);
@@ -84,8 +85,11 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
                                                    gnss.height,
                                                    gnss_pre.height);
         v = (float) distance.norm();
+        double dgpst = gnss.gpst - gnss_pre.gpst;
+        Vec3d acce = (distance - vn_pre) / dgpst;/* 平均加速度 */
+        vn_pre = distance;
         if (option.align_vel_threshold < v and v < 1e3) {
-            nav.vn = distance;
+            nav.vn = distance + acce * dgpst / 2;
             nav.vel_std = {0.3, 0.3, 0.3};
             nav.atti[2] = atan2(distance[1], distance[0]);
             nav.att_std[0] = 1 * _deg;
@@ -137,7 +141,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     gnss_pre = gnss;
 #if ENABLE_FUSION_RECORDER
     recorder_msg_align_t recorder = CREATE_RECORDER_MSG(align);
-    recorder.timestamp = *(uint64_t *) &nav.gpst;
+    recorder.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
         recorder.data.atti[i] = nav.atti[i];
         recorder.data.vn[i] = nav.vn[i];
@@ -146,16 +150,17 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     recorder.data.level_align_finished = flag_level_finished;
     recorder.data.yaw_align_finished = flag_yaw_finished;
     recorder.data.v_norm = v;
+    recorder.data.a_norm = smooth.getStd();
+    recorder.data.is_staic = smooth.isStatic();
     CHECKSUM_RECORDER_CRC32(&recorder);
     Recorder::GetInstance().Record(&recorder);
-
 #endif
     return v;
 }
 
 AlignMoving::AlignMoving(const RgioeOption &opt) : option(opt),
 #if USE_INCREMENT == 1
-                                                   smooth{1e-5, 150, 30}
+                                                   smooth{1e-3, 200, 30}
 #else
 smooth{1.6e-4, 2, 10}
 #endif

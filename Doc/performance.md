@@ -3,7 +3,7 @@
 ---
 ## 1\. FOG
 IMU POS830:
-ARW: 0.003, deg/s/sqrt(hr
+ARW: 0.003, deg/s /sqrt(hr
 VRW: 0.03, m/s/sqrt(hr)
 Gyro bias stability: 0.027, deg/hr
 Acce bias stability: 15, mGal

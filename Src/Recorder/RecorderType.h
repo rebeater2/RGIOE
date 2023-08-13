@@ -76,6 +76,8 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x22, align,
                      float vn[3];
                      float pos[3];
                      float v_norm;
+                     float a_norm;
+                     uint8_t is_staic;
                      uint8_t level_align_finished;
                      uint8_t yaw_align_finished;
                  }
@@ -95,6 +97,8 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x22, align,
 {RECORDER_TYPE_float,"pos_1"},\
 {RECORDER_TYPE_float,"pos_2"},\
 {RECORDER_TYPE_float,"v_norm"},\
+{RECORDER_TYPE_float,"a_norm"},\
+{RECORDER_TYPE_uint8_t,"is_staic"},\
 {RECORDER_TYPE_uint8_t,"level_finished"},\
 {RECORDER_TYPE_uint8_t,"yaw_finished"}\
 }

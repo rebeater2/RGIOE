@@ -64,7 +64,7 @@ RgioeImuData IMUSmooth::getSmoothedIMU() {
  * @return
  */
 double IMUSmooth::getStd() {
-    return (imu_var.gyro[0] + imu_var.gyro[1] + imu_var.gyro[2]);
+    return sqrt(imu_var.acce[0] + imu_var.acce[1] + imu_var.acce[2]);
 }
 
 bool IMUSmooth::isStatic() const {

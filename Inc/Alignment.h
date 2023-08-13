@@ -45,6 +45,9 @@ class AlignMoving : public AlignBase {
   RgioeGnssData gnss_pre{};
   IMUSmooth smooth;
   RgioeOption option;
+  Vec3d vn_pre;
+  Vec3d acc_pre;
+  double gpst_pre;
 };
 
 class AlignStatic : public AlignBase {
