@@ -115,12 +115,8 @@ int main(int argc, char *argv[]) {
         do {
             imu_reader.ReadNext(imu);
             align.Update(imu);
-            LOG_EVERY_N(INFO, opt.d_rate) << fmt::format("level attitude:{} {} {}",
-                                                         align.nav.atti[0] / _deg,
-                                                         align.nav.atti[1] / _deg,
-                                                         align.nav.atti[2] / _deg);
             if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-                logi << "aligning vel = " << align.Update(gnss);
+                align.Update(gnss);
                 if (!gnss_reader.ReadNext(gnss)) {
                     LOG(ERROR) << "GNSS read finished,but align not complete!";
                     return 1;
@@ -164,7 +160,6 @@ int main(int argc, char *argv[]) {
                 gnss.mode = GnssMode::INVALID;/*手动设置GNSS模式为INVALID*/
             }
             df.MeasureUpdatePos(gnss);
-            LOG_EVERY_N(INFO, 100) << "GNSS update:" << gnss << "at " << imu.gpst;
             gnss_reader.ReadNext(gnss);
             if (!gnss_reader.IsOk()) {
                 LOG(WARNING) << "Gnss read failed" << gnss;

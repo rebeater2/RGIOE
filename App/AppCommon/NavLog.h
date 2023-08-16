@@ -1,7 +1,7 @@
 #ifndef NAV_LOG_H__
 #define NAV_LOG_H__
 
-#include "Define.h"
+#include "RgioeDefine.h"
 
 #if GLOG_OUTPUT == 1
 

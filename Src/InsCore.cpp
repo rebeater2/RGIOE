@@ -10,12 +10,12 @@
 
 using namespace std;
 
-NavEpoch makeNavEpoch(double gpst, Vec3d &pos, Vec3d &vn, Vec3d &atti) {
+NavEpoch makeNavEpoch(double gpst, Vec3Hp &pos, Vec3d &vn, Vec3d &atti) {
     Quad Qbn = Convert::euler_to_quaternion(atti);
     Mat3d Cbn = Convert::euler_to_dcm(atti);
     LatLon ll = LatLon{pos[0], pos[1]};
-    Quad Qne = Convert::lla_to_qne(ll);
-    Mat3d Cne = Convert::lla_to_cne(ll);
+    QuadHp Qne = Convert::lla_to_qne(ll);
+    Mat3Hp Cne = Convert::lla_to_cne(ll);
     NavEpoch nav{
             gpst, pos, vn, atti,
             Vec3d{0, 0, 0},
@@ -35,10 +35,10 @@ NavEpoch makeNavEpoch(NavOutput nav_, RgioeOption opt) {
     auto vn = Vec3d{nav_.vn[0], nav_.vn[1], nav_.vn[2]};
     Quad Qbn = Convert::euler_to_quaternion(atti);
     Mat3d Cbn = Convert::euler_to_dcm(atti);
-    auto pos = Vec3d{nav_.lat * _deg, nav_.lon * _deg, nav_.height};
+    auto pos = Vec3Hp{nav_.lat * _deg, nav_.lon * _deg, nav_.height};
     auto ll = LatLon{pos[0], pos[1]};
-    Quad Qne = Convert::lla_to_qne(ll);
-    Mat3d Cne = Convert::lla_to_cne(ll);
+    QuadHp Qne = Convert::lla_to_qne(ll);
+    Mat3Hp Cne = Convert::lla_to_cne(ll);
     NavEpoch nav{
             nav_.gpst, pos, vn, atti,
             Vec3d{0, 0, 0},
@@ -59,7 +59,7 @@ NavEpoch makeNavEpoch(NavOutput nav_, RgioeOption opt) {
 }
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
-    Vec3d gn = {0, 0, Earth::Instance().g};
+    Vec3d gn = {0, 0, (RgioeFloatType)Earth::Instance().g};
     Vec3d v_g_cor = (gn - (2 * omega_ie_n + omega_en_n).cross(nav.vn)) * dt;
     Vec3d zeta_mid = (omega_en_n + omega_ie_n) * dt;
     Vec3d vf_kb_k1 = acce + 0.5 * gyro.cross(acce) + (_gyro_pre.cross(acce) + _acce_pre.cross(gyro)) / 12.0;
@@ -77,12 +77,12 @@ int Ins::_position_update() {
     Quad q_e_e_delta = Convert::rv_to_quaternion(epsilon_k).conjugate();
     Vec3d zeta_k = (omega_ie_n + omega_en_n) * dt;
     Quad q_n_n_delta = Convert::rv_to_quaternion(zeta_k);
-    Quad current_q_n_e = q_e_e_delta * nav.Qne * q_n_n_delta;
+    QuadHp current_q_n_e = q_e_e_delta.cast<double>() * nav.Qne * q_n_n_delta.cast<double>();
     nav.Qne = current_q_n_e.normalized();
     // # 位置更新完毕，重新计算omega_en_n,omega_ie_e
     LatLon ll = Convert::qne_to_lla(nav.Qne);
     double h = nav.pos[2] - vn_mid[2] * dt;
-    Vec3d pos = {ll.latitude, ll.longitude, h};
+    Vec3Hp pos = {ll.latitude, ll.longitude, h};
     nav.Cne = Convert::lla_to_cne(ll);
     /*x(k-1/2)=x(k-1)+0.5(x(k)- x(k-1))*/
     /*等价于 pos_mid = (pos+nav.pos)/2.0 */
@@ -119,12 +119,14 @@ int Ins::_atti_update(const Vec3d &gyro) {
  */
 int Ins::ForwardMechanization(const RgioeImuData &imuData) {
 #if USE_INCREMENT == 1
-    Vec3d acce{imuData.acce[0], imuData.acce[1], imuData.acce[2]};
-    Vec3d gyro{imuData.gyro[0], imuData.gyro[1], imuData.gyro[2]};
+    Vec3d acce{(RgioeFloatType)imuData.acce[0], (RgioeFloatType)imuData.acce[1], (RgioeFloatType)imuData.acce[2]};
+    Vec3d gyro{(RgioeFloatType)imuData.gyro[0], (RgioeFloatType)imuData.gyro[1], (RgioeFloatType)imuData.gyro[2]};
 #else
     Vec3d acce{imuData.acce[0] * dt * Earth::Instance().g, imuData.acce[1] * dt * Earth::Instance().g, imuData.acce[2] * Earth::Instance().g * dt};
     Vec3d gyro{imuData.gyro[0] * dt, imuData.gyro[1] * dt, imuData.gyro[2] * dt};
 #endif
+
+
     Vec3d acce_ = CompensateIMU(acce, nav.ab, nav.as);
     Vec3d gyro_ = CompensateIMU(gyro, nav.gb, nav.gs);
     ForwardMechanization(acce_, gyro_);
@@ -152,30 +154,32 @@ Vec3d Ins::CompensateIMU(const Vec3d &imu, const Vec3d &bias, const Vec3d &scale
 }
 
 Ins::Ins() {
-    eye3 = Eigen::Matrix3d::Identity(3, 3);
+    eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity();
     int d_rate = 100;
     dt = 1.0 / d_rate;
+    _acce_pre.setZero();
+    _gyro_pre.setZero();
     this->nav = NavEpoch{0, {0, 0, 0}};
 }
 
 Ins::~Ins() = default;
 
 void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
-    eye3 = Eigen::Matrix3d::Identity(3, 3);
+    eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity();
     dt = 1.0 / d_rate;
     nav = nav_;
     _gyro_pre.setZero();
-    _gyro_pre.setZero();
+    _acce_pre.setZero();
     Earth::Instance().Update(nav.pos[0], nav.pos[2]);
 
 }
 
 void Ins::InitializePva(const NavEpoch &nav_, const RgioeImuData &imu) {
-    eye3 = Eigen::Matrix3d::Identity(3, 3);
+    eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity();
     dt = 0.005;
     this->nav = nav_;
-    _acce_pre = Vec3d(imu.acce);
-    _gyro_pre = Vec3d(imu.gyro);
+    _acce_pre = Vec3d{(RgioeFloatType)imu.acce[0],(RgioeFloatType)imu.acce[1],(RgioeFloatType)imu.acce[2]};
+    _gyro_pre = Vec3d((RgioeFloatType)imu.gyro[0],(RgioeFloatType)imu.gyro[1],(RgioeFloatType)imu.gyro[2]);
     Earth::Instance().Update(nav.pos[0], nav.pos[2]);
 }
 
@@ -191,7 +195,7 @@ void Ins::_extrapolate() {
     Vec3d epsilon_mid = Earth::Instance().omega_ie_e * dt / 2;
     Quad q_nn_mid = Convert::rv_to_quaternion(zeta_mid);
     Quad q_ee_mid = Convert::rv_to_quaternion(epsilon_mid).conjugate();
-    Quad q_ne_mid = q_ee_mid * nav.Qne * q_nn_mid;
+    QuadHp q_ne_mid = q_ee_mid.cast<fp64>() * nav.Qne * q_nn_mid.cast<fp64>();
     LatLon lat_lon_mid = Convert::qne_to_lla(q_ne_mid.normalized());
     pos_mid = {lat_lon_mid.latitude, lat_lon_mid.longitude, h_mid};
     /*重新计算重力和角速度*/

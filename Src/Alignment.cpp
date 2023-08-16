@@ -1,10 +1,10 @@
 //
 // Created by rebeater on 5/24/21.
 //
-#include "Define.h"
+#include "RgioeDefine.h"
 #include <InsCore.h>
 #include "Alignment.h"
-#include "matrix_lib.h"
+#include "RgioeMath.h"
 #include "Convert.h"
 
 #if ENABLE_FUSION_RECORDER
@@ -27,16 +27,16 @@ void AlignMoving::Update(const RgioeImuData &imu) {
     auto smoothed_imu = smooth.getSmoothedIMU();
     Vec3d scale = Vec3d{option.imuPara.as_ini[0], option.imuPara.as_ini[1], option.imuPara.as_ini[2]},
             bias = Vec3d{option.imuPara.ab_ini[0], option.imuPara.ab_ini[1], option.imuPara.ab_ini[2]},
-            acce = Vec3d{smoothed_imu.acce};
+            acce = Vec3Hp{smoothed_imu.acce}.cast<RgioeFloatType>();
     Mat3d eye3 = Mat3d::Identity();
     double dt = 1.0 / option.d_rate;
     Mat3d scale_mat = scale.asDiagonal();
     acce = (eye3 - scale_mat) * (acce - bias * dt);
-    nav.gb = Vec3d{smoothed_imu.gyro} * option.d_rate;
+    nav.gb = Vec3Hp{smoothed_imu.gyro}.cast<RgioeFloatType>() * option.d_rate;
     nav.gpst = imu.gpst;
     Vec3d vm = acce.normalized();
-    nav.atti[0] = asin(vm[1]) * (vm[2] > 0 ? 1 : -1);
-    nav.atti[1] = -asin(vm[0]) * (vm[2] > 0 ? 1 : -1);
+    nav.atti[0] = rgioe_asin(vm[1]) *  (vm[2] > 0 ? 1 : -1);
+    nav.atti[1] = -rgioe_asin(vm[0]) * (vm[2] > 0 ? 1 : -1);
     nav.Qbn = Convert::euler_to_quaternion(nav.atti);
     nav.Cbn = Convert::euler_to_dcm(nav.atti);
     flag_level_finished = true;
@@ -91,7 +91,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
         if (option.align_vel_threshold < v and v < 1e3) {
             nav.vn = distance + acce * dgpst / 2;
             nav.vel_std = {0.3, 0.3, 0.3};
-            nav.atti[2] = atan2(distance[1], distance[0]);
+            nav.atti[2] = rgioe_atan2(distance[1], distance[0]);
             nav.att_std[0] = 1 * _deg;
             nav.att_std[1] = 1 * _deg;
             nav.att_std[2] = 2 * _deg;
@@ -107,14 +107,18 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     nav.pos[1] = gnss.lon * _deg;
     nav.pos[2] = gnss.height;
     /*补偿杆臂影响*/
-    Vec3d vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
-                 1.0 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+    Vec3Hp vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + (RgioeFloatType)nav.pos[2]),
+                 1.0 / ((Earth::Instance().RN(nav.pos[0]) + (RgioeFloatType)nav.pos[2]) * cos(nav.pos[0])),
                  -1
     };
     Vec3d lb = {option.lb_gnss[0], option.lb_gnss[1], option.lb_gnss[2]};
-    Mat3d Dr = vdr.asDiagonal();
-    nav.pos -= Dr * nav.Cbn * lb;
-    /*补偿安z-axis影响*/
+    Mat3Hp Dr = vdr.asDiagonal();
+    Vec3Hp delta_pos = Dr * (nav.Cbn * lb).cast<fp64>();
+    Vec3Hp dpos = {
+            delta_pos[0],delta_pos[1],delta_pos[2]
+    };
+    nav.pos = nav.pos - dpos;
+    /* 补偿安z-axis影响 */
     Vec3d vec = Vec3d{0, 0, option.angle_bv[2]};
     Mat3d Cbv = Convert::euler_to_dcm(vec);
     nav.Cbn = nav.Cbn * Cbv;
@@ -145,7 +149,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     for (int i = 0; i < 3; ++i) {
         recorder.data.atti[i] = nav.atti[i];
         recorder.data.vn[i] = nav.vn[i];
-        recorder.data.pos[i] = nav.pos[i];
+        recorder.data.pos[i] = (float)nav.pos[i];
     }
     recorder.data.level_align_finished = flag_level_finished;
     recorder.data.yaw_align_finished = flag_yaw_finished;
@@ -173,7 +177,7 @@ smooth{1.6e-4, 2, 10}
 AlignBase::AlignBase() {
     nav.gpst = 0;
     auto zero = Vec3d::Zero();
-    nav.pos = zero;/*n-frame position(lat,lon,alt) :d/d/m*/
+    nav.pos = Vec3Hp::Zero();/*n-frame position(lat,lon,alt) :d/d/m*/
     nav.vn = zero;/*n-frame velocity North East Down :m/a*/
     nav.atti = zero;/*attitude forward right down :rad*/
 

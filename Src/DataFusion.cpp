@@ -108,7 +108,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
     }
 #endif
 /*initial kalman filter*/
-    kf = KalmanFilter<STATE_CNT, double>(Xd, P);
+    kf = KalmanFilter<STATE_CNT, RgioeFloatType>(Xd, P);
     lb_gnss = Vec3d{opt.lb_gnss[0], opt.lb_gnss[1], opt.lb_gnss[2]};
     lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
     _timeUpdateIdx = 0;
@@ -212,11 +212,13 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
  * @param Rk
  * @return 1
  */
-int DataFusion::MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk) {
+#include "glog/logging.h"
+int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
     Mat3X H = _posH();
     Vec3d z = _posZ(pos);
 
 #ifdef ENABLE_FUSION_RECORDER
+
     recorder_msg_meas_pos_t measPos = CREATE_RECORDER_MSG(meas_pos);
     measPos.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
@@ -245,7 +247,7 @@ int DataFusion::MeasureUpdatePos(const RgioeGnssData &gnssData) {
     if (GnssCheck(gnssData) > 0) {
         nav.info.sensors |= RgioeSensorType::SENSOR_GNSS;
         nav.info.gnss_mode = gnssData.mode;
-        Vec3d pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
+        Vec3Hp pos(gnssData.lat * _deg, gnssData.lon * _deg, gnssData.height);
         Mat3d Rk = Mat3d::Zero();
         Rk(0, 0) = gnssData.pos_std[0] * gnssData.pos_std[0] * opt.gnss_std_scale;
         Rk(1, 1) = gnssData.pos_std[1] * gnssData.pos_std[1] * opt.gnss_std_scale;
@@ -277,7 +279,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
         nav.info.sensors |= RgioeSensorType::SENSOR_NHC;
     } else {
         nav.info.sensors &= ~RgioeSensorType::SENSOR_NHC;
-        Eigen::Matrix<double, 1, 1> R;
+        Eigen::Matrix<RgioeFloatType, 1, 1> R;
         R(0, 0) = opt.odo_std * opt.odo_std;
         kf.Update<1>(H3.block<1, STATE_CNT>(0, 0), z.block<1, 1>(0, 0), R);
     }
@@ -294,7 +296,7 @@ int DataFusion::MeasureUpdateVel(const double &vel) {
     return MeasureUpdateVel({vel, 0, 0});
 }
 
-KalmanFilter<STATE_CNT, double>::MatXX DataFusion::TransferMatrix(const ImuPara &para) {
+KalmanFilter<STATE_CNT, RgioeFloatType>::MatXX DataFusion::TransferMatrix(const ImuPara &para) {
     static MatXX phi;
     double g = Earth::Instance().g;
     double rm = Earth::Instance().RM(nav.pos[0]);
@@ -339,23 +341,23 @@ KalmanFilter<STATE_CNT, double>::MatXX DataFusion::TransferMatrix(const ImuPara 
  * @return
  */
 int DataFusion::_feedBack() {
-    double lat = nav.pos[0];
-    double h = nav.pos[2];
-    double rn = Earth::Instance().RN(lat);
-    double rm = Earth::Instance().RM(lat);
-    Vec3d d_atti = Vec3d{kf.Xd[1] / (rn + h),
+    fp64 lat = nav.pos[0];
+    fp64 h = (fp64) nav.pos[2];
+    fp64 rn = Earth::Instance().RN(lat);
+    fp64 rm = Earth::Instance().RM(lat);
+    Vec3Hp d_atti = Vec3Hp{kf.Xd[1] / (rn + h),
                          -kf.Xd[0] / (rm + h),
                          -kf.Xd[1] * tan(lat) / (rn + h)
     };
-    Quad qnc = Convert::rv_to_quaternion(-d_atti);
-    nav.Qne = (nav.Qne * qnc).normalized();
+    QuadHp qnc = Convert::rv_to_quaternion_hp(-d_atti);
+    nav.Qne = (nav.Qne * qnc.cast<fp64>()).normalized();
     LatLon ll = Convert::qne_to_lla(nav.Qne);
     nav.pos[0] = ll.latitude;
     nav.pos[1] = ll.longitude;
     nav.pos[2] = nav.pos[2] + kf.Xd[2];
-    Mat3d Ccn = eye3 + Convert::skew(d_atti);
+    Mat3d Ccn = eye3 + Convert::skew(d_atti.cast<RgioeFloatType>());
     nav.vn = Ccn * (nav.vn - Vec3d{kf.Xd[3], kf.Xd[4], kf.Xd[5]});
-    Vec3d phi = Vec3d{kf.Xd[6], kf.Xd[7], kf.Xd[8]} + d_atti;
+    Vec3d phi = Vec3d{kf.Xd[6], kf.Xd[7], kf.Xd[8]} + d_atti.cast<RgioeFloatType>();
     Quad Qpn = Convert::rv_to_quaternion(phi);
     nav.Qbn = (Qpn * nav.Qbn).normalized();
     nav.Cbn = Convert::quaternion_to_dcm(nav.Qbn);
@@ -377,7 +379,7 @@ int DataFusion::_feedBack() {
     return 0;
 }
 
-KalmanFilter<STATE_CNT, double>::Mat3X DataFusion::_posH() const {
+KalmanFilter<STATE_CNT, RgioeFloatType>::Mat3X DataFusion::_posH() const {
     Mat3X mat_h = Mat3X::Zero();
     mat_h.block<3, 3>(0, 0) = eye3;
     mat_h.block<3, 3>(0, 6) = Convert::skew(nav.Cbn * lb_gnss);
@@ -391,7 +393,7 @@ KalmanFilter<STATE_CNT, double>::Mat3X DataFusion::_posH() const {
     return mat_h;
 }
 
-KalmanFilter<STATE_CNT, double>::Mat3X DataFusion::_velH() const {
+KalmanFilter<STATE_CNT, RgioeFloatType>::Mat3X DataFusion::_velH() const {
     Mat3d mat_h = Mat3d::Zero();
     mat_h.block<3, 3>(1, 3);
     Mat3d Cnv = Cbv * nav.Cbn.transpose();
@@ -413,11 +415,11 @@ KalmanFilter<STATE_CNT, double>::Mat3X DataFusion::_velH() const {
  * @param position in LatLon
  * @return
  */
-Vec3d DataFusion::_posZ(const Vec3d &pos) {
-    Vec3d re_ins = Convert::lla_to_xyz(nav.pos);
-    Vec3d re_gnss = Convert::lla_to_xyz(pos);
-    Mat3d cne = Convert::lla_to_cne({pos[0], pos[1]});
-    Vec3d z = nav.Cne.transpose() * (re_ins - re_gnss) + nav.Cbn * lb_gnss;
+Vec3d DataFusion::_posZ(const Vec3Hp &pos) {
+    Vec3Hp re_ins = Convert::lla_to_xyz(nav.pos);
+    Vec3Hp re_gnss = Convert::lla_to_xyz(pos);
+    Mat3Hp cne = Convert::lla_to_cne({pos[0], pos[1]});
+    Vec3d z = (nav.Cne.transpose() * (re_ins - re_gnss)).cast<RgioeFloatType>() + nav.Cbn * lb_gnss;
     return z;
 }
 
@@ -453,8 +455,8 @@ int DataFusion::MeasureZeroVelocity() {
     if (!opt.zupta_enable) return 1;
     Vec1X HzuptA = Vec1X::Zero();
     HzuptA(0, 11) = 1;/*z轴零偏*/
-    Eigen::Matrix<double, 1, 1> zputa{_gyro_pre[2] / dt};
-    Eigen::Matrix<double, 1, 1> Rzupta{opt.zupta_std * opt.zupta_std};
+    Eigen::Matrix<RgioeFloatType, 1, 1> zputa{_gyro_pre[2] / dt};
+    Eigen::Matrix<RgioeFloatType, 1, 1> Rzupta{opt.zupta_std * opt.zupta_std};
     kf.Update(HzuptA, zputa, Rzupta);
     return 0;
 }
@@ -481,8 +483,8 @@ float DataFusion::MeasureUpdateRelativeHeight(const double height) {
         Vec3d posZ = _posZ({nav.pos[0], nav.pos[1], gnss_height + height - p_height});
         Mat3X posH = _posH();
         Vec1X H = posH.block<1, STATE_CNT>(2, 0);
-        Eigen::Matrix<double, 1, 1> R{opt.zupta_std * opt.zupta_std};
-        Eigen::Matrix<double, 1, 1> z{posZ[2]};
+        Eigen::Matrix<RgioeFloatType, 1, 1> R{opt.zupta_std * opt.zupta_std};
+        Eigen::Matrix<RgioeFloatType, 1, 1> z{posZ[2]};
         kf.Update(H, z, R);
         update_flag |= FLAG_HEIGHT;
         nav.info.sensors |= SENSOR_HEIGHT;
@@ -529,18 +531,19 @@ bool DataFusion::RtsUpdate() {
 #endif
 
 NavOutput DataFusion::Output() const {
-    Vec3d projpos = nav.pos;
+    Vec3Hp projpos = nav.pos;
     Vec3d projatti = nav.atti;
     if (opt.output_project_enable) {
         Vec3d atti = Vec3d{opt.atti_project[0], opt.atti_project[1], opt.atti_project[2]};
         Mat3d Cnx = Convert::euler_to_dcm(atti);
         projatti = Convert::dcm_to_euler(nav.Cbn * Cnx);
-        Vec3d vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
-                     1.0 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+        Vec3Hp vdr = {1 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
+                     1 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
                      -1
         };
         Vec3d outlb = {opt.pos_project[0], opt.pos_project[1], opt.pos_project[2]};
-        projpos = nav.pos + vdr.asDiagonal() * nav.Cbn * outlb;
+        Vec3Hp delta_pos = vdr.asDiagonal() * (nav.Cbn * outlb).cast<fp64>();
+        projpos = nav.pos + delta_pos;
     }
     static NavOutput out;
     out.gpst = nav.gpst;
@@ -559,12 +562,12 @@ NavOutput DataFusion::Output() const {
     out.info = nav.info;
     out.week = nav.week;
     for (int i = 0; i < 3; i++) {
-        out.pos_std[i] = (float) sqrt(kf.P(0 + i, 0 + i));
-        out.vn_std[i] = (float) sqrt(kf.P(3 + i, 3 + i));
-        out.atti_std[i] = (float) sqrt(kf.P(6 + i, 6 + i));
+        out.pos_std[i] = (float) rgioe_sqrt(kf.P(0 + i, 0 + i));
+        out.vn_std[i] = (float) rgioe_sqrt(kf.P(3 + i, 3 + i));
+        out.atti_std[i] = (float) rgioe_sqrt(kf.P(6 + i, 6 + i));
     }
 #ifdef ENABLE_FUSION_RECORDER
-    static Vec3d first_pos = nav.pos;
+    static  Vec3Hp first_pos = nav.pos;
     recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
     result.timestamp = nav.gpst;
     Vec3d rpos = Earth::Instance().distance(nav.pos[0], nav.pos[1], first_pos[0], first_pos[1], nav.pos[2],

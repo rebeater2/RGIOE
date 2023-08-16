@@ -9,20 +9,20 @@
 #ifndef LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H
 #define LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H
 
-#define _PI 3.1415926535897932
-#define _hour 3600
-#define _minute 60
-#define _sqrt_h 60
-#define _deg (_PI/180.0)
-#define _mGal (1e-5)
-#define _ppm (1e-6)
-#define _knot (0.5144444)
+#define _PI ((RgioeFloatType)3.1415926535897932)
+#define _hour ((RgioeFloatType)3600)
+#define _minute ((RgioeFloatType)60)
+#define _sqrt_h ((RgioeFloatType)60)
+#define _deg ((RgioeFloatType)(_PI/180.0))
+#define _mGal ((RgioeFloatType)(1e-5))
+#define _ppm ((RgioeFloatType)(1e-6))
+#define _knot ((RgioeFloatType)(0.5144444))
 #ifdef __cplusplus
 #include <cstdint>
 #else
 #include <stdint.h>
 #endif
-#include "Define.h"
+#include "RgioeDefine.h"
 
 typedef struct {
   float acce_bias[3];

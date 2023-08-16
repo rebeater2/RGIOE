@@ -63,15 +63,15 @@ RgioeImuData IMUSmooth::getSmoothedIMU() {
  * 零速检测，返回滑动窗口内三轴陀螺仪的标准差，
  * @return
  */
-double IMUSmooth::getStd() {
-    return sqrt(imu_var.acce[0] + imu_var.acce[1] + imu_var.acce[2]);
+RgioeFloatType IMUSmooth::getStd() {
+    return sqrtf((RgioeFloatType)(imu_var.acce[0] + imu_var.acce[1] + imu_var.acce[2]));
 }
 
 bool IMUSmooth::isStatic() const {
     return is_static_;
 }
 
-IMUSmooth::IMUSmooth(double threshold, int static_width, int window) : static_std_threshold(threshold),
+IMUSmooth::IMUSmooth(float threshold, int static_width, int window) : static_std_threshold(threshold),
                                                                        static_width(static_width),
                                                                        width(window),
                                                                        is_static_(false),

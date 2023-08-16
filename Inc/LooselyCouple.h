@@ -7,7 +7,7 @@
 **/
 #ifndef LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
 #define LOOSELYCOUPLE2020_CPP_LOOSELYCOUPLE_H
-#include "Define.h"
+#include "RgioeDefine.h"
 #include "RgioeDataType.h"
 #ifdef __cplusplus
 extern "C" {

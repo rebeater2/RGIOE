@@ -1,7 +1,7 @@
 //
 // Created by rebeater on 2020/12/17.
 //
-#include "Define.h"
+#include "RgioeDefine.h"
 #include "RgioeDataType.h"
 #include "FileIO.h"
 #include "Config.h"

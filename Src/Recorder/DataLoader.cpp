@@ -19,7 +19,7 @@ file_offset{0} {
 void DataLoader::LoadFile(const std::string &filename) {
     std::ifstream ifs(filename, std::ios::binary);
     if (!ifs.good()) {
-        LOG(INFO) << "No such file " << filename;
+        error_strings.emplace_back( "No such file " + filename);
         return;
     }
     uint8_t *file_buffer;
@@ -31,7 +31,6 @@ void DataLoader::LoadFile(const std::string &filename) {
     file_buffer = new uint8_t[file_length];    // allocate memory for a buffer of appropriate dimension
     ifs.read((char *) file_buffer, (long long) file_length);       // read the whole file into the buffer
     ifs.close();                    // close file handle
-    LOG(INFO) << "file size:" << file_length / 1024 / 1024 << "Mb";
     file_offset = _loadHeader(file_buffer);
     header_size = file_offset;
     if (!file_offset) {

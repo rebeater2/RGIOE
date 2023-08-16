@@ -6,7 +6,7 @@
 * @version 1.0
 **/
 
-#include "matrix_lib.h"
+#include "RgioeMath.h"
 #include "FileIO.h"
 #include "Convert.h"
 #include <glog/logging.h>

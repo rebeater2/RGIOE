@@ -9,7 +9,7 @@
 #define LOOSELYCOUPLE2020_CPP_WGS84_H
 
 //#include "NavStruct.h"
-#include <matrix_lib.h>
+#include <RgioeMath.h>
 
 struct deltaPos {
   double dn;
@@ -30,31 +30,31 @@ class Earth {
 	return wgs;
   }
  public:
-  const double omega_e = 7.2921151467e-5; 				/*地球自转角速度 */
-  const double e2 = 0.00669437999013;					/*偏心率*/
-  const double g0 = 9.7803267715;						/*赤道重力加速度*/
-  const double GM = 3.986005e14;						/*万有引力常量GM=gR^2*/
-  const double mg = 1e-3 * g0;							/*1e-3 倍重力*/
-  const double ug = 1e-6 * g0;							/*ug*/
-  const double a = 6378137.0;							/*半长轴*/
-  double g = g0;										/*重力*/
-  Vec3d omega_ie_e = {0, 0, omega_e};
+  const RgioeFloatType omega_e = 7.2921151467e-5; 				/*地球自转角速度 */
+  const RgioeFloatType e2 = 0.00669437999013;					/*偏心率*/
+  const RgioeFloatType g0 = 9.7803267715;						/*赤道重力加速度*/
+  const RgioeFloatType GM = 3.986005e14;						/*万有引力常量GM=gR^2*/
+  const RgioeFloatType mg = 1e-3 * g0;							/*1e-3 倍重力*/
+  const RgioeFloatType ug = 1e-6 * g0;							/*ug*/
+  const RgioeFloatType a = 6378137.0;							/*半长轴*/
+    RgioeFloatType g = g0;										/*重力*/
+  Vec3d omega_ie_e = {0, 0, (RgioeFloatType)omega_e};
 
-  double RM(double lat) const;
+    fp64 RM(double lat) const;
 
-  double RN(double lat) const;
+    fp64 RN(double lat) const;
 
-  Vec3d omega_en_n(Vec3d vn, Vec3d pos) const;
+  Vec3d omega_en_n(const Vec3d &vn, const Vec3Hp &pos) const;
 
   Vec3d omega_ie_n(double lat) const;
 
   void Update(double lat, double h);
 
-  double dN(double lat1, double lat2) const;
-  double dN(double lat1, double lat2,double h1) const;
+    RgioeFloatType dN(double lat1, double lat2) const;
+    RgioeFloatType dN(double lat1, double lat2,double h1) const;
 
-  double dE(double lon1, double lon2,double lat) const;
-  double dE( double lon1, double lon2,double lat,double h) const;
+    RgioeFloatType dE(double lon1, double lon2,double lat) const;
+    RgioeFloatType dE( double lon1, double lon2,double lat,double h) const;
 
   /**
    * 地球表面两点之间距离

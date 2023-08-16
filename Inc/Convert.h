@@ -10,7 +10,7 @@
 #ifndef LOOSELYCOUPLE2020_CPP_CONVERT_H
 #define LOOSELYCOUPLE2020_CPP_CONVERT_H
 
-#include <matrix_lib.h>
+#include <RgioeMath.h>
 #include "RgioeDataType.h"
 
 class Convert {
@@ -21,6 +21,7 @@ class Convert {
    * @return Quaternion in terms of rotation vector
    */
   static Quad rv_to_quaternion(const Vec3d &rotation_vector);
+  static QuadHp rv_to_quaternion_hp(const Vec3Hp &rotation_vector);
 
 
   /**
@@ -60,7 +61,7 @@ class Convert {
    * @param q :Qne
    * @return latitude and longitude in rad
    */
-  static LatLon qne_to_lla(const Quad &q);
+  static LatLon qne_to_lla(const QuadHp &q);
 
 
   /**
@@ -68,7 +69,7 @@ class Convert {
    * @param ll latitude and longitude in rad
    * @return Qne
    */
-  static Quad lla_to_qne(const LatLon &ll);
+  static QuadHp lla_to_qne(const LatLon &ll);
 
 
   /**
@@ -76,7 +77,7 @@ class Convert {
    * @param ll latitude and longitude in rad
    * @return Cne
    */
-  static Mat3d lla_to_cne(const LatLon &ll);
+  static Mat3Hp lla_to_cne(const LatLon &ll);
 
 
   /**
@@ -84,7 +85,7 @@ class Convert {
    * @param lla latitude,longitude,height, the units are:rad rad m
    * @return (x,y,z) in ECEF, the unit is m
    */
-  static Vec3d lla_to_xyz(const Vec3d &lla);
+  static Vec3Hp lla_to_xyz(const Vec3Hp &lla);
 
 
   /**
@@ -112,6 +113,8 @@ class Convert {
    * @return  skew matrix
    */
   static Mat3d skew(const Vec3d &v);
+
+
 };
 
 #endif //LOOSELYCOUPLE2020_CPP_CONVERT_H

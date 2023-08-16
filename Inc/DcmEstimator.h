@@ -8,7 +8,7 @@
 
 #ifndef LOOSELYCOUPLE2020_CPP_INC_DCMESTIMATOR_H_
 #define LOOSELYCOUPLE2020_CPP_INC_DCMESTIMATOR_H_
-#include "matrix_lib.h"
+#include "RgioeMath.h"
 class DcmEstimator {
  public:
   DcmEstimator();

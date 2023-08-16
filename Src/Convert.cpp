@@ -16,25 +16,53 @@
  * @return
  */
 Quad Convert::rv_to_quaternion(const Vec3d &rotation_vector) {
-    double mag2 = rotation_vector.x() * rotation_vector.x();
+    RgioeFloatType mag2 = rotation_vector.x() * rotation_vector.x();
     mag2 += rotation_vector.y() * rotation_vector.y();
     mag2 += rotation_vector.z() * rotation_vector.z();
     if (mag2 < EIGEN_PI * EIGEN_PI) {
         mag2 *= 0.25;
-        double cs = 1.0 - mag2 / 2.0 * (1.0 - mag2 / 12.0 * (1 - mag2 / 30.0));
-        double sn = 1.0 - mag2 / 6.0 * (1.0 - mag2 / 20.0 * (1 - mag2 / 42.0));
-        return Quad{cs, 0.5 * sn * rotation_vector[0], 0.5 * sn * rotation_vector[1], 0.5 * sn * rotation_vector[2]};
+        RgioeFloatType cs = 1.0f - mag2 / 2.0f * (1.0f - mag2 / 12.0f * (1 - mag2 / 30.0f));
+        RgioeFloatType sn = 1.0f - mag2 / 6.0f * (1.0f - mag2 / 20.0f * (1 - mag2 / 42.0f));
+        return Quad{cs, 0.5f * sn * rotation_vector[0], 0.5f * sn * rotation_vector[1], 0.5f * sn * rotation_vector[2]};
     } else {
-        double mag = sqrt(mag2);
-        double s_mag = sin(mag / 2.);
+        RgioeFloatType mag = rgioe_sqrt(mag2);
+        RgioeFloatType s_mag = rgioe_sin(mag / 2);
         Quad q = Quad{
-                cos(mag / 2.),
+                rgioe_cos(mag / 2),
                 rotation_vector[0] * s_mag / mag,
                 rotation_vector[1] * s_mag / mag,
                 rotation_vector[2] * s_mag / mag,
         };
         if (q.w() < 0)
             q = Quad{
+                    -rgioe_cos(mag / 2),
+                    -rotation_vector[0] * s_mag / mag,
+                    -rotation_vector[1] * s_mag / mag,
+                    -rotation_vector[2] * s_mag / mag,
+            };
+        return q;
+    }
+}
+QuadHp Convert::rv_to_quaternion_hp(const Vec3Hp &rotation_vector) {
+    fp64 mag2 = rotation_vector.x() * rotation_vector.x();
+    mag2 += rotation_vector.y() * rotation_vector.y();
+    mag2 += rotation_vector.z() * rotation_vector.z();
+    if (mag2 < EIGEN_PI * EIGEN_PI) {
+        mag2 *= 0.25;
+        fp64 cs = 1.0f - mag2 / 2.0f * (1.0f - mag2 / 12.0f * (1 - mag2 / 30.0f));
+        fp64 sn = 1.0f - mag2 / 6.0f * (1.0f - mag2 / 20.0f * (1 - mag2 / 42.0f));
+        return QuadHp{cs, 0.5f * sn * rotation_vector[0], 0.5f * sn * rotation_vector[1], 0.5f * sn * rotation_vector[2]};
+    } else {
+        fp64 mag = sqrt(mag2);
+        fp64 s_mag = sin(mag / 2);
+        QuadHp q = QuadHp{
+                cos(mag / 2),
+                rotation_vector[0] * s_mag / mag,
+                rotation_vector[1] * s_mag / mag,
+                rotation_vector[2] * s_mag / mag,
+        };
+        if (q.w() < 0)
+            q = QuadHp{
                     -cos(mag / 2),
                     -rotation_vector[0] * s_mag / mag,
                     -rotation_vector[1] * s_mag / mag,
@@ -43,6 +71,7 @@ Quad Convert::rv_to_quaternion(const Vec3d &rotation_vector) {
         return q;
     }
 }
+
 /**
  * 反对称矩阵
  * @param v [x,y,z]
@@ -63,13 +92,14 @@ Mat3d Convert::skew(const Vec3d &v) {
     return m;
 }
 
+
 Mat3d Convert::rv_to_DCM(const Vec3d &rotation_vector) {
-    double norm = rotation_vector[0] * rotation_vector[0];
+    RgioeFloatType norm = rotation_vector[0] * rotation_vector[0];
     norm += rotation_vector[1] * rotation_vector[1];
     norm += rotation_vector[2] * rotation_vector[2];
     double s_qrt = sqrt(norm);
     auto sk = skew(rotation_vector);
-    Mat3d eye3 = Eigen::Matrix3d::Identity(3, 3);
+    Mat3d eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity(3, 3);
     return eye3 + sin(s_qrt) / (s_qrt) * sk + (1 - cos(s_qrt)) / (norm) * sk * sk;
 }
 
@@ -77,7 +107,7 @@ Mat3d Convert::quaternion_to_dcm(const Quad &q) {
     return Mat3d(q);
 }
 
-LatLon Convert::qne_to_lla(const Quad &q) {
+LatLon Convert::qne_to_lla(const QuadHp &q) {
     double a = atan(q.y() / q.w());
     double b = atan2(q.z(), q.w());
     double lat = -0.5 * _PI - 2 * a;
@@ -87,47 +117,47 @@ LatLon Convert::qne_to_lla(const Quad &q) {
 
 Vec3d Convert::dcm_to_euler(const Mat3d &dcm) {
 
-    double roll, pitch, heading;
-    pitch = atan(-dcm(2, 0) / sqrt(dcm(2, 1) * dcm(2, 1) + dcm(2, 2) * dcm(2, 2)));
+    RgioeFloatType roll, pitch, heading;
+    pitch = rgioe_atan(-dcm(2, 0) / rgioe_sqrt(dcm(2, 1) * dcm(2, 1) + dcm(2, 2) * dcm(2, 2)));
     if (dcm(2, 0) <= -0.999) {
         roll = NAN;
-        heading = atan2(dcm(1, 2) - dcm(0, 1), dcm(0, 2) + dcm(1, 1));
+        heading = rgioe_atan2(dcm(1, 2) - dcm(0, 1), dcm(0, 2) + dcm(1, 1));
     } else if (dcm(2, 0) >= 0.999) {
         roll = NAN;
-        heading = atan2(dcm(1, 2) + dcm(0, 1), dcm(0, 2) + dcm(1, 1)) + _PI;
+        heading = rgioe_atan2(dcm(1, 2) + dcm(0, 1), dcm(0, 2) + dcm(1, 1)) + _PI;
     } else {
-        roll = atan2(dcm(2, 1), dcm(2, 2));
-        heading = atan2(dcm(1, 0), dcm(0, 0));
+        roll = rgioe_atan2(dcm(2, 1), dcm(2, 2));
+        heading = rgioe_atan2(dcm(1, 0), dcm(0, 0));
     }
     return Vec3d{roll, pitch, heading};
 }
 
 Quad Convert::euler_to_quaternion(const Vec3d &euler) {
-    double roll = euler[0], pitch = euler[1], heading = euler[2];
-    double q0 = cos(roll / 2) * cos(pitch / 2) * cos(heading / 2) + sin(roll / 2) * sin(pitch / 2) * sin(
+    RgioeFloatType roll = euler[0], pitch = euler[1], heading = euler[2];
+    RgioeFloatType q0 = rgioe_cos(roll / 2) * rgioe_cos(pitch / 2) * rgioe_cos(heading / 2) + rgioe_sin(roll / 2) * rgioe_sin(pitch / 2) * rgioe_sin(
             heading / 2);
-    double q1 = sin(roll / 2) * cos(pitch / 2) * cos(heading / 2) - cos(roll / 2) * sin(pitch / 2) * sin(
+    RgioeFloatType q1 = rgioe_sin(roll / 2) * rgioe_cos(pitch / 2) * rgioe_cos(heading / 2) - rgioe_cos(roll / 2) * rgioe_sin(pitch / 2) * rgioe_sin(
             heading / 2);
-    double q2 = cos(roll / 2) * sin(pitch / 2) * cos(heading / 2) + sin(roll / 2) * cos(pitch / 2) * sin(
+    RgioeFloatType q2 = rgioe_cos(roll / 2) * rgioe_sin(pitch / 2) * rgioe_cos(heading / 2) + rgioe_sin(roll / 2) * rgioe_cos(pitch / 2) * rgioe_sin(
             heading / 2);
-    double q3 = cos(roll / 2) * cos(pitch / 2) * sin(heading / 2) - sin(roll / 2) * sin(pitch / 2) * cos(
+    RgioeFloatType q3 = rgioe_cos(roll / 2) * rgioe_cos(pitch / 2) * rgioe_sin(heading / 2) - rgioe_sin(roll / 2) * rgioe_sin(pitch / 2) * rgioe_cos(
             heading / 2);
     return Quad{q0, q1, q2, q3};
 }
 
 
 Mat3d Convert::euler_to_dcm(const Vec3d &euler) {
-    double phi = euler[0], theta = euler[1], psi = euler[2];
+    RgioeFloatType phi = euler[0], theta = euler[1], psi = euler[2];
     Mat3d c;
-    c(0, 0) = cos(theta) * cos(psi);
-    c(0, 1) = -cos(phi) * sin(psi) + sin(phi) * sin(theta) * cos(psi);
-    c(0, 2) = sin(phi) * sin(psi) + cos(phi) * sin(theta) * cos(psi);
-    c(1, 0) = cos(theta) * sin(psi);
-    c(1, 1) = cos(phi) * cos(psi) + sin(phi) * sin(theta) * sin(psi);
-    c(1, 2) = -sin(phi) * cos(psi) + cos(phi) * sin(theta) * sin(psi);
-    c(2, 0) = -sin(theta);
-    c(2, 1) = sin(phi) * cos(theta);
-    c(2, 2) = cos(phi) * cos(theta);
+    c(0, 0) = rgioe_cos(theta) * rgioe_cos(psi);
+    c(0, 1) = -rgioe_cos(phi) * rgioe_sin(psi) + rgioe_sin(phi) * rgioe_sin(theta) * rgioe_cos(psi);
+    c(0, 2) = rgioe_sin(phi) * rgioe_sin(psi) + rgioe_cos(phi) * rgioe_sin(theta) * rgioe_cos(psi);
+    c(1, 0) = rgioe_cos(theta) * rgioe_sin(psi);
+    c(1, 1) = rgioe_cos(phi) * rgioe_cos(psi) + rgioe_sin(phi) * rgioe_sin(theta) * rgioe_sin(psi);
+    c(1, 2) = -rgioe_sin(phi) * rgioe_cos(psi) + rgioe_cos(phi) * rgioe_sin(theta) * rgioe_sin(psi);
+    c(2, 0) = -rgioe_sin(theta);
+    c(2, 1) = rgioe_sin(phi) * rgioe_cos(theta);
+    c(2, 2) = rgioe_cos(phi) * rgioe_cos(theta);
     return c;
 }
 
@@ -141,18 +171,18 @@ Mat3d Convert::euler_to_dcm(const Vec3d &euler) {
         q3 =  cos(phi) *  sin(lamda)
         return Quaternion(q0, q1, q2, q3)
     */
-Quad Convert::lla_to_qne(const LatLon &ll) {
-    double phi = -0.25 * _PI - 0.5 * ll.latitude;
-    double lamda = 0.5 * ll.longitude;
-    double q0 = cos(phi) * cos(lamda);
-    double q1 = -sin(phi) * sin(lamda);
-    double q2 = sin(phi) * cos(lamda);
-    double q3 = cos(phi) * sin(lamda);
-    return Quad{q0, q1, q2, q3};
+QuadHp Convert::lla_to_qne(const LatLon &ll) {
+    fp64 phi = -0.25 * _PI - 0.5 * ll.latitude;
+    fp64 lamda = 0.5 * ll.longitude;
+    fp64 q0 = cos(phi) * cos(lamda);
+    fp64 q1 = -sin(phi) * sin(lamda);
+    fp64 q2 = sin(phi) * cos(lamda);
+    fp64 q3 = cos(phi) * sin(lamda);
+    return QuadHp{q0, q1, q2, q3};
 }
 
-Mat3d Convert::lla_to_cne(const LatLon &ll) {
-    Mat3d dcm;
+Mat3Hp Convert::lla_to_cne(const LatLon &ll) {
+    Mat3Hp dcm;
     double lat = ll.latitude, lon = ll.longitude;
     dcm(0, 0) = -sin(lat) * cos(lon);
     dcm(0, 1) = -sin(lon);
@@ -170,14 +200,15 @@ Vec3d Convert::gyro_to_rv(const Vec3d &gyro, const  Vec3d &gyro_pre) {
     return gyro + gyro_pre.cross(gyro) / 12.0;
 }
 
-Vec3d Convert::lla_to_xyz(const Eigen::Vector3d &lla) {
-    Vec3d re = Vec3d::Zero();
-    double rn = Earth::Instance().RN(lla[0]);
+Vec3Hp Convert::lla_to_xyz(const Vec3Hp &lla) {
+    Vec3Hp re = Vec3Hp::Zero();
+    fp64 rn = Earth::Instance().RN(lla[0]);
     re[0] = (rn + lla[2]) * cos(lla[0]) * cos(lla[1]);
     re[1] = (rn + lla[2]) * cos(lla[0]) * sin(lla[1]);
     re[2] = (rn * (1 - Earth::Instance().e2) + lla[2]) * sin(lla[0]);
-
-//    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"lla "<<lla.transpose();
-//    LOG_FIRST_N(INFO,10)<<std::setprecision(10)<<"re "<<re.transpose();
     return re;
 }
+
+
+
+

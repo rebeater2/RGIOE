@@ -39,7 +39,7 @@ private:
     Singleton &operator=(const Singleton &rhs) {}
 };
 
-#define USE_MATRIX_WITH_KALMAN_DIM(type) using type = KalmanFilter<STATE_CNT, double>::type
+#define USE_MATRIX_WITH_KALMAN_DIM(type) using type = KalmanFilter<STATE_CNT, RgioeFloatType>::type
 
 class DataFusion : public Ins {
 public:
@@ -79,7 +79,7 @@ public:
      * @param Rk error matrix of the position
      * @return 0
      */
-    int MeasureUpdatePos(const Vec3d &pos, const Mat3d &Rk);
+    int MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk);
 
     /**
      * GNSS position update for extend kalman filter.
@@ -145,7 +145,7 @@ public:
     DcmEstimator estimator_{};            /*DCM estimator for install angle */
 public:
     /*base private*/
-    KalmanFilter<STATE_CNT, double> kf;
+    KalmanFilter<STATE_CNT, RgioeFloatType> kf;
     MatXX Q0;                            /*Matrix for Q*/
     Vec3d lb_gnss;                        /*Gnss level arm in meter*/
     Vec3d lb_wheel;                    /*wheel level arm in meter*/
@@ -163,10 +163,10 @@ public:
 #endif
     uint32_t _timeUpdateIdx;                /*number of time updates*/
 private:
-    KalmanFilter<STATE_CNT, double>::Mat3X _posH() const;                    /* mat H for position update*/
+    KalmanFilter<STATE_CNT, RgioeFloatType>::Mat3X _posH() const;                    /* mat H for position update*/
     Mat3X _velH() const;    /* mat H for velocity update*/
     IMUSmooth smooth;    /*Static detector*/
-    Vec3d _posZ(const Vec3d &pos);        /* calculate delta Z*/
+    Vec3d _posZ(const Vec3Hp &pos);        /* calculate delta Z*/
     int _feedBack();                     /*feedback for position,velocity and height*/
 
 private:

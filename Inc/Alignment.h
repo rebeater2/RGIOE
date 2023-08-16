@@ -17,7 +17,7 @@
  *  nav = Align.getNav();
  *
  */
-#include "matrix_lib.h"
+#include "RgioeMath.h"
 #include "InsCore.h"
 #include "StaticDetect.h"
 
@@ -47,7 +47,7 @@ class AlignMoving : public AlignBase {
   RgioeOption option;
   Vec3d vn_pre;
   Vec3d acc_pre;
-  double gpst_pre;
+  double gpst_pre{};
 };
 
 class AlignStatic : public AlignBase {
