@@ -6,7 +6,7 @@
 #define RGIOE_APP_UIDATAFUSION_NAVPLOT_H_
 
 #include "FileIO.h"
-#include "RgioeDataType.h"
+#include "../../Src/RgioeDataType.h"
 #include <QMainWindow>
 #include <qwt_plot_curve.h>
 

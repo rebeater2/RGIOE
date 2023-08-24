@@ -1,14 +1,14 @@
 //
 // Created by rebeater on 2020/12/17.
 //
-#include "RgioeDefine.h"
-#include "RgioeDataType.h"
+#include "../Src/RgioeDefine.h"
+#include "../Src/RgioeDataType.h"
 #include "FileIO.h"
 #include "../App/AppCommon/Config.h"
 #include "DataFusion.h"
 #include "../App/AppCommon/NavLog.h"
 #include "Timer.h"
-#include <Alignment.h>
+#include "../Src/Alignment.h"
 
 void navExit(const std::string &info) {
   loge << info;

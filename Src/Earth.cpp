@@ -5,7 +5,7 @@
 * @date: 2020/11/11 
 * @version: 1.0.0
 **/
-#include <Earth.h>
+#include "Earth.h"
 
 Vec3d Earth::omega_en_n(const Vec3d &vn, const Vec3Hp &pos) const {
     double h = pos.z(), lat = pos.x();

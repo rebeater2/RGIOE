@@ -8,7 +8,7 @@
 
 #include <string>
 #include "FileIO.h"
-#include "Earth.h"
+#include "../Src/Earth.h"
 
 struct NavBin {
     double gpst;

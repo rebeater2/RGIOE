@@ -6,9 +6,9 @@
 * @version 1.0
 **/
 
-#include "RgioeMath.h"
+#include "../Src/RgioeMath.h"
 #include "FileIO.h"
-#include "Convert.h"
+#include "../Src/Convert.h"
 #include <glog/logging.h>
 #include "Eigen/Dense"
 #include <string>

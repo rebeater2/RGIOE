@@ -43,7 +43,7 @@ add_library(LooselyCouple STATIC
         Src/Alignment.cpp
         Src/StaticDetect.cpp
         Src/Recorder/Recorder.cpp
-        Inc/StaticDetect.h)
+        Src/StaticDetect.h)
 set_target_properties(LooselyCouple PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1

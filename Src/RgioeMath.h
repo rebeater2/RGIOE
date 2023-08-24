@@ -10,13 +10,14 @@
 #ifndef LOOSELYCOUPLE2020_CPP_MATRIX_LIB_H
 #define LOOSELYCOUPLE2020_CPP_MATRIX_LIB_H
 // workaround issue between gcc >= 4.7 and cuda 5.5
-#if (defined __GNUC__) && (__GNUC__>4 || __GNUC_MINOR__>=7)
+#if (defined __GNUC__) && (__GNUC__ > 4 || __GNUC_MINOR__ >= 7)
 #undef _GLIBCXX_ATOMIC_BUILTINS
 #undef _GLIBCXX_USE_INT128
 #endif
+
 #include<Eigen/Dense>
 #include<Eigen/Eigen>
-#include <RgioeDefine.h>
+#include "RgioeDefine.h"
 
 #if RGIOE_CONFIG_PRECISE == FP64
 #define rgioe_sin sin
@@ -58,5 +59,4 @@ typedef Eigen::Matrix2f Mat2d;
 typedef Eigen::Quaternion<RgioeFloatType> Quad;
 typedef Eigen::Quaternion<fp64> QuadHp;
 #endif
-#define SHOW(var) LOG_FIRST_N(INFO,10) << #var <<" "<< var
 #endif //LOOSELYCOUPLE2020_CPP_MATRIX_LIB_H

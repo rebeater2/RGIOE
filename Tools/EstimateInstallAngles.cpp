@@ -8,8 +8,8 @@
 
 #include <FileIO.h>
 #include <glog/logging.h>
-#include "DcmEstimator.h"
-#include "Convert.h"
+#include "../Src/DcmEstimator.h"
+#include "../Src/Convert.h"
 
 int main(int argc, char **argv) {
     google::InitGoogleLogging(".");

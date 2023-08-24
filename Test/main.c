@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 
-#include "LooselyCouple.h"
+#include "../Src/LooselyCouple.h"
 
 /**/
 

@@ -7,10 +7,10 @@
 **/
 #include "DataFusionThread.h"
 #include "DataFusion.h"
-#include "Alignment.h"
+#include "../../Src/Alignment.h"
 #include "FileIO.h"
 #include "Timer.h"
-#include "Outage.h"
+#include "../../Src/Outage.h"
 #include <glog/logging.h>
 
 void DataFusionThread::run() {

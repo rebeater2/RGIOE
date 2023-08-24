@@ -5,7 +5,7 @@
 #ifndef LOOSELYCOUPLE2020_CPP_DATAFUSION_H
 #define LOOSELYCOUPLE2020_CPP_DATAFUSION_H
 
-#include "../Src/KalmanFilter.hpp"
+#include "KalmanFilter.hpp"
 #include "InsCore.h"
 #include "StaticDetect.h"
 #include "DcmEstimator.h"
@@ -102,7 +102,7 @@ public:
      * @param vel: forward velocity
      * @return 0
      */
-    int MeasureUpdateVel(const double &vel);
+    int MeasureUpdateVel(const fp32 &vel);
 
     /**
      * pressure height update

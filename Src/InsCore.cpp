@@ -5,8 +5,8 @@
 * @date: 2020/11/10
 * @version: 1.0.0
 **/
-#include <InsCore.h>
-#include <Earth.h>
+#include "InsCore.h"
+#include "Earth.h"
 
 using namespace std;
 
@@ -59,7 +59,7 @@ NavEpoch makeNavEpoch(NavOutput nav_, RgioeOption opt) {
 }
 
 int Ins::_velocity_update(const Vec3d &acce, const Vec3d &gyro) {
-    Vec3d gn = {0, 0, (RgioeFloatType)Earth::Instance().g};
+    Vec3d gn = {0, 0, (RgioeFloatType) Earth::Instance().g};
     Vec3d v_g_cor = (gn - (2 * omega_ie_n + omega_en_n).cross(nav.vn)) * dt;
     Vec3d zeta_mid = (omega_en_n + omega_ie_n) * dt;
     Vec3d vf_kb_k1 = acce + 0.5 * gyro.cross(acce) + (_gyro_pre.cross(acce) + _acce_pre.cross(gyro)) / 12.0;
@@ -119,8 +119,8 @@ int Ins::_atti_update(const Vec3d &gyro) {
  */
 int Ins::ForwardMechanization(const RgioeImuData &imuData) {
 #if USE_INCREMENT == 1
-    Vec3d acce{(RgioeFloatType)imuData.acce[0], (RgioeFloatType)imuData.acce[1], (RgioeFloatType)imuData.acce[2]};
-    Vec3d gyro{(RgioeFloatType)imuData.gyro[0], (RgioeFloatType)imuData.gyro[1], (RgioeFloatType)imuData.gyro[2]};
+    Vec3d acce{(RgioeFloatType) imuData.acce[0], (RgioeFloatType) imuData.acce[1], (RgioeFloatType) imuData.acce[2]};
+    Vec3d gyro{(RgioeFloatType) imuData.gyro[0], (RgioeFloatType) imuData.gyro[1], (RgioeFloatType) imuData.gyro[2]};
 #else
     Vec3d acce{imuData.acce[0] * dt * Earth::Instance().g, imuData.acce[1] * dt * Earth::Instance().g, imuData.acce[2] * Earth::Instance().g * dt};
     Vec3d gyro{imuData.gyro[0] * dt, imuData.gyro[1] * dt, imuData.gyro[2] * dt};
@@ -154,7 +154,7 @@ Vec3d Ins::CompensateIMU(const Vec3d &imu, const Vec3d &bias, const Vec3d &scale
 }
 
 Ins::Ins() {
-    eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity();
+    eye3 = Eigen::Matrix<RgioeFloatType, 3, 3>::Identity();
     int d_rate = 100;
     dt = 1.0 / d_rate;
     _acce_pre.setZero();
@@ -165,7 +165,7 @@ Ins::Ins() {
 Ins::~Ins() = default;
 
 void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
-    eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity();
+    eye3 = Eigen::Matrix<RgioeFloatType, 3, 3>::Identity();
     dt = 1.0 / d_rate;
     nav = nav_;
     _gyro_pre.setZero();
@@ -175,11 +175,11 @@ void Ins::InitializePva(const NavEpoch &nav_, const int d_rate) {
 }
 
 void Ins::InitializePva(const NavEpoch &nav_, const RgioeImuData &imu) {
-    eye3 = Eigen::Matrix<RgioeFloatType,3,3>::Identity();
+    eye3 = Eigen::Matrix<RgioeFloatType, 3, 3>::Identity();
     dt = 0.005;
     this->nav = nav_;
-    _acce_pre = Vec3d{(RgioeFloatType)imu.acce[0],(RgioeFloatType)imu.acce[1],(RgioeFloatType)imu.acce[2]};
-    _gyro_pre = Vec3d((RgioeFloatType)imu.gyro[0],(RgioeFloatType)imu.gyro[1],(RgioeFloatType)imu.gyro[2]);
+    _acce_pre = Vec3d{(RgioeFloatType) imu.acce[0], (RgioeFloatType) imu.acce[1], (RgioeFloatType) imu.acce[2]};
+    _gyro_pre = Vec3d((RgioeFloatType) imu.gyro[0], (RgioeFloatType) imu.gyro[1], (RgioeFloatType) imu.gyro[2]);
     Earth::Instance().Update(nav.pos[0], nav.pos[2]);
 }
 

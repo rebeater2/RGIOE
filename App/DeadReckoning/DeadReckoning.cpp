@@ -1,15 +1,15 @@
 //
 // Created by rebeater on 2020/12/17.
 //
-#include "RgioeDefine.h"
-#include "RgioeDataType.h"
+#include "../../Src/RgioeDefine.h"
+#include "../../Src/RgioeDataType.h"
 #include "FileIO.h"
 #include "Config.h"
 #define GLOG_OUTPUT 1
 #include "DataFusion.h"
 #include "NavLog.h"
 #include "Timer.h"
-#include <Alignment.h>
+#include "../../Src/Alignment.h"
 
 void navExit(const std::string &info) {
   loge << info;

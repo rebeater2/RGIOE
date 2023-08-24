@@ -6,6 +6,8 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 
+add_compile_options(-O2)
+
 include_directories(${CMAKE_HOME_DIRECTORY}/Inc)
 include_directories(${CMAKE_HOME_DIRECTORY}/Src)
 include_directories(../AppCommon)

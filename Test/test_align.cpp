@@ -1,7 +1,7 @@
 //
 // Created by rebeater on 5/24/21.
 //
-#include "Alignment.h"
+#include "../Src/Alignment.h"
 #include <fstream>
 #include <iostream>
 #include "FileIO.h"

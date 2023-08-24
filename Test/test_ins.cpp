@@ -2,7 +2,7 @@
 // Created by rebeater on 2020/11/10.
 //
 
-#include <InsCore.h>
+#include "../Src/InsCore.h"
 #include <iostream>
 #include <fstream>
 #include "FileIO.h"

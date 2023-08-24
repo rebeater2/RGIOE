@@ -19,7 +19,7 @@
 #include <thread>
 #include <fstream>
 #include <condition_variable>
-#include "RgioeDataType.h"
+#include "../../Src/RgioeDataType.h"
 #include <atomic>
 
 using std::ostream;

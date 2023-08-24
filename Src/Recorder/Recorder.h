@@ -100,7 +100,7 @@ public:
 
 private:
     std::ofstream ofs;
-    char rcd_filename[128];
+    char rcd_filename[128]{};
     uint8_t *header_buffer;
     std::map<uint32_t, DataSetConfig> header_config;
 private:

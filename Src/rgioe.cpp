@@ -6,60 +6,60 @@
 * @version 1.0
 **/
 #include "rgioe.h"
-#include <DataFusion.h>
-#include <Alignment.h>
+#include "DataFusion.h"
+#include "Alignment.h"
 
 #define ENABLE_DEFAULT_OPTION
 #ifdef ENABLE_DEFAULT_OPTION
 const ImuPara default_imupara{0.15 * _deg / _sqrt_h, 0.25 / _sqrt_h,
-    -0 * _mGal, 0 * _mGal, -0 * _mGal,
-    0 * _deg / _hour, -0 * _deg / _hour, 0 * _deg / _hour,
-    0, 0, 0,
-    0, 0, 0,
-    3.6 * _mGal, 3.6 * _mGal, 3.6 * _mGal,
-    3 * _deg / _hour, 3 * _deg / _hour, 3 * _deg / _hour,
-    1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
-    1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
-    1 * _hour, 1 * _hour
+                              -0 * _mGal, 0 * _mGal, -0 * _mGal,
+                              0 * _deg / _hour, -0 * _deg / _hour, 0 * _deg / _hour,
+                              0, 0, 0,
+                              0, 0, 0,
+                              3.6 * _mGal, 3.6 * _mGal, 3.6 * _mGal,
+                              3 * _deg / _hour, 3 * _deg / _hour, 3 * _deg / _hour,
+                              1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
+                              1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
+                              1 * _hour, 1 * _hour
 };
 NavOutput init_pva{0, 0, 0, 0};
 RgioeOption default_option{
-    .imuPara=default_imupara,
-    .d_rate = 125,
-    .align_mode=RgioeAlignMode::ALIGN_USE_GIVEN,
-    .align_vel_threshold = 1.4,
-    .enable_gnss = 1,
-    .lb_gnss={0, 0, 0},
-    .gnss_std_scale = 1.0,
-    .nhc_enable=1,
-    .nhc_std= {0.1, 0.1},
-    .zupt_enable=1,
-    .zupt_std=0.01,
-    .zupta_enable = 1,
-    .zupta_std=0.01 * _deg,
-    .odo_enable = 0,
-    .odo_std = 0.1,
-    .odo_scale = 1.14,
-    .odo_scale_std  = 0,
-    .lb_wheel={-0.317, -0.095, 0.03},
-    .angle_bv={0, 0, 0},
-    .pos_std={1, 1, 1},
-    .vel_std={2, 2, 2},
-    .atti_std={10 * _deg, 10 * _deg, 10 * _deg},
-    .output_project_enable = 0,/*输出投影*/
-    .pos_project = {0, 0, 0},/*投影到目标位置*/
-    .atti_project = {0, 0, 0},/*投影到目标姿态*/
-    .enable_rts = 0
+        .imuPara=default_imupara,
+        .d_rate = 125,
+        .align_mode=RgioeAlignMode::ALIGN_USE_GIVEN,
+        .align_vel_threshold = 1.4,
+        .enable_gnss = 1,
+        .lb_gnss={0, 0, 0},
+        .gnss_std_scale = 1.0,
+        .nhc_enable=1,
+        .nhc_std= {0.1, 0.1},
+        .zupt_enable=1,
+        .zupt_std=0.01,
+        .zupta_enable = 1,
+        .zupta_std=0.01 * _deg,
+        .odo_enable = 0,
+        .odo_std = 0.1,
+        .odo_scale = 1.14,
+        .odo_scale_std  = 0,
+        .lb_wheel={-0.317, -0.095, 0.03},
+        .angle_bv={0, 0, 0},
+        .pos_std={1, 1, 1},
+        .vel_std={2, 2, 2},
+        .atti_std={10 * _deg, 10 * _deg, 10 * _deg},
+        .output_project_enable = 0,/*输出投影*/
+        .pos_project = {0, 0, 0},/*投影到目标位置*/
+        .atti_project = {0, 0, 0},/*投影到目标姿态*/
+        .enable_rts = 0
 };
 #endif
 
 /** <h2> global variables*/
 struct RgioeData_t {
-  DataFusion df;
-  AlignMoving am;
-  float time_delay{};
+    DataFusion df;
+    AlignMoving am;
+    float time_delay{};
 #if RGIOE_REALTIME_DEBUG == 1
-  int (*trace)(const char *fmt, ...);
+    int (*trace)(const char *fmt, ...);
 #endif
 };
 
@@ -187,6 +187,7 @@ rgioe_error_t rgioe_get_pos(void *rgioe_dev, double pos[3], float *std) {
     }
     return RGIOE_OK;
 }
+
 /**
  * <h3> get velocity from rgioe
  * @param rgioe_dev

@@ -13,6 +13,7 @@
 #define RGIOE_RGIOEDEFINE_H
 
 #include "RgioeConfig.h"
+
 #define BASE_STATE 15
 /*系统状态量组成为 []表示可选：
  * 位置(3) 速度(3) 姿态(3) 加速度零偏(3) 陀螺零偏(3) [陀螺比例因子(3)] [加速度计比例因子] [杆臂(3)] [里程计比例因子(1)]

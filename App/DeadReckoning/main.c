@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #define USE_YAML 1
-#include <LooselyCouple.h>
+#include "../../Src/LooselyCouple.h"
 #include "ReadConfig.h"
 
 /**/

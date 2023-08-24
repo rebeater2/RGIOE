@@ -15,8 +15,8 @@
 #include "navplay/gnss.h"
 #include "navplay/vel.h"
 
-#include "Earth.h"
-#include "Convert.h"
+#include "../../../../../Src/Earth.h"
+#include "../../../../../Src/Convert.h"
 #include "NavRawReader.h"
 #include "glog/logging.h"
 #include "fmt/format.h"

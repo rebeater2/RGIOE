@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 #include "RgioeConfig.h"
-#include "RgioeDataType.h"
+#include "../Src/RgioeDataType.h"
 
 #define RGIOE_REALTIME_DEBUG 0
 

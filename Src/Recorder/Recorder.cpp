@@ -29,7 +29,7 @@ Recorder::Recorder() {
     header_buffer = new uint8_t[RECORDER_HEADER_MAX_LENGTH];
     /*create header config*/
 #ifdef RECORDER_HEADERCONFIG
-    RECORDER_HEADERCONFIG;
+    RECORDER_HEADERCONFIG
 #endif
 }
 

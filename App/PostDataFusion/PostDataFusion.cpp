@@ -160,26 +160,16 @@ int main(int argc, char *argv[]) {
                 gnss.mode = GnssMode::INVALID;/*手动设置GNSS模式为INVALID*/
             }
             df.MeasureUpdatePos(gnss);
-            gnss_reader.ReadNext(gnss);
-            if (!gnss_reader.IsOk()) {
-                LOG(WARNING) << "Gnss read failed" << gnss;
-            }
-        }
-        while (gnss.gpst < imu.gpst) {
-            if (!gnss_reader.ReadNext(gnss)) {
-                LOG(WARNING) << "Gnss read failed" << gnss;
-            }
+            do{
+                if(!gnss_reader.ReadNext(gnss)){
+                    LOG(WARNING) << "gnss read failed";
+                }
+            }while(gnss_reader.IsOk() && gnss.gpst < imu.gpst);
         }
         /*里程计更新*/
         if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.2 / opt.d_rate) {
             df.MeasureUpdateVel(vel.forward);
             Vec3d angle = df.estimator_.GetEulerAngles().transpose();
-            LOG_EVERY_N(INFO, 100 * opt.d_rate) << fmt::format("Odo update {:.4f} {} {} {}",
-                                                               vel.gpst,
-                                                               angle[0] / _deg,
-                                                               angle[1] / _deg,
-                                                               angle[2] / _deg
-                );
             do {
                 if (!podoReader->ReadNext(vel)) {
                     LOG(WARNING) << "vel read failed" << vel.gpst;
@@ -228,12 +218,12 @@ int main(int argc, char *argv[]) {
     LOG_IF(INFO, config.outage_config.enable)
                     << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
                     << config.outage_config.stop;
-    LOG(INFO) << "The result is saved to " << config.output_config.file_path;
+    LOG(INFO) << "\tThe result is saved to " << config.output_config.file_path;
 #if ESTIMATE_GNSS_LEVEL_ARM == 1
     LOG(INFO) << "Final lever arm:" << df.lb_gnss.transpose();
 #endif
 #ifdef ENABLE_FUSION_RECORDER
-    LOG(INFO) << "Recorder was saved to " << Recorder::GetInstance().GetRcdFilename();
+    LOG(INFO) << "\tRecorder was saved to " << Recorder::GetInstance().GetRcdFilename();
 #endif
     return 0;
 }

@@ -288,7 +288,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
     return 0;
 }
 
-int DataFusion::MeasureUpdateVel(const double &vel) {
+int DataFusion::MeasureUpdateVel(const fp32 &vel) {
     /* Vec3d w_ib = _gyro_pre * opt.d_rate;
      Vec3d w_nb_b = w_ib - nav.Cbn.transpose() * (omega_ie_n + omega_en_n);
      Vec3d v_v = nav.Cbn.transpose() * (nav.vn + Cbv * (omega_ie_n + omega_en_n));
