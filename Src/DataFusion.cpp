@@ -212,23 +212,23 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
  * @param Rk
  * @return 1
  */
-#include "glog/logging.h"
+
 int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
     Mat3X H = _posH();
     Vec3d z = _posZ(pos);
-
+    kf.Update(H, z, Rk);
 #ifdef ENABLE_FUSION_RECORDER
-
     recorder_msg_meas_pos_t measPos = CREATE_RECORDER_MSG(meas_pos);
     measPos.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
         measPos.data.z[i] = z[i];
         measPos.data.r[i] = Rk(i, i);
     }
+    measPos.data.ak = kf.GetX2();
     CHECKSUM_RECORDER_CRC32(&measPos);
     Recorder::GetInstance().Record(&measPos);
 #endif
-    kf.Update(H, z, Rk);
+
     update_flag |= FLAG_POSITION;
     return 0;
 }

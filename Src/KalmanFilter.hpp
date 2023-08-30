@@ -50,6 +50,8 @@ public:
     void Update(const Eigen::Matrix<fp, obs_dim, dim> &H, const Eigen::Matrix<fp, obs_dim, 1> &Z,
                 const Eigen::Matrix<fp, obs_dim, obs_dim> &R);
 
+    fp GetX2() const;
+
     void RTSUpdate(const MatXX &phi, const MatXX &matP);
 
     void Reset();
@@ -63,12 +65,20 @@ public:
 public:
     MatXX P;
     MatXX Q0;
-    double dk = 1;
-    double b = 0.5;
-    double rmin = 1e-4;
-    double rmax = 0.01;
-    double rk = 0.01;
+    fp dk = 1;
+    fp b = 0.5;
+    fp rmin = 1e-4;
+    fp rmax = 0.01;
+    fp rk = 0.01;
+    fp ak = 0;
+    fp Td = 0.0006;
+    uint32_t reject_cnt = 0;
 };
+
+template<int dim, typename fp>
+fp KalmanFilter<dim, fp>::GetX2() const{
+    return ak;
+}
 
 template<int dim, typename fp>
 void KalmanFilter<dim, fp>::Reset() {
@@ -89,7 +99,17 @@ template<int dim, typename fp>
 template<int obs_dim>
 void KalmanFilter<dim, fp>::Update(const Eigen::Matrix<fp, obs_dim, dim> &H, const Eigen::Matrix<fp, obs_dim, 1> &obs,
                                    const Eigen::Matrix<fp, obs_dim, obs_dim> &R) {
-    Eigen::Matrix<fp, dim, obs_dim> K = P * H.transpose() * ((H * P * H.transpose() + R).inverse() + R);
+    /** 卡方检测 **/
+    Eigen::Matrix<fp, obs_dim, obs_dim> Cvk = (H * P * H.transpose() + R).inverse() + R;
+    ak = (obs.transpose() * Cvk.inverse() * obs).norm();
+    if(ak > Td ) {
+        reject_cnt ++;
+        return;
+    }
+    reject_cnt = 0;
+
+    /** Kalman Update*/
+    Eigen::Matrix<fp, dim, obs_dim> K = P * H.transpose() * Cvk;
     Xd = K * obs;
     MatXX temp = (Eigen::Matrix<fp, dim, dim>::Identity() - K * H);
     P = temp * P * temp.transpose() + K * R * K.transpose();

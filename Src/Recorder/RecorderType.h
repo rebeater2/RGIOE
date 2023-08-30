@@ -34,8 +34,10 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x21, kalman,
                      float acce_scale[3];
                      float gyro_bias[3];
                      float gyro_scale[3];
+                     float ak;
                      uint8_t update_flag;
                      uint32_t feedback_cnt;
+                     uint32_t reject_cnt;
                  }
 )
 #define RECORDER_kalman_ITEMS \
@@ -107,6 +109,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x23, meas_pos,
                  {
                      float z[3];
                      float r[3];
+                     float ak;
                  }
 )
 #define RECORDER_meas_pos_ITEMS \
@@ -117,6 +120,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x23, meas_pos,
 {RECORDER_TYPE_float,"r_0"},\
 {RECORDER_TYPE_float,"r_1"},\
 {RECORDER_TYPE_float,"r_2"},\
+{RECORDER_TYPE_float,"ak"},\
 }
 
 RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x24, state,
