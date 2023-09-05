@@ -25,6 +25,6 @@ unit-test-job:   # This job runs in the test stage.
   tags:
     - windows_compiler
   script:
-    - uname -a
+    - uname -a b
 
 
