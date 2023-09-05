@@ -42,6 +42,23 @@ private:
 #define USE_MATRIX_WITH_KALMAN_DIM(type) using type = KalmanFilter<STATE_CNT, RgioeFloatType>::type
 
 class DataFusion : public Ins {
+    class Monitor{
+    public:
+        void OnTimeUpdate();
+        void OnMeasUpdate();
+        void OnReject();
+        uint32_t GetMaxIntegrateIter() const;
+        uint32_t GetRejectCnt() const;
+        uint32_t GetEkfCnt() const;
+        uint32_t GetOutageCnt() const;
+    private:
+        uint32_t reject_cnt{0};
+        uint32_t no_update_cnt{0};
+        uint32_t meas_update_cnt{0};
+        uint32_t time_update_cnt{0};
+        uint32_t no_update_cnt_min{UINT32_MAX};
+        uint32_t no_update_cnt_max{0};
+    };
 public:
     USE_MATRIX_WITH_KALMAN_DIM(MatXX);
     USE_MATRIX_WITH_KALMAN_DIM(Mat3X);
@@ -152,6 +169,8 @@ public:
     Mat3d Cbv;                            /*Cbv,DCM from body frame to vehicle frame*/
     RgioeOption opt{};                         /*global RgioeOption for data fusion*/
     uint32_t update_flag;                    /*flag,set to 1 when measurement is coming*/
+    VecX1 kfXd;                             /*state vector for kalman filter*/
+    int32_t update_iter;
 #if REAL_TIME_MODE != 1
     /*for RTS */
 
@@ -167,8 +186,8 @@ private:
     Mat3X _velH() const;    /* mat H for velocity update*/
     IMUSmooth smooth;    /*Static detector*/
     Vec3d _posZ(const Vec3Hp &pos);        /* calculate delta Z*/
-    int _feedBack();                     /*feedback for position,velocity and height*/
-
+    int _feedBack(const KalmanFilter<STATE_CNT,RgioeFloatType>::Vec1X &kd);                     /*feedback for position,velocity and height*/
+    Monitor monitor;
 private:
     /*for height update*/
     double p_height{INT32_MIN};         /*上时刻高程预测*/

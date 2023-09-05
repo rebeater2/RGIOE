@@ -35,7 +35,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x21, kalman,
                      float gyro_bias[3];
                      float gyro_scale[3];
                      float ak;
-                     uint8_t update_flag;
+                     int32_t update_iter;
                      uint32_t feedback_cnt;
                      uint32_t reject_cnt;
                  }
@@ -69,8 +69,10 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x21, kalman,
 {RECORDER_TYPE_float,"gyro_scale_x"},\
 {RECORDER_TYPE_float,"gyro_scale_y"},\
 {RECORDER_TYPE_float,"gyro_scale_z"},\
-{RECORDER_TYPE_uint8_t,"update_flag"},\
+{RECORDER_TYPE_float,"ak"},         \
+{RECORDER_TYPE_int32_t,"update_iter"},\
 {RECORDER_TYPE_uint32_t,"feedback_cnt"},\
+{RECORDER_TYPE_uint32_t,"reject_cnt"},\
 }
 RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x22, align,
                  {

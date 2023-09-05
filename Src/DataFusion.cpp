@@ -24,6 +24,8 @@ smooth{1.6e-4, 2, 10}
     Q0.setZero();
     _timeUpdateIdx = 0;
     update_flag = 0x00;
+    update_iter = 0;
+    kfXd.setZero();
 }
 
 /**
@@ -146,11 +148,15 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         update_flag &= ~FLAG_HEIGHT;
     }*/
     if (update_flag > 0) {
-        _feedBack();
+        kfXd = kf.Xd;
+        update_iter = monitor.GetMaxIntegrateIter();
         kf.Reset();
         update_flag = 0;
     }
-
+    if (update_iter > 0) {
+        _feedBack(kfXd / monitor.GetMaxIntegrateIter());
+        update_iter--;
+    }
     smooth.Update(imu);
     ForwardMechanization(imu);
     MatXX phi = TransferMatrix(opt.imuPara);
@@ -192,6 +198,9 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     for (int i = 0; i < STATE_CNT; ++i) {
         kalman.data.matP[i] = kf.P(i, i);
     }
+    kalman.data.ak = kf.ak;
+    kalman.data.update_iter = update_iter;
+    kalman.data.reject_cnt = monitor.GetEkfCnt();
     CHECKSUM_RECORDER_CRC32(&kalman);
     Recorder::GetInstance().Record(&kalman);
     recorder_msg_imu_t imu_data = CREATE_RECORDER_MSG(imu);
@@ -203,6 +212,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     CHECKSUM_RECORDER_CRC32(&imu_data);
     Recorder::GetInstance().Record(&imu_data);
 #endif
+    monitor.OnTimeUpdate();
     return 0;
 }
 
@@ -228,8 +238,8 @@ int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
     CHECKSUM_RECORDER_CRC32(&measPos);
     Recorder::GetInstance().Record(&measPos);
 #endif
-
     update_flag |= FLAG_POSITION;
+    monitor.OnMeasUpdate();
     return 0;
 }
 
@@ -285,6 +295,7 @@ int DataFusion::MeasureUpdateVel(const Vec3d &vel) {
     }
 
     update_flag |= FLAG_VELOCITY;/**/
+    monitor.OnMeasUpdate();
     return 0;
 }
 
@@ -340,41 +351,41 @@ KalmanFilter<STATE_CNT, RgioeFloatType>::MatXX DataFusion::TransferMatrix(const 
  * feed back Modified Error Models
  * @return
  */
-int DataFusion::_feedBack() {
+int DataFusion::_feedBack(const KalmanFilter<STATE_CNT, RgioeFloatType>::Vec1X &xd) {
     fp64 lat = nav.pos[0];
     fp64 h = (fp64) nav.pos[2];
     fp64 rn = Earth::Instance().RN(lat);
     fp64 rm = Earth::Instance().RM(lat);
-    Vec3Hp d_atti = Vec3Hp{kf.Xd[1] / (rn + h),
-                         -kf.Xd[0] / (rm + h),
-                         -kf.Xd[1] * tan(lat) / (rn + h)
+    Vec3Hp d_atti = Vec3Hp{xd[1] / (rn + h),
+                           -xd[0] / (rm + h),
+                           -xd[1] * tan(lat) / (rn + h)
     };
     QuadHp qnc = Convert::rv_to_quaternion_hp(-d_atti);
     nav.Qne = (nav.Qne * qnc.cast<fp64>()).normalized();
     LatLon ll = Convert::qne_to_lla(nav.Qne);
     nav.pos[0] = ll.latitude;
     nav.pos[1] = ll.longitude;
-    nav.pos[2] = nav.pos[2] + kf.Xd[2];
+    nav.pos[2] = nav.pos[2] + xd[2];
     Mat3d Ccn = eye3 + Convert::skew(d_atti.cast<RgioeFloatType>());
-    nav.vn = Ccn * (nav.vn - Vec3d{kf.Xd[3], kf.Xd[4], kf.Xd[5]});
-    Vec3d phi = Vec3d{kf.Xd[6], kf.Xd[7], kf.Xd[8]} + d_atti.cast<RgioeFloatType>();
+    nav.vn = Ccn * (nav.vn - Vec3d{xd[3], xd[4], xd[5]});
+    Vec3d phi = Vec3d{xd[6], xd[7], xd[8]} + d_atti.cast<RgioeFloatType>();
     Quad Qpn = Convert::rv_to_quaternion(phi);
     nav.Qbn = (Qpn * nav.Qbn).normalized();
     nav.Cbn = Convert::quaternion_to_dcm(nav.Qbn);
     nav.atti = Convert::dcm_to_euler(nav.Cbn);
-    nav.gb += Vec3d{kf.Xd[9], kf.Xd[10], kf.Xd[11]};
-    nav.ab += Vec3d{kf.Xd[12], kf.Xd[13], kf.Xd[14]};
+    nav.gb += Vec3d{xd[9], xd[10], xd[11]};
+    nav.ab += Vec3d{xd[12], xd[13], xd[14]};
 #if ESTIMATE_GYRO_SCALE_FACTOR == 1
-    nav.gs += kf.Xd.block<STATE_GYRO_SCALE_FACTOR_SIZE,1>(STATE_GYRO_SCALE_FACTOR_START,0);
+    nav.gs += xd.block<STATE_GYRO_SCALE_FACTOR_SIZE,1>(STATE_GYRO_SCALE_FACTOR_START,0);
 #endif
 #if ESTIMATE_ACCE_SCALE_FACTOR == 1
-    nav.as += kf.Xd.block<STATE_ACCE_SCALE_FACTOR_SIZE,1>(STATE_ACCE_SCALE_FACTOR_START,0);
+    nav.as += xd.block<STATE_ACCE_SCALE_FACTOR_SIZE,1>(STATE_ACCE_SCALE_FACTOR_START,0);
 #endif
 #if ESTIMATE_GNSS_LEVEL_ARM
-    lb_gnss += kf.Xd.block<STATE_GNSS_LEVEL_ARM_SIZE, 1>(STATE_GNSS_LEVEL_ARM_START, 0);
+    lb_gnss += xd.block<STATE_GNSS_LEVEL_ARM_SIZE, 1>(STATE_GNSS_LEVEL_ARM_START, 0);
 #endif
 #if ESTIMATE_ODOMETER_SCALE_FACTOR
-    nav.kd += kf.Xd.block<STATE_ODOMETER_SCALE_FACTOR_SIZE, 1>(STATE_ODOMETER_SCALE_FACTOR_START, 0)(0);
+    nav.kd += xd.block<STATE_ODOMETER_SCALE_FACTOR_SIZE, 1>(STATE_ODOMETER_SCALE_FACTOR_START, 0)(0);
 #endif
     return 0;
 }
@@ -524,7 +535,7 @@ bool DataFusion::RtsUpdate() {
 /*    MatXX matA = matp * matphi.transpose() * matp1.inverse();
     kf.P = matp + matA * (kf.P - matp1) * matA.transpose();
     kf.Xd = xdc + matA * kf.Xd;*/
-    _feedBack();
+    _feedBack(kf.Xd);
     return matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty();
 }
 
@@ -538,8 +549,8 @@ NavOutput DataFusion::Output() const {
         Mat3d Cnx = Convert::euler_to_dcm(atti);
         projatti = Convert::dcm_to_euler(nav.Cbn * Cnx);
         Vec3Hp vdr = {1 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
-                     1 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
-                     -1
+                      1 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
+                      -1
         };
         Vec3d outlb = {opt.pos_project[0], opt.pos_project[1], opt.pos_project[2]};
         Vec3Hp delta_pos = vdr.asDiagonal() * (nav.Cbn * outlb).cast<fp64>();
@@ -567,7 +578,7 @@ NavOutput DataFusion::Output() const {
         out.atti_std[i] = (float) rgioe_sqrt(kf.P(6 + i, 6 + i));
     }
 #ifdef ENABLE_FUSION_RECORDER
-    static  Vec3Hp first_pos = nav.pos;
+    static Vec3Hp first_pos = nav.pos;
     recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
     result.timestamp = nav.gpst;
     Vec3d rpos = Earth::Instance().distance(nav.pos[0], nav.pos[1], first_pos[0], first_pos[1], nav.pos[2],
@@ -583,3 +594,45 @@ NavOutput DataFusion::Output() const {
     return out;
 }
 
+void DataFusion::Monitor::OnTimeUpdate() {
+    time_update_cnt ++;
+    no_update_cnt ++;
+}
+
+void DataFusion::Monitor::OnMeasUpdate() {
+    meas_update_cnt ++;
+    if(no_update_cnt < no_update_cnt_min){
+        no_update_cnt_min = no_update_cnt;
+    }
+    if(no_update_cnt > no_update_cnt_max){
+        no_update_cnt_max = no_update_cnt;
+    }
+    no_update_cnt = 0;
+    reject_cnt = 0;
+}
+
+void DataFusion::Monitor::OnReject() {
+    reject_cnt ++;
+}
+
+uint32_t DataFusion::Monitor::GetMaxIntegrateIter() const {
+    if(no_update_cnt_min > 1000){
+        return 1000;
+    }
+    if(no_update_cnt_min == 0){
+        return 1;
+    }
+    return no_update_cnt_min;
+}
+
+uint32_t DataFusion::Monitor::GetRejectCnt() const {
+    return reject_cnt;
+}
+
+uint32_t DataFusion::Monitor::GetEkfCnt() const {
+    return meas_update_cnt;
+}
+
+uint32_t DataFusion::Monitor::GetOutageCnt() const {
+    return no_update_cnt;
+}
