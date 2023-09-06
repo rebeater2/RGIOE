@@ -28,6 +28,10 @@ build-win32-job:   # This job runs in the test stage.
     - echo "Running unit tests... This will take about 60 seconds."
     - sh build_win32.sh
     - echo "complier finished"
+  artifacts:
+    paths:
+      - ./App/bin
+
 
 unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
@@ -35,7 +39,6 @@ unit-test-job:   # This job runs in the test stage.
     - windows_compiler
   script:
     - echo "Running loosely couple on A15 data."
-    - chmod +x ./App/bin/PostDataFusion.exe
     - ./App/bin/PostDataFusion.exe /home/linfe/workspace/CICD/testdata/demo_a15.yml
     - echo " TODO test finished"
 
