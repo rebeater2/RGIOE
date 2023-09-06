@@ -1,0 +1,1 @@
+./App/bin/PostDataFusion.exe /home/linfe/workspace/CICD/testdata/demo_a15.yml

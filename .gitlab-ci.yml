@@ -35,7 +35,6 @@ unit-test-job:   # This job runs in the test stage.
     - windows_compiler
   script:
     - echo "Running loosely couple on A15 data."
-    - chmod +x ./App/bin/PostDataFusion.exe
-    - ./App/bin/PostDataFusion.exe /home/linfe/workspace/CICD/testdata/demo_a15.yml
+    - sh ci-test-a15.sh
     - echo " TODO test finished"
 
