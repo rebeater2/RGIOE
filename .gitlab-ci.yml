@@ -28,5 +28,5 @@ unit-test-job:   # This job runs in the test stage.
   script:
     - echo "Running unit tests... This will take about 60 seconds."
     - build_win32.sh
-    - echo "Code coverage is 90%"
+    - echo "complier finished"
 
