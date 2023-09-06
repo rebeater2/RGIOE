@@ -34,6 +34,7 @@ unit-test-job:   # This job runs in the test stage.
   tags:
     - windows_compiler
   script:
-    - echo "Running unit tests... This will take about 60 seconds."
+    - echo "Running loosely couple on A15 data."
+    - ./App/bin/PostDataFusion.exe /home/linfe/workspace/CICD/testdata/demo_a15.yml
     - echo " TODO test finished"
 
