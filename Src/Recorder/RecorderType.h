@@ -27,6 +27,28 @@ RECORDER_MSG_DEF(RECORDER_MSG_SENSOR, 0x21, imu,
 {RECORDER_TYPE_float,"gyro_raw_y"},\
 {RECORDER_TYPE_float,"gyro_raw_z"} ,\
 }
+RECORDER_MSG_DEF(RECORDER_MSG_SENSOR, 0x22, gnss ,
+                 {
+                     float pos[3];
+                     float hdop;
+                     float pdop;
+                     uint16_t ns;
+                     uint8_t mode;
+                     uint32_t gnss_cnt;
+                 }
+)
+#define RECORDER_gnss_ITEMS \
+{               \
+{RECORDER_TYPE_float,"pos_x"},\
+{RECORDER_TYPE_float,"pos_y"},\
+{RECORDER_TYPE_float,"pos_z"},\
+{RECORDER_TYPE_float,"hdop"},\
+{RECORDER_TYPE_float,"pdop"},\
+{RECORDER_TYPE_uint16_t,"ns"},\
+{RECORDER_TYPE_uint8_t,"mode"},\
+{RECORDER_TYPE_uint32_t,"gnss_cnt"} ,\
+}
+
 RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x21, kalman,
                  {
                      float matP[15];
@@ -179,6 +201,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x25, result,
 #define RECORDER_HEADERCONFIG \
  {                        \
  RECORDER_ADD_DATASET(imu,RECORDER_imu_ITEMS); \
+ RECORDER_ADD_DATASET(gnss,RECORDER_gnss_ITEMS); \
  RECORDER_ADD_DATASET(kalman,RECORDER_kalman_ITEMS); \
  RECORDER_ADD_DATASET(align,RECORDER_align_ITEMS); \
  RECORDER_ADD_DATASET(meas_pos,RECORDER_meas_pos_ITEMS); \

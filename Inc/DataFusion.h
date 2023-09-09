@@ -171,6 +171,7 @@ public:
     uint32_t update_flag;                    /*flag,set to 1 when measurement is coming*/
     VecX1 kfXd;                             /*state vector for kalman filter*/
     int32_t update_iter;
+    NavEpoch first_epoch;
 #if REAL_TIME_MODE != 1
     /*for RTS */
 

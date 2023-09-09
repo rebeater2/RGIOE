@@ -100,9 +100,9 @@ template<int obs_dim>
 void KalmanFilter<dim, fp>::Update(const Eigen::Matrix<fp, obs_dim, dim> &H, const Eigen::Matrix<fp, obs_dim, 1> &obs,
                                    const Eigen::Matrix<fp, obs_dim, obs_dim> &R) {
     /** 卡方检测 **/
-    Eigen::Matrix<fp, obs_dim, obs_dim> Cvk = (H * P * H.transpose() + R).inverse() + R;
+    Eigen::Matrix<fp, obs_dim, obs_dim> Cvk = (H * P * H.transpose() + R).inverse();
     ak = (obs.transpose() * Cvk.inverse() * obs).norm();
-    if(ak > Td ) {
+    if(ak > Td && reject_cnt < 3) {
         reject_cnt ++;
         return;
     }

@@ -316,6 +316,7 @@ bool GnssReader::ReadNext(RgioeGnssData &gnss) {
         }
             break;
         case GNSS_10_LINES:
+            gnss = {0};
             ss >> gnss.week >> gnss.gpst >> gnss.lat >> gnss.lon >> gnss.height >> gnss.pos_std[0] >> gnss.pos_std[1]
                >> gnss.pos_std[2] >> gnss.ns >> gnss.mode;// >> gnss.ns;
             gnss.yaw = -1;

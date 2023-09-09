@@ -1,7 +1,7 @@
 #!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/04/ADI51_220307_118100.raw.imd.fix.imd
+  file-path: F:\Data\Navigation\Robot\20220307/ADIS16465_01/04/ADI51_220307_118100.raw.imd.fix.imd
   d-rate: 125
   format: 1
   parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/adis16465_parameter.yml

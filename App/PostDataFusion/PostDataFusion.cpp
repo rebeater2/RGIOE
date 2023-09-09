@@ -148,6 +148,7 @@ int main(int argc, char *argv[]) {
     }
 
     bmp_reader.ReadUntil(imu.gpst, &press);
+    gnss_reader.ReadUntil(imu.gpst,&gnss);
 /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
     LOG(INFO) << "start:" << imu.gpst << ",end:" << config.stop_time;
     while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
@@ -178,7 +179,7 @@ int main(int argc, char *argv[]) {
         }
         if (config.pressure_config.enable and fabs(press.gpst - imu.gpst) < 1.0 / opt.d_rate) {
             double height = 44330 * (1 - pow(press.pressure / 101325.0, 0.19));
-            double z = df.MeasureUpdateRelativeHeight(height);
+           // double z = df.MeasureUpdateRelativeHeight(height);
             LOG_EVERY_N(INFO, 100 * opt.d_rate) << "Pressure update:" << gnss << "at " << imu.gpst;
             bmp_reader.ReadNext(press);
         }

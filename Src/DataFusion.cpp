@@ -26,6 +26,7 @@ smooth{1.6e-4, 2, 10}
     update_flag = 0x00;
     update_iter = 0;
     kfXd.setZero();
+    first_epoch = {};
 }
 
 /**
@@ -38,6 +39,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
     Vec1X Xd;
     Xd.setZero();
     this->opt = RgioeOption;
+    first_epoch = ini_nav;
     InitializePva(ini_nav, opt.d_rate);
     nav = ini_nav;
     nav.kd = opt.odo_scale;
@@ -200,7 +202,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     }
     kalman.data.ak = kf.ak;
     kalman.data.update_iter = update_iter;
-    kalman.data.reject_cnt = monitor.GetEkfCnt();
+    kalman.data.reject_cnt = kf.reject_cnt;
     CHECKSUM_RECORDER_CRC32(&kalman);
     Recorder::GetInstance().Record(&kalman);
     recorder_msg_imu_t imu_data = CREATE_RECORDER_MSG(imu);
@@ -269,6 +271,21 @@ int DataFusion::MeasureUpdatePos(const RgioeGnssData &gnssData) {
         nav.info.sensors &= ~RgioeSensorType::SENSOR_GNSS;
         nav.info.gnss_mode = GnssMode::INVALID;
     }
+#if ENABLE_FUSION_RECORDER
+    recorder_msg_gnss_t msg = CREATE_RECORDER_MSG(gnss);
+    msg.timestamp = nav.gpst;
+    auto dis = Earth::Instance().distance(gnssData.lat * _deg, gnssData.lon * _deg,
+                                          first_epoch.pos[0], first_epoch.pos[1], gnssData.height, first_epoch.pos[2]);
+    for (int i = 0; i < 3; ++i) {
+        msg.data.pos[i] = dis[i];
+    }
+    msg.data.ns = gnssData.ns;
+    msg.data.mode = gnssData.mode;
+    msg.data.hdop = gnssData.hdop;
+    msg.data.pdop = gnssData.pdop;
+    CHECKSUM_RECORDER_CRC32(&msg);
+    Recorder::GetInstance().Record(&msg);
+#endif
     return 0;
 }
 
@@ -595,16 +612,16 @@ NavOutput DataFusion::Output() const {
 }
 
 void DataFusion::Monitor::OnTimeUpdate() {
-    time_update_cnt ++;
-    no_update_cnt ++;
+    time_update_cnt++;
+    no_update_cnt++;
 }
 
 void DataFusion::Monitor::OnMeasUpdate() {
-    meas_update_cnt ++;
-    if(no_update_cnt < no_update_cnt_min){
+    meas_update_cnt++;
+    if (no_update_cnt < no_update_cnt_min) {
         no_update_cnt_min = no_update_cnt;
     }
-    if(no_update_cnt > no_update_cnt_max){
+    if (no_update_cnt > no_update_cnt_max) {
         no_update_cnt_max = no_update_cnt;
     }
     no_update_cnt = 0;
@@ -612,14 +629,14 @@ void DataFusion::Monitor::OnMeasUpdate() {
 }
 
 void DataFusion::Monitor::OnReject() {
-    reject_cnt ++;
+    reject_cnt++;
 }
 
 uint32_t DataFusion::Monitor::GetMaxIntegrateIter() const {
-    if(no_update_cnt_min > 1000){
+    if (no_update_cnt_min > 1000) {
         return 1000;
     }
-    if(no_update_cnt_min == 0){
+    if (no_update_cnt_min == 0) {
         return 1;
     }
     return no_update_cnt_min;
