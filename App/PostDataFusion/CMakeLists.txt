@@ -23,7 +23,7 @@ option(EST_ACCE_SCALE ON)
 option(EST_GNSS_LEVEL_ARM ON)
 option(EST_ODO_SCALE ON)
 
-if(EST_GYRO_SCALE)
+if(EST_ACCE_SCALE)
     add_compile_options(-DRGIOE_ESTIMATE_ACCE_SCALE_FACTOR=1)
 endif()
 if(EST_GYRO_SCALE)
