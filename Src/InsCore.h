@@ -52,7 +52,7 @@ NavEpoch makeNavEpoch(NavOutput nav_, RgioeOption opt);
 class Ins {
 public:
     NavEpoch nav;
-    double dt;
+    RgioeFloatType dt;
     Mat3d eye3;
 public:
     Vec3d _acce_pre;

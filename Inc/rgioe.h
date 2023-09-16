@@ -18,7 +18,7 @@ extern "C" {
 #define REAL_TIME_MODE 1
 #endif
 
-#include "RgioeConfig.h"
+#include "RgioeConfig_template.h"
 #include "../Src/RgioeDataType.h"
 
 #define RGIOE_REALTIME_DEBUG 0

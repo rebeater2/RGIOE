@@ -104,7 +104,6 @@ void KalmanFilter<dim, fp>::Update(const Eigen::Matrix<fp, obs_dim, dim> &H, con
     ak = (obs.transpose() * Cvk.inverse() * obs).norm();
     if(ak > Td && reject_cnt < 3) {
         reject_cnt ++;
-        return;
     }
     reject_cnt = 0;
 

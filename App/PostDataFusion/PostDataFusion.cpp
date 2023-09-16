@@ -2,10 +2,6 @@
 // Created by rebeater on 2020/12/17.
 //
 
-#ifndef REAL_TIME_MODE
-#define REAL_TIME_MODE 0
-#endif
-
 #include "DataFusion.h"
 #include "Alignment.h"
 #include "RgioeDataType.h"
@@ -43,6 +39,20 @@ extern int GnssCheck(const GnssData &gnss){
 }
 #endif
 
+
+void ShowFusionConfig(){
+    LOG(INFO) << "---------------------start of config---------------------------";
+#define SHOW_MACRO(macro)   LOG(INFO) << #macro << " = " << macro?"ON":"OFF"
+    SHOW_MACRO(RGIOE_ESTIMATE_ACCE_SCALE_FACTOR);
+    SHOW_MACRO(RGIOE_ESTIMATE_GYRO_SCALE_FACTOR);
+    SHOW_MACRO(RGIOE_ESTIMATE_GNSS_LEVEL_ARM);
+    SHOW_MACRO(RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR);
+    SHOW_MACRO(STATE_CNT);
+#undef SHOW_MACRO
+    LOG(INFO) << "-----------------------end of config-----------------------";
+}
+
+
 int main(int argc, char *argv[]) {
     logInit(argv[0], "./log/");
 #ifdef ENABLE_FUSION_RECORDER
@@ -52,6 +62,7 @@ int main(int argc, char *argv[]) {
         loge << CopyRight << endl;
         return 1;
     }
+    ShowFusionConfig();
     Config config;
     Smoother<double> odo_smooth{50};/*里程计平滑器*/
     config.LoadFrom(argv[1]);
@@ -116,16 +127,17 @@ int main(int argc, char *argv[]) {
             imu_reader.ReadNext(imu);
             align.Update(imu);
             if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
-                align.Update(gnss);
+                auto v = align.Update(gnss);
+                LOG(INFO) << "algn: " <<gnss.gpst << "\tvel=" << v << "m/s";
                 if (!gnss_reader.ReadNext(gnss)) {
                     LOG(ERROR) << "GNSS read finished,but align not complete!";
-                    return 1;
+                    return 0;
                 }
             }
         } while (!align.alignFinished() and imu_reader.IsOk());
         if (!align.alignFinished()) {
             LOG(ERROR) << "GNSS read finished,but align not complete!";
-            return 1;
+            return 0;
         }
         nav = align.getNavEpoch();
     } else if (opt.align_mode == ALIGN_USE_GIVEN) {
@@ -206,26 +218,24 @@ int main(int argc, char *argv[]) {
         LOG(INFO) << "RTS smooth finished\n";
     }
     LOG(INFO) << "Process finished";
-/*show summary and reports:*/
-    double time_resolve = static_cast<double>(timer.elapsed()) / 1000.0;
-    writer.stop();
-    double time_writing = static_cast<double> (timer.elapsed()) / 1000.0;
+    /*show summary and reports:*/
     delete podoReader;
     LOG(INFO) << "\n\tSummary:\n"
               << "\tAll epochs:" << df.EpochCounter() << '\n'
-              << "\tTime for Computing:" << time_resolve << "s" << '\n'
-              << "\tTime for File Writing:" << time_writing << 's' << '\n'
+              << "\tTime for Computing:" <<  static_cast<double>(timer.elapsed()) / 1000.0 << "s" << '\n'
               << "\tFinal PVA:" << df.Output() << '\n';
     LOG_IF(INFO, config.outage_config.enable)
                     << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "
                     << config.outage_config.stop;
     LOG(INFO) << "\tThe result is saved to " << config.output_config.file_path;
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     LOG(INFO) << "Final lever arm:" << df.lb_gnss.transpose();
 #endif
 #ifdef ENABLE_FUSION_RECORDER
     LOG(INFO) << "\tRecorder was saved to " << Recorder::GetInstance().GetRcdFilename();
 #endif
+    ERROR_EXIT:
+    writer.stop();
     return 0;
 }
 

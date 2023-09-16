@@ -314,8 +314,8 @@ std::string Config::ToStdString() const {
     res.reserve(1024);
     res += fmt::format("imu file: {}\n", imu_config.file_path);
     res += fmt::format("imu rate: {}\n", imu_config.d_rate);
-    res += fmt::format("imu format: {}\n", imu_config.format);
-    res += fmt::format("imu frame: {}\n", imu_config.frame);
+    res += fmt::format("imu format: {}\n", (int)imu_config.format);
+    res += fmt::format("imu frame: {}\n", (int)imu_config.frame);
     res += fmt::format("gnss scale: {:3f}\n", gnss_config.scale_of_std);
     res += fmt::format("enable pressure: {}\n", pressure_config.enable);
     return res;

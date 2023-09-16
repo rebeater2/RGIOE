@@ -54,7 +54,7 @@ void AlignMoving::Update(const RgioeImuData &imu) {
         flag_yaw_finished = true;
     }
 }
-
+#include "glog/logging.h"
 double AlignMoving::Update(const RgioeGnssData &gnss) {
 /*  if (!(GnssCheck(gnss) > 0)) {
 	return 0;
@@ -65,7 +65,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
         return -1;
     }
     Earth::Instance().Update(gnss.lat * _deg, gnss.height);
-#if REAL_TIME_MODE != 1
+#if RGIOE_ENABLE_DOUBLE_ANTENNA == 1
     if (gnss.yaw >= 0 and gnss.yaw <= 360) {
         nav.atti[2] = gnss.yaw * _deg;
         nav.Qbn = Convert::euler_to_quaternion(nav.atti);
@@ -99,10 +99,10 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
             nav.Cbn = Convert::euler_to_dcm(nav.atti);
             flag_yaw_finished = true;
         }
-#if REAL_TIME_MODE != 1
+#if RGIOE_ENABLE_DOUBLE_ANTENNA == 1
     }
-    nav.gpst = gnss.gpst;
 #endif
+    nav.gpst = gnss.gpst;
     nav.pos[0] = gnss.lat * _deg;
     nav.pos[1] = gnss.lon * _deg;
     nav.pos[2] = gnss.height;
@@ -162,14 +162,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     return v;
 }
 
-AlignMoving::AlignMoving(const RgioeOption &opt) : option(opt),
-#if USE_INCREMENT == 1
-                                                   smooth{1e-3, 200, 30}
-#else
-smooth{1.6e-4, 2, 10}
-#endif
-{
-
+AlignMoving::AlignMoving(const RgioeOption &opt) : option(opt),smooth{1e-3, 200, 30}{
     nav.kd = opt.odo_scale;
     gnss_pre = {0};
 }

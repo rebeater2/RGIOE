@@ -128,14 +128,13 @@ public:
      */
     float MeasureUpdateRelativeHeight(double height);
 
-#if REAL_TIME_MODE != 1
+#if RGIOE_ENABLE_RTS == 1
 
     /**
      * RTS 反向平滑
      * @return 进度: 0开始,1 完成
      */
     bool RtsUpdate();
-
 #endif
 
     /**

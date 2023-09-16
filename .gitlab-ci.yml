@@ -27,7 +27,7 @@ build-win32-job:   # This job runs in the test stage.
   script:
     - echo "Running unit tests... This will take about 60 seconds."
     - sh build_win32.sh
-    - echo "complier finished"
+    - echo "compile finished"
   artifacts:
     paths:
       - ./App/bin

@@ -4,7 +4,7 @@
 
 #include "DataFusion.h"
 #include "Recorder/RecorderType.h"
-
+#include "glog/logging.h"
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
 #define FLAG_HEIGHT 0b1000000U
@@ -13,14 +13,7 @@ char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
                    "Copyright(c) 2019-2021, by Bao Linfeng, All rights reserved.\n"
                    "This Version is for Embedded and Real-time Application\n";
 
-DataFusion::DataFusion() : Ins(),
-#if USE_INCREMENT == 1
-                           smooth{5e-9, 2, 10}
-#else
-smooth{1.6e-4, 2, 10}
-#endif
-
-{
+DataFusion::DataFusion() : Ins(), smooth{5e-9, 2, 10} {
     Q0.setZero();
     _timeUpdateIdx = 0;
     update_flag = 0x00;
@@ -53,23 +46,23 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
     P.block<3, 3>(9, 9) = temp.asDiagonal();
     temp = Vec3d{opt.imuPara.ab_std[0], opt.imuPara.ab_std[1], opt.imuPara.ab_std[2]};
     P.block<3, 3>(12, 12) = temp.asDiagonal();
-#if ESTIMATE_GYRO_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_GYRO_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_GYRO_SCALE_FACTOR_SIZE; ++i)
-      P(STATE_GYRO_SCALE_FACTOR_START + i, STATE_GYRO_SCALE_FACTOR_START + i) =
-          opt.imuPara.gs_std[i] * opt.imuPara.gs_std[i];
+        P(STATE_GYRO_SCALE_FACTOR_START + i, STATE_GYRO_SCALE_FACTOR_START + i) =
+                opt.imuPara.gs_std[i] * opt.imuPara.gs_std[i];
 #endif
-#if ESTIMATE_ACCE_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_ACCE_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_ACCE_SCALE_FACTOR_SIZE; ++i)
-      P(STATE_ACCE_SCALE_FACTOR_START + i, STATE_ACCE_SCALE_FACTOR_START + i) =
-          opt.imuPara.as_std[i] * opt.imuPara.as_std[i];
+        P(STATE_ACCE_SCALE_FACTOR_START + i, STATE_ACCE_SCALE_FACTOR_START + i) =
+                opt.imuPara.as_std[i] * opt.imuPara.as_std[i];
 #endif
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     double level_arm_std = 0.001;
     for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
       P(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = level_arm_std;
     }
 #endif
-#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i) {
       P(STATE_ODOMETER_SCALE_FACTOR_START + i, STATE_ODOMETER_SCALE_FACTOR_START + i) = 1e-9;
     }
@@ -90,22 +83,22 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
     Q0(12, 12) = 2 * opt.imuPara.ab_std[0] * opt.imuPara.ab_std[0] / opt.imuPara.at_corr;
     Q0(13, 13) = 2 * opt.imuPara.ab_std[1] * opt.imuPara.ab_std[1] / opt.imuPara.at_corr;
     Q0(14, 14) = 2 * opt.imuPara.ab_std[2] * opt.imuPara.ab_std[2] / opt.imuPara.at_corr;
-#if ESTIMATE_GYRO_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_GYRO_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_GYRO_SCALE_FACTOR_SIZE; ++i)
-      Q0(STATE_GYRO_SCALE_FACTOR_START + i, STATE_GYRO_SCALE_FACTOR_START + i) =
-          2 * opt.imuPara.gs_std[i] * opt.imuPara.gs_std[i] / opt.imuPara.gt_corr;
+        Q0(STATE_GYRO_SCALE_FACTOR_START + i, STATE_GYRO_SCALE_FACTOR_START + i) =
+                2 * opt.imuPara.gs_std[i] * opt.imuPara.gs_std[i] / opt.imuPara.gt_corr;
 #endif
-#if ESTIMATE_ACCE_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_ACCE_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_ACCE_SCALE_FACTOR_SIZE; ++i)
-      Q0(STATE_ACCE_SCALE_FACTOR_START + i, STATE_ACCE_SCALE_FACTOR_START + i) =
-          2 * opt.imuPara.as_std[i] * opt.imuPara.as_std[i] / opt.imuPara.at_corr;
+        Q0(STATE_ACCE_SCALE_FACTOR_START + i, STATE_ACCE_SCALE_FACTOR_START + i) =
+                2 * opt.imuPara.as_std[i] * opt.imuPara.as_std[i] / opt.imuPara.at_corr;
 #endif
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i) {
       Q0(STATE_GNSS_LEVEL_ARM_START + i, STATE_GNSS_LEVEL_ARM_START + i) = 0;//2 * level_arm_std * level_arm_std / 36000;
     }
 #endif
-#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i) {
       Q0(STATE_ODOMETER_SCALE_FACTOR_START + i, STATE_ODOMETER_SCALE_FACTOR_START + i) =
           2 * opt.odo_scale_std * opt.odo_scale_std / 3600;
@@ -117,7 +110,6 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
     lb_wheel = Vec3d{opt.lb_wheel[0], opt.lb_wheel[1], opt.lb_wheel[2]};
     _timeUpdateIdx = 0;
     Cbv = Convert::euler_to_dcm({opt.angle_bv[0], opt.angle_bv[1], opt.angle_bv[2]});
-
 }
 
 
@@ -127,7 +119,7 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
  * @return : 1 success 0 fail in time check
  */
 int DataFusion::TimeUpdate(const RgioeImuData &imu) {
-#if REAL_TIME_MODE != 1
+#if RGIOE_ENABLE_RTS == 1
     if (opt.enable_rts) {
         matp_posts.push_back(kf.P);
         Xds.push_back(kf.Xd);
@@ -137,7 +129,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 #ifdef ENABLE_FUSION_RECORDER
     recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
     state.timestamp = nav.gpst;
-    for (int i = 0; i < STATE_CNT; ++i) {
+    for (int i = 0; i < std::max(21,STATE_CNT); ++i) {
         state.data.xd[i] = kf.Xd[i];
     }
     CHECKSUM_RECORDER_CRC32(&state);
@@ -164,9 +156,8 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     MatXX phi = TransferMatrix(opt.imuPara);
     MatXX Q = 0.5 * (phi * Q0 + Q0 * phi.transpose()) * dt;
 //    MatXd Q = 0.5 * (phi * Q0 * phi.transpose() + Q0) * dt;
-
     kf.Predict(phi, Q);
-#if REAL_TIME_MODE != 1
+#if RGIOE_ENABLE_RTS == 1
     if (opt.enable_rts) {
         matp_pres.push_back(kf.P);
         matphis.push_back(phi);
@@ -197,8 +188,8 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         kalman.data.gyro_bias[i] = nav.gb[i] / _deg * _hour;
         kalman.data.gyro_scale[i] = nav.gs[i] / _ppm;
     }
-    for (int i = 0; i < STATE_CNT; ++i) {
-        kalman.data.matP[i] = kf.P(i, i);
+    for (int i = 0; i < 15; ++i) {
+        kalman.data.matP[i] = (float)kf.P(i, i);
     }
     kalman.data.ak = kf.ak;
     kalman.data.update_iter = update_iter;
@@ -345,19 +336,20 @@ KalmanFilter<STATE_CNT, RgioeFloatType>::MatXX DataFusion::TransferMatrix(const 
     phi.block<3, 3>(6, 9) = -nav.Cbn * dt;
     phi.block<3, 3>(9, 9) = eye3 - eye3 * dt / para.gt_corr;/*corr time*/
     phi.block<3, 3>(12, 12) = eye3 - eye3 * dt / para.at_corr;/*corr time*/
-#if ESTIMATE_GYRO_SCALE_FACTOR == 1
-    phi.block<3, 3>(STATE_GYRO_SCALE_FACTOR_START, STATE_GYRO_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.at_corr;
-  phi.block<3, 3>(9, STATE_GYRO_SCALE_FACTOR_START) = -nav.Cbn * _gyro_pre.asDiagonal();
+#if RGIOE_ESTIMATE_GYRO_SCALE_FACTOR == 1
+    phi.block<3, 3>(STATE_GYRO_SCALE_FACTOR_START, STATE_GYRO_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.gt_corr;
+    phi.block<3, 3>(9, STATE_GYRO_SCALE_FACTOR_START) = -nav.Cbn * _gyro_pre.asDiagonal();
 #endif
-#if ESTIMATE_ACCE_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_ACCE_SCALE_FACTOR == 1
     phi.block<3, 3>(STATE_ACCE_SCALE_FACTOR_START, STATE_ACCE_SCALE_FACTOR_START) = eye3 - eye3 * dt / para.at_corr;
-  phi.block<3, 3>(6, STATE_ACCE_SCALE_FACTOR_START) = nav.Cbn * _acce_pre.asDiagonal();
+    phi.block<3, 3>(6, STATE_ACCE_SCALE_FACTOR_START) = nav.Cbn * _acce_pre.asDiagonal();
 #endif
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
+
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     for (int i = 0; i < STATE_GNSS_LEVEL_ARM_SIZE; ++i)
     phi(STATE_GNSS_LEVEL_ARM_START+i, STATE_GNSS_LEVEL_ARM_START+i) = 1.0 - dt / 36000;
 #endif
-#if ESTIMATE_ODOMETER_SCALE_FACTOR == 1
+#if RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR == 1
     for (int i = 0; i < STATE_ODOMETER_SCALE_FACTOR_SIZE; ++i)
     phi(STATE_ODOMETER_SCALE_FACTOR_START+i, STATE_ODOMETER_SCALE_FACTOR_START+i) = 1.0 - dt / 36000;
 #endif
@@ -392,16 +384,16 @@ int DataFusion::_feedBack(const KalmanFilter<STATE_CNT, RgioeFloatType>::Vec1X &
     nav.atti = Convert::dcm_to_euler(nav.Cbn);
     nav.gb += Vec3d{xd[9], xd[10], xd[11]};
     nav.ab += Vec3d{xd[12], xd[13], xd[14]};
-#if ESTIMATE_GYRO_SCALE_FACTOR == 1
-    nav.gs += xd.block<STATE_GYRO_SCALE_FACTOR_SIZE,1>(STATE_GYRO_SCALE_FACTOR_START,0);
+#if RGIOE_ESTIMATE_GYRO_SCALE_FACTOR == 1
+    nav.gs -= xd.block<STATE_GYRO_SCALE_FACTOR_SIZE, 1>(STATE_GYRO_SCALE_FACTOR_START, 0);
 #endif
-#if ESTIMATE_ACCE_SCALE_FACTOR == 1
-    nav.as += xd.block<STATE_ACCE_SCALE_FACTOR_SIZE,1>(STATE_ACCE_SCALE_FACTOR_START,0);
+#if RGIOE_ESTIMATE_ACCE_SCALE_FACTOR == 1
+    nav.as += xd.block<STATE_ACCE_SCALE_FACTOR_SIZE, 1>(STATE_ACCE_SCALE_FACTOR_START, 0);
 #endif
-#if ESTIMATE_GNSS_LEVEL_ARM
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM
     lb_gnss += xd.block<STATE_GNSS_LEVEL_ARM_SIZE, 1>(STATE_GNSS_LEVEL_ARM_START, 0);
 #endif
-#if ESTIMATE_ODOMETER_SCALE_FACTOR
+#if RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR
     nav.kd += xd.block<STATE_ODOMETER_SCALE_FACTOR_SIZE, 1>(STATE_ODOMETER_SCALE_FACTOR_START, 0)(0);
 #endif
     return 0;
@@ -411,7 +403,8 @@ KalmanFilter<STATE_CNT, RgioeFloatType>::Mat3X DataFusion::_posH() const {
     Mat3X mat_h = Mat3X::Zero();
     mat_h.block<3, 3>(0, 0) = eye3;
     mat_h.block<3, 3>(0, 6) = Convert::skew(nav.Cbn * lb_gnss);
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
+
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     Vec3d vdr = {1.0 / (Earth::Instance().RM(nav.pos[0]) + nav.pos[2]),
                  1.0 / ((Earth::Instance().RN(nav.pos[0]) + nav.pos[2]) * cos(nav.pos[0])),
                  -1
@@ -432,7 +425,7 @@ KalmanFilter<STATE_CNT, RgioeFloatType>::Mat3X DataFusion::_velH() const {
     H3.block<3, 3>(0, 3) = Cnv;
     H3.block<3, 3>(0, 6) = -Cnv * Convert::skew(nav.vn);
     H3.block<3, 3>(0, 9) = -Cbv * Convert::skew(lb_wheel);
-#if ESTIMATE_GNSS_LEVEL_ARM == 1
+#if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     H3.block<STATE_GNSS_LEVEL_ARM_SIZE,STATE_GNSS_LEVEL_ARM_SIZE>(0,STATE_GNSS_LEVEL_ARM_START)=nav.Cbn;
 #endif
     return H3;
@@ -523,9 +516,8 @@ float DataFusion::MeasureUpdateRelativeHeight(const double height) {
     return (float) 0;
 }
 
-#if REAL_TIME_MODE != 1
+#if RGIOE_ENABLE_RTS == 1
 
-//#include "glog/logging.h"
 bool DataFusion::RtsUpdate() {
     if (matp_posts.empty() or matphis.empty() or Xds.empty() or navs.empty()) {
         return true;
@@ -639,7 +631,7 @@ uint32_t DataFusion::Monitor::GetMaxIntegrateIter() const {
     if (no_update_cnt_min == 0) {
         return 1;
     }
-    return no_update_cnt_min;
+    return 1;
 }
 
 uint32_t DataFusion::Monitor::GetRejectCnt() const {

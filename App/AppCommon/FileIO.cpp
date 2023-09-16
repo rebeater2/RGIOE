@@ -88,6 +88,8 @@ ostream &operator<<(ostream &os, const ImuPara &para) {
                       "vrw:{:15f} m/s/sqrt_h\n"
                       "gb-std:{:15f} {:15f} {:15f} deg/h\n"
                       "ab-std:{:15f} {:15f} {:15f}  mGal\n"
+                      "gs-std:{:15f} {:15f} {:15f} ppm\n"
+                      "as-std:{:15f} {:15f} {:15f}  ppm\n"
                       "gb-ini:{:15f} {:15f} {:15f}  deg/h\n"
                       "ab-ini:{:15f} {:15f} {:15f}  mGal\n"
                       "acce corr time: {:.1f} h\n"
@@ -96,6 +98,8 @@ ostream &operator<<(ostream &os, const ImuPara &para) {
                       para.vrw * _sqrt_h,
                       para.gb_std[0] / _deg * _hour, para.gb_std[1] / _deg * _hour, para.gb_std[2] / _deg * _hour,
                       para.ab_std[0] / _mGal, para.ab_std[1] / _mGal, para.ab_std[2] / _mGal,
+                      para.gs_std[0] / _ppm, para.gs_std[1] / _ppm, para.gs_std[2] / _ppm,
+                      para.as_std[0] / _ppm, para.as_std[1] / _ppm, para.as_std[2] / _ppm,
                       para.gb_ini[0] / _deg * _hour, para.gb_ini[1] / _deg * _hour, para.gb_ini[2] / _deg * _hour,
                       para.ab_ini[0] / _mGal, para.ab_ini[1] / _mGal, para.ab_ini[2] / _mGal,
                       para.at_corr / _hour, para.gt_corr / _hour
@@ -138,6 +142,7 @@ NavWriter::NavWriter(std::string file_path, NavFileFormat fmt) : file_path(std::
 }
 
 NavWriter::~NavWriter() {
+    flag_running.clear();
     if (th_write.joinable())
         th_write.join();
 }

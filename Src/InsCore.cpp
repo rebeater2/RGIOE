@@ -118,14 +118,8 @@ int Ins::_atti_update(const Vec3d &gyro) {
  * @return
  */
 int Ins::ForwardMechanization(const RgioeImuData &imuData) {
-#if USE_INCREMENT == 1
     Vec3d acce{(RgioeFloatType) imuData.acce[0], (RgioeFloatType) imuData.acce[1], (RgioeFloatType) imuData.acce[2]};
     Vec3d gyro{(RgioeFloatType) imuData.gyro[0], (RgioeFloatType) imuData.gyro[1], (RgioeFloatType) imuData.gyro[2]};
-#else
-    Vec3d acce{imuData.acce[0] * dt * Earth::Instance().g, imuData.acce[1] * dt * Earth::Instance().g, imuData.acce[2] * Earth::Instance().g * dt};
-    Vec3d gyro{imuData.gyro[0] * dt, imuData.gyro[1] * dt, imuData.gyro[2] * dt};
-#endif
-
 
     Vec3d acce_ = CompensateIMU(acce, nav.ab, nav.as);
     Vec3d gyro_ = CompensateIMU(gyro, nav.gb, nav.gs);
