@@ -18,6 +18,25 @@ add_definitions(-DGLOG_OUTPUT)
 add_definitions(-DUSE_YAML=1)
 add_definitions(-DENABLE_FUSION_RECORDER)
 
+option(EST_GYRO_SCALE ON)
+option(EST_ACCE_SCALE ON)
+option(EST_GNSS_LEVEL_ARM ON)
+option(EST_ODO_SCALE ON)
+
+if(EST_GYRO_SCALE)
+    add_compile_options(-DRGIOE_ESTIMATE_ACCE_SCALE_FACTOR=1)
+endif()
+if(EST_GYRO_SCALE)
+    add_compile_options(-DRGIOE_ESTIMATE_GYRO_SCALE_FACTOR=1)
+endif()
+if(EST_GNSS_LEVEL_ARM)
+    add_compile_options(-DRGIOE_ESTIMATE_GNSS_LEVEL_ARM=1)
+endif()
+if(EST_ODO_SCALE)
+    add_compile_options(-DRGIOE_ESTIMATE_ACCE_SCALE_FACTOR=1)
+endif()
+
+
 find_package(fmt REQUIRED)
 add_executable( PostDataFusion
         ${SOURCE}
