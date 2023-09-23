@@ -40,5 +40,8 @@ unit-test-job:   # This job runs in the test stage.
   script:
     - echo "Running loosely couple on A15 data."
     - sh ci-test-a15.sh
-    - echo " TODO test finished"
+    - echo " test finished"
+  artifacts:
+    paths:
+      - ./App/bin
 
