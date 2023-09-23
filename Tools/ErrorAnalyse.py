@@ -25,7 +25,7 @@ if __name__ == '__main__':
     target_path, truth_path = load_config(yml_path)
     print("ground truth:{}".format(truth_path))
     print("target file:{}".format(target_path))
-    column_index = [0, 1, 2, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+    column_index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, -1, -1, -1, -1]
     e = ErrorAnalyser(target_path, truth_path, column_index, write2file=False)
     e.analyse(_3d=True, _2d=True)
 
