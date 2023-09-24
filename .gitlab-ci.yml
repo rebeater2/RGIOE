@@ -33,8 +33,8 @@ build-win32-job:   # This job runs in the test stage.
       - ./App/bin
 
 
-unit-test-job:   # This job runs in the test stage.
-  stage: test    # It only starts when the job in the build stage completes successfully.
+gnss-ins-test-job:   # test for high precise GNSS/INS loosely couple system with no outage
+  stage: test
   tags:
     - linux_lpc
   script:
@@ -44,4 +44,13 @@ unit-test-job:   # This job runs in the test stage.
   artifacts:
     paths:
       - ./App/bin/*.rcd
+
+ins-test-job:   # pure inertial navigation system
+  stage: test
+  tags:
+    - linux_lpc
+  script:
+    - echo "Running loosely couple on A15 data."
+    - sh ci-test-pos830.sh
+    - echo " test finished"
 
