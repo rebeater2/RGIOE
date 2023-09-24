@@ -34,7 +34,7 @@ int navOutput(NavOutput *nav_output);
 double navAlignGnss(const RgioeGnssData *gnss);
 int navAlignLevel(const RgioeImuData *imu);
 void navSetGNSS(const RgioeGnssData *gnss);
-void navSetVel(const Velocity *vel);
+void navSetVel(const RgioeOdometerData *vel);
 void navUpdate(const RgioeImuData *imu);
 ```
 # Performance

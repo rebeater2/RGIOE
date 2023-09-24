@@ -21,7 +21,7 @@ void getXd(double *xds);/*for debug*/
 /*接收前右下、非增量形式的惯导数据*/
 int navAlignLevel(const RgioeImuData *imu);
 void navSetPos(const double latLon[2], float h, const float std[3]);
-void navSetVel(const Velocity *vel);/*里程计速度更新*/
+void navSetVel(const RgioeOdometerData *vel);/*里程计速度更新*/
 void timeUpdate(const RgioeImuData *imu);
 #ifdef __cplusplus
 };

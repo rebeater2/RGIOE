@@ -104,8 +104,8 @@ public:
     bool LoadImuPara(std::string &error_msg);
 
 public:
-    float start_time{0};
-    float stop_time{0};
+    double start_time{0};
+    double stop_time{0};
     bool enable_rts{false};
 
     GnssConfig gnss_config;

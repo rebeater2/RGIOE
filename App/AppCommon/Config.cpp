@@ -157,12 +157,12 @@ void Config::SaveTo(const string &path) const {
     out << node;
     out.close();
 }
-
 void Config::LoadFrom(const string &path) {
     YAML::Node node = YAML::LoadFile(path);
-    start_time = node["start-time"].as<float>();
-    stop_time = node["stop-time"].as<float>();
-
+    /* for yaml-cpp does NOT have full precise for type double */
+    std::string start_time_str = node["start-time"].as<string>();
+    start_time = std::stod(start_time_str);
+    stop_time = node["stop-time"].as<double>();
     enable_rts = node["enable-rts"].as<bool>();
 
     output_config.file_path = node["Output-Config"]["file-path"].as<string>();
@@ -212,36 +212,36 @@ void Config::LoadFrom(const string &path) {
     }
     zupt_config.zupt_enable = node["ZUPT-Config"]["ZUPT-enable"].as<bool>();
     zupt_config.zupta_enable = node["ZUPT-Config"]["ZUPTA-enable"].as<bool>();
-    zupt_config.zupt_std = node["ZUPT-Config"]["zupt-std"].as<float>();
+    zupt_config.zupt_std = node["ZUPT-Config"]["zupt-std"].as<RgioeFloatType>();
     zupt_config.zupta_std = node["ZUPT-Config"]["zupta-std"].as<float>();
     zupt_config.zupt_window = node["ZUPT-Config"]["zupt-window"].as<int>();
     zupt_config.static_wide = node["ZUPT-Config"]["static-wide"].as<int>();
     zupt_config.threshold = node["ZUPT-Config"]["threshold"].as<float>();
 
     align_config.mode = (RgioeAlignMode) node["Align-Config"]["mode"].as<int>();
-    align_config.vel_threshold_for_moving = node["Align-Config"]["velocity-threshold"].as<float>();
+    align_config.vel_threshold_for_moving = node["Align-Config"]["velocity-threshold"].as<RgioeFloatType>();
     align_config.init_pva.week = node["Align-Config"]["init-PVA"]["week"].as<int>();
     align_config.init_pva.gpst = node["Align-Config"]["init-PVA"]["gpst"].as<double>();
     align_config.init_pva.lat = node["Align-Config"]["init-PVA"]["lat"].as<double>();
     align_config.init_pva.lon = node["Align-Config"]["init-PVA"]["lon"].as<double>();
-    align_config.init_pva.height = node["Align-Config"]["init-PVA"]["height"].as<float>();
+    align_config.init_pva.height = node["Align-Config"]["init-PVA"]["height"].as<RgioeFloatType>();
 
-    align_config.init_pva.vn[0] = node["Align-Config"]["init-PVA"]["vn"][0].as<float>();
-    align_config.init_pva.vn[1] = node["Align-Config"]["init-PVA"]["vn"][1].as<float>();
-    align_config.init_pva.vn[2] = node["Align-Config"]["init-PVA"]["vn"][2].as<float>();
-    align_config.init_pva.atti[0] = node["Align-Config"]["init-PVA"]["atti"][0].as<float>();
-    align_config.init_pva.atti[1] = node["Align-Config"]["init-PVA"]["atti"][1].as<float>();
-    align_config.init_pva.atti[2] = node["Align-Config"]["init-PVA"]["atti"][2].as<float>();
+    align_config.init_pva.vn[0] = node["Align-Config"]["init-PVA"]["vn"][0].as<RgioeFloatType>();
+    align_config.init_pva.vn[1] = node["Align-Config"]["init-PVA"]["vn"][1].as<RgioeFloatType>();
+    align_config.init_pva.vn[2] = node["Align-Config"]["init-PVA"]["vn"][2].as<RgioeFloatType>();
+    align_config.init_pva.atti[0] = node["Align-Config"]["init-PVA"]["atti"][0].as<RgioeFloatType>();
+    align_config.init_pva.atti[1] = node["Align-Config"]["init-PVA"]["atti"][1].as<RgioeFloatType>();
+    align_config.init_pva.atti[2] = node["Align-Config"]["init-PVA"]["atti"][2].as<RgioeFloatType>();
 
     outage_config.enable = node["Outage-Config"]["enable"].as<bool>();
-    outage_config.start = node["Outage-Config"]["start"].as<float>();
-    outage_config.stop = node["Outage-Config"]["stop"].as<float>();
-    outage_config.step = node["Outage-Config"]["step"].as<float>();
-    outage_config.outage = node["Outage-Config"]["outage"].as<float>();
+    outage_config.start = node["Outage-Config"]["start"].as<RgioeFloatType>();
+    outage_config.stop = node["Outage-Config"]["stop"].as<RgioeFloatType>();
+    outage_config.step = node["Outage-Config"]["step"].as<RgioeFloatType>();
+    outage_config.outage = node["Outage-Config"]["outage"].as<RgioeFloatType>();
 
     pressure_config.enable = node["Pressure-Config"]["enable"].as<bool>();
     pressure_config.file_path = node["Pressure-Config"]["file-path"].as<string>();
-    pressure_config.press_height_std = node["Pressure-Config"]["height-std"].as<float>();
+    pressure_config.press_height_std = node["Pressure-Config"]["height-std"].as<RgioeFloatType>();
 
 }
 

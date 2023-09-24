@@ -40,9 +40,9 @@ extern int GnssCheck(const GnssData &gnss){
 #endif
 
 
-void ShowFusionConfig(){
+void ShowFusionConfig() {
     LOG(INFO) << "---------------------start of config---------------------------";
-#define SHOW_MACRO(macro)   LOG(INFO) << #macro << " = " << macro?"ON":"OFF"
+#define SHOW_MACRO(macro)   LOG(INFO) << #macro << " = " << (macro?"ON":"OFF")
     SHOW_MACRO(RGIOE_ESTIMATE_ACCE_SCALE_FACTOR);
     SHOW_MACRO(RGIOE_ESTIMATE_GYRO_SCALE_FACTOR);
     SHOW_MACRO(RGIOE_ESTIMATE_GNSS_LEVEL_ARM);
@@ -59,52 +59,73 @@ int main(int argc, char *argv[]) {
     Recorder::GetInstance().Initialize(argv[0]);
 #endif
     if (argc < 2) {
-        loge << CopyRight << endl;
+        LOG(INFO) << CopyRight << endl;
         return 1;
     }
     ShowFusionConfig();
     Config config;
-    Smoother<double> odo_smooth{50};/*里程计平滑器*/
     config.LoadFrom(argv[1]);
     bool ok;
     string error_msg;
+    RgioeImuData imu;
+    RgioeGnssData gnss;
+    NavOutput out;
+    RgioeOdometerData odometer;
+    PressureData press;
     ok = config.LoadImuPara(error_msg);
     RgioeOption opt = config.GetOption();
     LOG_IF(FATAL, !ok) << "IMU parameter file read failed:" << error_msg;
     LOG(INFO) << config.ToStdString();
     LOG(INFO) << opt.imuPara;
-    if (config.odometer_config.enable)
-        logi << "Odometer path:" << config.odometer_config.file_path;
-    RgioeImuData imu;
-    RgioeGnssData gnss;
-    NavOutput out;
-    Velocity vel;
-    PressureData press;
+
+
+    std::shared_ptr<ReaderBase<RgioeImuData>> imu_reader;
+    std::shared_ptr<ReaderBase<RgioeGnssData>> gnss_reader;
+    std::shared_ptr<ReaderBase<RgioeOdometerData>> odometer_reader;
+    std::shared_ptr<ReaderBase<PressureData>> press_reader;
+
+    imu_reader = std::make_shared<IMUReader>(config.imu_config.file_path, config.imu_config.format,
+                                             config.imu_config.frame, false, config.imu_config.d_rate);
+    if (!imu_reader->IsOk()) {
+        LOG(FATAL) << fmt::format("IMU file({}) not found", config.imu_config.file_path);
+    }
+    LOG(INFO) <<fmt::format("start time {:.5}", config.start_time);
+    imu_reader->ReadUntil(config.start_time, &imu);
+
+    if (config.gnss_config.enable) {
+        gnss_reader = std::make_shared<GnssReader>(config.gnss_config.file_path);
+        if (!gnss_reader->IsOk()) {
+            LOG(WARNING) << fmt::format("Gnss file({}) not found", config.gnss_config.file_path);
+        }
+        gnss_reader->ReadUntil(imu.gpst, &gnss);
+    }
+    if (config.odometer_config.enable) {
+        odometer_reader = std::make_shared<OdometerReader>(config.odometer_config.file_path);
+        if (!odometer_reader->IsOk()) {
+            LOG(WARNING) << fmt::format("Odometer file({}) not found", config.gnss_config.file_path);
+        }
+        odometer_reader->ReadUntil(imu.gpst, &odometer);
+    }
+    if (config.pressure_config.enable) {
+        press_reader = std::make_shared<BmpReader>(config.pressure_config.file_path);
+        if (!odometer_reader->IsOk()) {
+            LOG(WARNING) << fmt::format("Press file({}) not found", config.pressure_config.file_path);
+        }
+        press_reader->ReadUntil(imu.gpst, &press);
+    }
     Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
                       config.outage_config.step};// = cfg.outage_config();
-    LOG(INFO) << config.outage_config.start << " " << config.outage_config.stop << " " << config.outage_config.outage
-              << " " << config.outage_config.step;
-
-    IMUReader imu_reader(config.imu_config.file_path,
-                         config.imu_config.format,
-                         config.imu_config.frame,
-                         false, config.imu_config.d_rate);
-    if (!imu_reader.IsOk()) {
-        LOG(ERROR) << "No such file:" + config.imu_config.file_path;
-        return 1;
-    }
-    if (!imu_reader.ReadUntil(config.start_time, &imu)) {
+    NavWriter writer(config.output_config.file_path, config.output_config.format);
+#if 0
+    if (!imu_reader.ReadUntil(91620.005, &imu)) {
         LOG(ERROR) << "IMU data does NOT reach the start time: " << config.start_time;
         return 1;
     }
-    GnssReader gnss_reader(config.gnss_config.file_path, config.gnss_config.format);
-    if (!gnss_reader.IsOk()) {
-        LOG(ERROR) << "No such file:" + config.gnss_config.file_path;
-    }
+
     if (!gnss_reader.ReadUntil(imu.gpst, &gnss)) {
         LOG(WARNING) << "GNSS data does NOT reach the start time: " << config.start_time;
     }
-    ReaderBase<Velocity> *podoReader = nullptr;//= new OdometerReader(config.odometer_config.file_path);
+    ReaderBase<RgioeOdometerData> *podoReader = nullptr;//= new OdometerReader(config.odometer_config.file_path);
     if (config.odometer_config.enable) {
         LOG(INFO) << "Odometer path:" << config.odometer_config.file_path;
         podoReader = new OdometerReader(config.odometer_config.file_path);
@@ -118,23 +139,23 @@ int main(int argc, char *argv[]) {
         LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
         return 1;
     }
-    NavWriter writer(config.output_config.file_path, config.output_config.format);
+#endif
     NavEpoch nav;
     if (opt.align_mode == RgioeAlignMode::ALIGN_MOVING) {
         LOG(INFO) << "Align moving mode, wait for GNSS";
         AlignMoving align{opt};
         do {
-            imu_reader.ReadNext(imu);
+            imu_reader->ReadNext(imu);
             align.Update(imu);
             if (fabs(gnss.gpst - imu.gpst) < 1. / opt.d_rate) {
                 auto v = align.Update(gnss);
-                LOG(INFO) << "algn: " <<gnss.gpst << "\tvel=" << v << "m/s";
-                if (!gnss_reader.ReadNext(gnss)) {
+                LOG(INFO) << "algn: " << gnss.gpst << "\tvel=" << v << "m/s";
+                if (!gnss_reader->ReadNext(gnss)) {
                     LOG(ERROR) << "GNSS read finished,but align not complete!";
                     return 0;
                 }
             }
-        } while (!align.alignFinished() and imu_reader.IsOk());
+        } while (!align.alignFinished() and imu_reader->IsOk());
         if (!align.alignFinished()) {
             LOG(ERROR) << "GNSS read finished,but align not complete!";
             return 0;
@@ -147,53 +168,49 @@ int main(int argc, char *argv[]) {
         LOG(ERROR) << "supported align mode" << (int) opt.align_mode;
         return 1;
     }
-    LOG(INFO) << "initial gyro bias:" << nav.gb.transpose() / _deg * _hour;
 
     Timer timer;
 /*第一步：初始化*/
     DataFusion df;
     df.Initialize(nav, opt);
-    LOG(INFO) << "initial PVA:" << df.Output();
-    if (opt.odo_enable and podoReader) {
-        podoReader->ReadUntil(imu.gpst, &vel);
-        podoReader->ReadNext(vel);//.gpst, &vel);
-    }
+    LOG(INFO) << "initial position:" << df.Output();
 
-    bmp_reader.ReadUntil(imu.gpst, &press);
-    gnss_reader.ReadUntil(imu.gpst,&gnss);
+    if (config.pressure_config.enable) press_reader->ReadUntil(imu.gpst, &press);
+    if (config.gnss_config.enable) gnss_reader->ReadUntil(imu.gpst, &gnss);
+    if (config.odometer_config.enable) odometer_reader->ReadUntil(imu.gpst, &odometer);
 /* loop function 1: end time <= 0 or 0  < imu.gpst < end time */
     LOG(INFO) << "start:" << imu.gpst << ",end:" << config.stop_time;
-    while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader.IsOk()) {
-        if (!imu_reader.ReadNext(imu))break;
+    while (((config.stop_time <= 0) || (config.start_time > 0 && imu.gpst < config.stop_time)) && imu_reader->IsOk()) {
+        if (!imu_reader->ReadNext(imu))break;
         /*第二步 时间更新*/
         df.TimeUpdate(imu);
         /* GNSS更新 */
-        if (gnss_reader.IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
+        if (config.gnss_config.enable and gnss_reader->IsOk() and fabs(gnss.gpst - imu.gpst) < 0.6 / opt.d_rate) {
             if (config.outage_config.enable and outage_cfg.IsOutage(gnss.gpst)) {
                 gnss.mode = GnssMode::INVALID;/*手动设置GNSS模式为INVALID*/
             }
             df.MeasureUpdatePos(gnss);
-            do{
-                if(!gnss_reader.ReadNext(gnss)){
+            do {
+                if (!gnss_reader->ReadNext(gnss)) {
                     LOG(WARNING) << "gnss read failed";
                 }
-            }while(gnss_reader.IsOk() && gnss.gpst < imu.gpst);
+            } while (gnss_reader->IsOk() && gnss.gpst < imu.gpst);
         }
         /*里程计更新*/
-        if (opt.odo_enable and podoReader->IsOk() and fabs(vel.gpst - imu.gpst) < 1.2 / opt.d_rate) {
-            df.MeasureUpdateVel(vel.forward);
+        if (opt.odo_enable and odometer_reader->IsOk() and fabs(odometer.gpst - imu.gpst) < 1.2 / opt.d_rate) {
+            df.MeasureUpdateVel(odometer.forward);
             Vec3d angle = df.estimator_.GetEulerAngles().transpose();
             do {
-                if (!podoReader->ReadNext(vel)) {
-                    LOG(WARNING) << "vel read failed" << vel.gpst;
+                if (!odometer_reader->ReadNext(odometer)) {
+                    LOG(WARNING) << "vel read failed" << odometer.gpst;
                 }
-            } while (vel.gpst < imu.gpst);
+            } while (odometer.gpst < imu.gpst);
         }
         if (config.pressure_config.enable and fabs(press.gpst - imu.gpst) < 1.0 / opt.d_rate) {
             double height = 44330 * (1 - pow(press.pressure / 101325.0, 0.19));
-           // double z = df.MeasureUpdateRelativeHeight(height);
+            // double z = df.MeasureUpdateRelativeHeight(height);
             LOG_EVERY_N(INFO, 100 * opt.d_rate) << "Pressure update:" << gnss << "at " << imu.gpst;
-            bmp_reader.ReadNext(press);
+            press_reader->ReadNext(press);
         }
         if (!opt.enable_rts) {
             writer.update(df.Output());
@@ -219,10 +236,9 @@ int main(int argc, char *argv[]) {
     }
     LOG(INFO) << "Process finished";
     /*show summary and reports:*/
-    delete podoReader;
     LOG(INFO) << "\n\tSummary:\n"
               << "\tAll epochs:" << df.EpochCounter() << '\n'
-              << "\tTime for Computing:" <<  static_cast<double>(timer.elapsed()) / 1000.0 << "s" << '\n'
+              << "\tTime for Computing:" << static_cast<double>(timer.elapsed()) / 1000.0 << "s" << '\n'
               << "\tFinal PVA:" << df.Output() << '\n';
     LOG_IF(INFO, config.outage_config.enable)
                     << "outage:" << config.outage_config.outage << " s, from " << config.outage_config.start << " to "

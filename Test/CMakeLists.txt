@@ -11,6 +11,7 @@ file(GLOB_RECURSE SOURCE
 
 set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}../../App/bin)
 find_package(fmt REQUIRED)
+find_package(yaml-cpp REQUIRED)
 include_directories(../App/AppCommon)
 add_executable(test_ins
         ../Src/InsCore.cpp
@@ -18,8 +19,9 @@ add_executable(test_ins
         ../Src/Convert.cpp
         ../Src/Earth.cpp
         ../App/AppCommon/FileIO.cpp
+        ../App/AppCommon/Config.cpp
          test_ins.cpp)
-target_link_libraries(test_ins Eigen3::Eigen fmt pthread)
+target_link_libraries(test_ins Eigen3::Eigen fmt pthread yaml-cpp)
 
 add_executable(test_kalman
         ./test_kalman.cpp

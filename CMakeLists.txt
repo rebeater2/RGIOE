@@ -49,6 +49,6 @@ find_package(glog REQUIRED)
 add_subdirectory(App/PostDataFusion)
 #add_subdirectory(App/RtSimulation/src)
 #add_subdirectory(Tools)
-#add_subdirectory(Test)
+add_subdirectory(Test)
 #add_link_options(-lgfortran -lm)
 

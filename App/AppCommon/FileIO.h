@@ -236,13 +236,13 @@ private:
     NavFileFormat fmt;
 };
 
-class OdometerReader : public ReaderBase<Velocity> {
+class OdometerReader : public ReaderBase<RgioeOdometerData> {
 public:
     explicit OdometerReader(const std::string &file_path);
 
-    bool ReadNext(Velocity &vel) override;
+    bool ReadNext(RgioeOdometerData &vel) override;
 
-    double GetTime(const Velocity &vel) const override;
+    double GetTime(const RgioeOdometerData &vel) const override;
 };
 
 class BmpReader : public ReaderBase<PressureData> {

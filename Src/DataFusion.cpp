@@ -569,22 +569,22 @@ NavOutput DataFusion::Output() const {
     out.gpst = nav.gpst;
     out.lat = projpos[0] / _deg;
     out.lon = projpos[1] / _deg;
-    out.height = (float) projpos[2];
+    out.height = (RgioeFloatType) projpos[2];
     for (int i = 0; i < 3; i++) {
-        out.vn[i] = (float) nav.vn[i];
-        out.atti[i] = (float) (projatti[i] / _deg);
-        out.gb[i] = (float) (nav.gb[i] / _deg * _hour);
-        out.ab[i] = (float) (nav.ab[i] / _mGal);
-        out.gs[i] = (float) (nav.gs[i] / _ppm);
-        out.as[i] = (float) (nav.as[i] / _ppm);
+        out.vn[i] = (RgioeFloatType) nav.vn[i];
+        out.atti[i] = (RgioeFloatType) (projatti[i] / _deg);
+        out.gb[i] = (RgioeFloatType) (nav.gb[i] / _deg * _hour);
+        out.ab[i] = (RgioeFloatType) (nav.ab[i] / _mGal);
+        out.gs[i] = (RgioeFloatType) (nav.gs[i] / _ppm);
+        out.as[i] = (RgioeFloatType) (nav.as[i] / _ppm);
     }
-    out.kd = (float) nav.kd;
+    out.kd = (RgioeFloatType) nav.kd;
     out.info = nav.info;
     out.week = nav.week;
     for (int i = 0; i < 3; i++) {
-        out.pos_std[i] = (float) rgioe_sqrt(kf.P(0 + i, 0 + i));
-        out.vn_std[i] = (float) rgioe_sqrt(kf.P(3 + i, 3 + i));
-        out.atti_std[i] = (float) rgioe_sqrt(kf.P(6 + i, 6 + i));
+        out.pos_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(0 + i, 0 + i));
+        out.vn_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(3 + i, 3 + i));
+        out.atti_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(6 + i, 6 + i));
     }
 #ifdef ENABLE_FUSION_RECORDER
     static Vec3Hp first_pos = nav.pos;

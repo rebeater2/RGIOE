@@ -372,7 +372,7 @@ OdometerReader::OdometerReader(const std::string &file_path) {
     ok_ = ifs.good();
 }
 
-bool OdometerReader::ReadNext(Velocity &vel) {
+bool OdometerReader::ReadNext(RgioeOdometerData &vel) {
     if (!ok_) return ok_;
     std::string buffer;
     getline(ifs, buffer);
@@ -382,7 +382,7 @@ bool OdometerReader::ReadNext(Velocity &vel) {
     return ok_;
 }
 
-double OdometerReader::GetTime(const Velocity &vel) const {
+double OdometerReader::GetTime(const RgioeOdometerData &vel) const {
     return vel.gpst;
 }
 
