@@ -50,7 +50,7 @@ ins-test-job:   # pure inertial navigation system
   tags:
     - linux_lpc
   script:
-    - echo "Running loosely couple on A15 data."
+    - echo "Running ins test on pos830 data."
     - sh ci-test-pos830.sh
     - echo " test finished"
 
