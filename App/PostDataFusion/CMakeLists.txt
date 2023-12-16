@@ -16,24 +16,48 @@ include_directories(.)
 
 add_definitions(-DGLOG_OUTPUT)
 add_definitions(-DUSE_YAML=1)
-add_definitions(-DENABLE_FUSION_RECORDER)
 
-option(EST_GYRO_SCALE ON)
-option(EST_ACCE_SCALE ON)
-option(EST_GNSS_LEVEL_ARM ON)
-option(EST_ODO_SCALE ON)
+# compiler options definition
+# 1. for sate vector
+option(EST_GYRO_SCALE OFF)
+option(EST_ACCE_SCALE OFF)
+option(EST_GNSS_LEVEL_ARM OFF)
+option(EST_ODO_SCALE OFF)
+# 2. for recorder
+option(RECORDER OFF)
+# 3. for fast ins
+option(FAST_INS OFF)
 
+
+# estimate acce scale
 if(EST_ACCE_SCALE)
     add_compile_options(-DRGIOE_ESTIMATE_ACCE_SCALE_FACTOR=1)
 endif()
+
+# estimate gyro scale
 if(EST_GYRO_SCALE)
     add_compile_options(-DRGIOE_ESTIMATE_GYRO_SCALE_FACTOR=1)
 endif()
+
+# estimate gnss level arm
 if(EST_GNSS_LEVEL_ARM)
     add_compile_options(-DRGIOE_ESTIMATE_GNSS_LEVEL_ARM=1)
 endif()
+
+#estimate odometer scale
 if(EST_ODO_SCALE)
     add_compile_options(-DRGIOE_ESTIMATE_ACCE_SCALE_FACTOR=1)
+endif()
+
+if(RECORDER)
+    message("recorder: ON")
+    add_compile_options(-DENABLE_FUSION_RECORDER=1)
+endif()
+
+
+if(FAST_INS)
+    message("fast INS mode: ON")
+    add_compile_options(-DRGIOE_FAST_INS=1)
 endif()
 
 

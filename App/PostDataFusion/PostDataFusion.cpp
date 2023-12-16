@@ -10,7 +10,6 @@
 #include "NavLog.h"
 #include "Timer.h"
 #include "Outage.h"
-#include "Smoother.h"
 #include "fmt/format.h"
 
 #include <list>
@@ -47,7 +46,8 @@ void ShowFusionConfig() {
     SHOW_MACRO(RGIOE_ESTIMATE_GYRO_SCALE_FACTOR);
     SHOW_MACRO(RGIOE_ESTIMATE_GNSS_LEVEL_ARM);
     SHOW_MACRO(RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR);
-    SHOW_MACRO(STATE_CNT);
+    SHOW_MACRO(ENABLE_FUSION_RECORDER);
+    LOG(INFO) << "State vector length:" << STATE_CNT;
 #undef SHOW_MACRO
     LOG(INFO) << "-----------------------end of config-----------------------";
 }
@@ -55,14 +55,14 @@ void ShowFusionConfig() {
 
 int main(int argc, char *argv[]) {
     logInit(argv[0], "./log/");
-#ifdef ENABLE_FUSION_RECORDER
+    ShowFusionConfig();
+#if ENABLE_FUSION_RECORDER
     Recorder::GetInstance().Initialize(argv[0]);
 #endif
     if (argc < 2) {
         LOG(INFO) << CopyRight << endl;
         return 1;
     }
-    ShowFusionConfig();
     Config config;
     config.LoadFrom(argv[1]);
     bool ok;
@@ -78,7 +78,6 @@ int main(int argc, char *argv[]) {
     LOG(INFO) << config.ToStdString();
     LOG(INFO) << opt.imuPara;
 
-
     std::shared_ptr<ReaderBase<RgioeImuData>> imu_reader;
     std::shared_ptr<ReaderBase<RgioeGnssData>> gnss_reader;
     std::shared_ptr<ReaderBase<RgioeOdometerData>> odometer_reader;
@@ -88,6 +87,7 @@ int main(int argc, char *argv[]) {
                                              config.imu_config.frame, false, config.imu_config.d_rate);
     if (!imu_reader->IsOk()) {
         LOG(FATAL) << fmt::format("IMU file({}) not found", config.imu_config.file_path);
+        return -1;
     }
     LOG(INFO) <<fmt::format("start time {:.5}", config.start_time);
     imu_reader->ReadUntil(config.start_time, &imu);
@@ -116,30 +116,7 @@ int main(int argc, char *argv[]) {
     Outage outage_cfg{config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
                       config.outage_config.step};// = cfg.outage_config();
     NavWriter writer(config.output_config.file_path, config.output_config.format);
-#if 0
-    if (!imu_reader.ReadUntil(91620.005, &imu)) {
-        LOG(ERROR) << "IMU data does NOT reach the start time: " << config.start_time;
-        return 1;
-    }
 
-    if (!gnss_reader.ReadUntil(imu.gpst, &gnss)) {
-        LOG(WARNING) << "GNSS data does NOT reach the start time: " << config.start_time;
-    }
-    ReaderBase<RgioeOdometerData> *podoReader = nullptr;//= new OdometerReader(config.odometer_config.file_path);
-    if (config.odometer_config.enable) {
-        LOG(INFO) << "Odometer path:" << config.odometer_config.file_path;
-        podoReader = new OdometerReader(config.odometer_config.file_path);
-        if (!podoReader->ReadUntil(imu.gpst, &vel)) {
-            LOG(ERROR) << "Error odometer data does NOT reach the start time";
-            return 1;
-        }
-    }
-    BmpReader bmp_reader{config.pressure_config.file_path};
-    if (config.pressure_config.enable and !bmp_reader.ReadUntil(config.start_time, &press)) {
-        LOG(ERROR) << "Error BMP280 data does NOT reach the start time";
-        return 1;
-    }
-#endif
     NavEpoch nav;
     if (opt.align_mode == RgioeAlignMode::ALIGN_MOVING) {
         LOG(INFO) << "Align moving mode, wait for GNSS";
@@ -247,7 +224,7 @@ int main(int argc, char *argv[]) {
 #if RGIOE_ESTIMATE_GNSS_LEVEL_ARM == 1
     LOG(INFO) << "Final lever arm:" << df.lb_gnss.transpose();
 #endif
-#ifdef ENABLE_FUSION_RECORDER
+#if ENABLE_FUSION_RECORDER
     LOG(INFO) << "\tRecorder was saved to " << Recorder::GetInstance().GetRcdFilename();
 #endif
     ERROR_EXIT:

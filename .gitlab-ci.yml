@@ -20,6 +20,19 @@ stages:          # List of stages for jobs, and their order of execution
   - build
   - test
 
+
+build-multi-option-job:   # This job runs in the test stage.
+  stage: build    # It only starts when the job in the build stage completes successfully.
+  tags:
+    - linux_lpc
+  script:
+    - echo "Running unit tests... This will take about 60 seconds."
+    - sh build_test.sh
+    - echo "compile finished"
+  artifacts:
+    paths:
+      - ./App/bin
+
 build-win32-job:   # This job runs in the test stage.
   stage: build    # It only starts when the job in the build stage completes successfully.
   tags:
@@ -31,7 +44,6 @@ build-win32-job:   # This job runs in the test stage.
   artifacts:
     paths:
       - ./App/bin
-
 
 gnss-ins-test-job:   # test for high precise GNSS/INS loosely couple system with no outage
   stage: test

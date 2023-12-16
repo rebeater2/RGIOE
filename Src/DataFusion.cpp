@@ -126,7 +126,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         navs.push_back(nav);
     }
 #endif
-#ifdef ENABLE_FUSION_RECORDER
+#if ENABLE_FUSION_RECORDER
     recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
     state.timestamp = nav.gpst;
     for (int i = 0; i < std::max(21,STATE_CNT); ++i) {
@@ -179,7 +179,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     } else {
         nav.info.sensors &= ~SENSOR_NHC;
     }
-#ifdef ENABLE_FUSION_RECORDER
+#if ENABLE_FUSION_RECORDER
     recorder_msg_kalman_t kalman = CREATE_RECORDER_MSG(kalman);
     kalman.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
@@ -220,7 +220,7 @@ int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
     Mat3X H = _posH();
     Vec3d z = _posZ(pos);
     kf.Update(H, z, Rk);
-#ifdef ENABLE_FUSION_RECORDER
+#if ENABLE_FUSION_RECORDER
     recorder_msg_meas_pos_t measPos = CREATE_RECORDER_MSG(meas_pos);
     measPos.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
@@ -586,7 +586,7 @@ NavOutput DataFusion::Output() const {
         out.vn_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(3 + i, 3 + i));
         out.atti_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(6 + i, 6 + i));
     }
-#ifdef ENABLE_FUSION_RECORDER
+#if ENABLE_FUSION_RECORDER
     static Vec3Hp first_pos = nav.pos;
     recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
     result.timestamp = nav.gpst;
