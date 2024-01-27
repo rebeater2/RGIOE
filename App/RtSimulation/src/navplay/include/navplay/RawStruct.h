@@ -8,7 +8,7 @@
 
 #ifndef ROBOT_DECODE__RAWSTRUCT_H_
 #define ROBOT_DECODE__RAWSTRUCT_H_
-#include "../../../../../../Src/RgioeDataType.h"
+#include "RgioeDataType.h"
 namespace InsCube {
 #include "stdint.h"
 typedef struct {

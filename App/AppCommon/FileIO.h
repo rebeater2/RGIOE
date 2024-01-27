@@ -15,7 +15,7 @@
 #include <thread>
 #include <fstream>
 #include <condition_variable>
-#include "RgioeDataType.h"
+#include <rgioe.h>
 #include <atomic>
 
 using std::ostream;

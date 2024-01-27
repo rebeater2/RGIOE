@@ -3,7 +3,7 @@
 //
 
 #include "FileIO.h"
-#include "../../Src/Earth.h"
+#include "Earth.h"
 #include <utility>
 #include <sstream>
 #include "fmt/format.h"

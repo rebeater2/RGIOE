@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(
         Inc
+        Src
 )
 
 file(GLOB_RECURSE SOURCE

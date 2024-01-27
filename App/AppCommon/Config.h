@@ -9,7 +9,7 @@
 #ifndef UIDATAFUSION__CONFIG_H_
 #define UIDATAFUSION__CONFIG_H_
 
-#include "../../Src/RgioeDataType.h"
+#include "rgioe.h"
 #include "FileIO.h"
 #include <string>
 

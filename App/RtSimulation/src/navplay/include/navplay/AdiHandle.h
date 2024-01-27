@@ -8,7 +8,7 @@
 
 #ifndef INSCUBEDECODER__ADIHANDLE_H_
 #define INSCUBEDECODER__ADIHANDLE_H_
-#include "../../../../../../Src/RgioeDataType.h"
+#include "RgioeDataType.h"
 #include "RawStruct.h"
 #include "HandleBase.h"
 

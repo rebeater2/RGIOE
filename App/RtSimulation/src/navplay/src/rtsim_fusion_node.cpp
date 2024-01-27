@@ -18,7 +18,7 @@
 #include "fmt/format.h"
 #include "glog/logging.h"
 
-#include "../../../../../Src/RgioeDataType.h"
+#include "RgioeDataType.h"
 #include <thread>
 #include <nav_msgs/Path.h>
 #include "../../../../../Src/Earth.h"

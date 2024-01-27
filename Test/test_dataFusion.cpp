@@ -2,7 +2,7 @@
 // Created by rebeater on 2020/12/17.
 //
 #include "../Src/RgioeDefine.h"
-#include "../Src/RgioeDataType.h"
+#include "RgioeDataType.h"
 #include "FileIO.h"
 #include "../App/AppCommon/Config.h"
 #include "DataFusion.h"

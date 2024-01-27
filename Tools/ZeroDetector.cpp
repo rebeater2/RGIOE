@@ -8,7 +8,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "../Src/RgioeDataType.h"
+#include "RgioeDataType.h"
 #include "DataFusion.h"
 #include <fmt/format.h>
 #include "FileIO.h"
