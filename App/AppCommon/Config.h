@@ -14,7 +14,6 @@
 #include <string>
 
 class BaseConfig {
-
 };
 
 struct GnssConfig : public BaseConfig {

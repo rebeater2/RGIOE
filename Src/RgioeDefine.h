@@ -65,9 +65,9 @@ typedef fp32 RgioeFloatType;
 typedef fp64 RgioeFloatType;
 #endif
 
-
-#define PRINT_MACRO_HELPER(x)   #x
-#define PRINT_MACRO(x)   #x "=" PRINT_MACRO_HELPER(x)
-#pragma message(PRINT_MACRO(STATE_CNT))
+// print STATE_CNT while compiling
+//#define PRINT_MACRO_HELPER(x)   #x
+//#define PRINT_MACRO(x)   #x "=" PRINT_MACRO_HELPER(x)
+//#pragma message(PRINT_MACRO(STATE_CNT))
 
 #endif //RGIOE_RGIOEDEFINE_H

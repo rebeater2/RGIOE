@@ -113,6 +113,7 @@ private:
 
 template<typename T>
 void Recorder::Record(T *data) {
+    CHECKSUM_RECORDER_CRC32(data);
     ofs.write((const char *) data, sizeof(T));
 }
 

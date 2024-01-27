@@ -83,20 +83,13 @@ typedef struct {
     double lon;
     float height; /*32*/
     float pos_std[3];
-#if REAL_TIME_MODE == 0
     float vn[3];
     float vn_std[3];
     double gpst;
-    float hdop;
-    float pdop;
-    float gdop;
     float yaw;/*0~360,-1表示无效*/
     float yaw_std;/*32 + 4*6 = 56 */
     float pitch;
     float pitch_std;
-#endif
-    int week;/*4*/
-    int ns; /*大于128不可能！！！*/
     int mode; /*  和 NMEA的模式定义保持一致*/
 } RgioeGnssData;/*64 bytes*/
 
@@ -224,4 +217,4 @@ typedef struct {
     double angular;
 } AuxiliaryData;
 
-#endif //LOOSELY_COUPLE_H7_NAV_STRUCT_H
+#endif //LOOSELYCOUPLE2020_CPP_NAV_STRUCT_H

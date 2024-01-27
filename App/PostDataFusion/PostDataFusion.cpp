@@ -2,58 +2,125 @@
 // Created by rebeater on 2020/12/17.
 //
 
-#include "DataFusion.h"
-#include "Alignment.h"
-#include "RgioeDataType.h"
+#include "rgioe.h"
 #include "FileIO.h"
 #include "Config.h"
-#include "NavLog.h"
-#include "Timer.h"
+#include "DataManager.h"
 #include "Outage.h"
-#include "fmt/format.h"
+#include "Timer.h"
 
-#include <list>
+#if ENABLE_FUSION_RECORDER
 
-#if 0
-extern int GnssCheck(const GnssData &gnss){
-  if (gnss.ns > 60) {
-    return 0;
-  }
-  if (gnss.ns < 25) {//低于5的抛弃
-    return 0;
-  }
-  if (gnss.mode == SPP) {
-    return 1;
-  }
-  if (gnss.pos_std[0]> 0.1 or gnss.pos_std[2] > 0.1 or gnss.pos_std[2]> 0.3 ){
-    return 0;
-  }
-  if (gnss.mode == RTK_DGPS) {
-    return 2;
-  } else if (gnss.mode == RTK_FLOAT || gnss.mode == RTK_FIX) {
-    return 3;
-  } else {
-    return 0;
-  }
-}
+#include "Recorder/Recorder.h"
+
 #endif
 
+#include <fmt/format.h>
+#include <glog/logging.h>
 
-void ShowFusionConfig() {
+char rgioe_help_info[] = "usage: PostDataFusion config.yml";
+
+void ShowFusionConfig(const char *argv0);
+
+void InitialLog(const char *argv0);
+
+int main(int argc, char **argv) {
+    InitialLog(argv[0]);
+    ShowFusionConfig(argv[0]);
+    if (argc < 2) {
+        LOG(INFO) << rgioe_help_info << endl;
+        return 1;
+    }
+#if ENABLE_FUSION_RECORDER
+    Recorder::GetInstance().Initialize(argv[0]);
+#endif
+    /*! main action */
+    Config config;
+    config.LoadFrom(argv[1]);
+    LOG(INFO) << config.ToStdString();
+    LOG(INFO) << config.GetOption().imuPara;
+
+    std::shared_ptr<BaseData_t> data = nullptr;
+    auto *rgioe_dev = new uint8_t[rgioe_buffer_size];
+    rgioe_nav_pva_t result;
+    NavWriter writer{config.output_config.file_path, config.output_config.format};
+    RgioeOption opt = config.GetOption();
+    Outage outage = Outage(config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
+                           config.outage_config.step);
+    DataManager manager;
+
+    manager.AddFile(config.gnss_config)
+            .AddFile(config.imu_config);
+
+    rgioe_init(rgioe_dev, &opt);
+    Timer timer;
+    timer.reset();
+    do {
+        /*! step1: read raw data*/
+        data = manager.GetNextData();
+        if (!data) break;
+//        LOG_IF(INFO, data->type == 2) << fmt::format("type {}:{:6f}", data->type, data->time);
+        /*! step2: predict or measure update */
+        switch (data->type) {
+            case DATA_TYPE_IMU: {
+                auto imu = std::dynamic_pointer_cast<ImuData_t>(data);
+                auto rgioe_imu = imu->toRgioeData();
+                rgioe_timeupdate(rgioe_dev, data->time, &rgioe_imu);
+            }
+                break;
+            case DATA_TYPE_GNSS: {
+                auto gnss = std::dynamic_pointer_cast<GnssData_t>(data);
+                auto rgioe_gnss = gnss->toRgioeData();
+                if (config.outage_config.enable and outage.IsOutage(gnss->time))
+                    break;
+                rgioe_gnssupdate(rgioe_dev, gnss->time, &rgioe_gnss);
+            }
+                break;
+            default:
+                break;
+        }
+        /*! step3: output the result (TODO configure output rate)*/
+        if (rgioe_get_status(rgioe_dev) == RGIOE_STATUS_NAVIGATION) {
+            rgioe_get_result(rgioe_dev, &result);
+            writer.update(result);
+        }
+    } while (true);
+    writer.stop();
+    LOG(INFO) << "Time usage:" << timer.elapsed() << "ms";
+    LOG(INFO) << "Heap size: " << rgioe_buffer_size;
+    LOG(INFO) << "Final nav:" << result;
+    LOG(INFO) << "Result was saved to:" << config.output_config.file_path;
+#if ENABLE_FUSION_RECORDER
+    LOG(INFO) << "Recorder was saved to:" << Recorder::GetInstance().GetRcdFilename();
+#endif
+    rgioe_deinit(rgioe_dev);
+    delete[]rgioe_dev;
+}
+
+void InitialLog(const char *argv0) {
+    google::InitGoogleLogging(argv0);
+    FLAGS_alsologtostderr = true;
+}
+
+
+void ShowFusionConfig(const char *argv0) {
     LOG(INFO) << "---------------------start of config---------------------------";
+    (void *) argv0;
+    LOG(INFO) << CopyRight;
+    LOG(INFO) << "Build information:" << rgioe_build_info;
 #define SHOW_MACRO(macro)   LOG(INFO) << #macro << " = " << (macro?"ON":"OFF")
     SHOW_MACRO(RGIOE_ESTIMATE_ACCE_SCALE_FACTOR);
     SHOW_MACRO(RGIOE_ESTIMATE_GYRO_SCALE_FACTOR);
     SHOW_MACRO(RGIOE_ESTIMATE_GNSS_LEVEL_ARM);
     SHOW_MACRO(RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR);
     SHOW_MACRO(ENABLE_FUSION_RECORDER);
-    LOG(INFO) << "State vector length:" << STATE_CNT;
+    LOG(INFO) << "State vector size:" << STATE_CNT;
 #undef SHOW_MACRO
     LOG(INFO) << "-----------------------end of config-----------------------";
 }
 
-
-int main(int argc, char *argv[]) {
+#if 0
+int main1(int argc, char *argv[]) {
     logInit(argv[0], "./log/");
     ShowFusionConfig();
 #if ENABLE_FUSION_RECORDER
@@ -89,15 +156,16 @@ int main(int argc, char *argv[]) {
         LOG(FATAL) << fmt::format("IMU file({}) not found", config.imu_config.file_path);
         return -1;
     }
-    LOG(INFO) <<fmt::format("start time {:.5}", config.start_time);
+    LOG(INFO) << fmt::format("start time {:.5}", config.start_time);
     imu_reader->ReadUntil(config.start_time, &imu);
 
     if (config.gnss_config.enable) {
-        gnss_reader = std::make_shared<GnssReader>(config.gnss_config.file_path);
+        gnss_reader = std::make_shared<GnssReader>(config.gnss_config.file_path, config.gnss_config.format);
         if (!gnss_reader->IsOk()) {
             LOG(WARNING) << fmt::format("Gnss file({}) not found", config.gnss_config.file_path);
         }
         gnss_reader->ReadUntil(imu.gpst, &gnss);
+        LOG_IF(ERROR, !gnss_reader->IsOk()) << "GNSS file not reach " << imu.gpst << " but reach " << gnss.gpst;
     }
     if (config.odometer_config.enable) {
         odometer_reader = std::make_shared<OdometerReader>(config.odometer_config.file_path);
@@ -185,7 +253,7 @@ int main(int argc, char *argv[]) {
         }
         if (config.pressure_config.enable and fabs(press.gpst - imu.gpst) < 1.0 / opt.d_rate) {
             double height = 44330 * (1 - pow(press.pressure / 101325.0, 0.19));
-            // double z = df.MeasureUpdateRelativeHeight(height);
+            double z = df.MeasureUpdateRelativeHeight(height);
             LOG_EVERY_N(INFO, 100 * opt.d_rate) << "Pressure update:" << gnss << "at " << imu.gpst;
             press_reader->ReadNext(press);
         }
@@ -231,4 +299,4 @@ int main(int argc, char *argv[]) {
     writer.stop();
     return 0;
 }
-
+#endif

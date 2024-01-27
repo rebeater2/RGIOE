@@ -160,8 +160,8 @@ void Config::SaveTo(const string &path) const {
 void Config::LoadFrom(const string &path) {
     YAML::Node node = YAML::LoadFile(path);
     /* for yaml-cpp does NOT have full precise for type double */
-    std::string start_time_str = node["start-time"].as<string>();
-    start_time = std::stod(start_time_str);
+//    std::string start_time_str = node["start-time"].as<string>();
+    start_time = node["start-time"].as<double>();
     stop_time = node["stop-time"].as<double>();
     enable_rts = node["enable-rts"].as<bool>();
 
@@ -242,7 +242,8 @@ void Config::LoadFrom(const string &path) {
     pressure_config.enable = node["Pressure-Config"]["enable"].as<bool>();
     pressure_config.file_path = node["Pressure-Config"]["file-path"].as<string>();
     pressure_config.press_height_std = node["Pressure-Config"]["height-std"].as<RgioeFloatType>();
-
+    std::string err_msg;
+    LoadImuPara(err_msg);
 }
 
 RgioeOption Config::GetOption() const {

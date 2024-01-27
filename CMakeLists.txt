@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.17)
 project(RGIOE)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_BUILD_TYPE "release")
+# set(CMAKE_BUILD_TYPE "release")
 #set(CMAKE_C_COMPILER gcc)
 #set(CMAKE_CXX_COMPILER clang++)
 
@@ -17,8 +17,6 @@ file(GLOB_RECURSE SOURCE
         )
 
 
-#add_compile_options(-O3)
-#
 
 #target_link_libraries(test_kalman Eigen3::Eigen)
 
@@ -32,7 +30,7 @@ find_package(Eigen3 REQUIRED)
 #add_definitions(-DEIGEN_USE_MKL_ALL)
 
 add_compile_options(-fPIC)
-add_compile_options(-O3)
+add_compile_options(-Ofast)
 set(PROJECT_VERSION 1.00)
 
 message("check for Qt5")

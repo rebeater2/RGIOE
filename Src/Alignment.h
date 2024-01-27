@@ -25,8 +25,8 @@ class AlignBase {
  public:
   AlignBase();
   NavOutput getPva() const;
-  NavEpoch getNavEpoch() const;
-  bool alignFinished() const { return flag_level_finished and flag_yaw_finished; }
+  const NavEpoch &getNavEpoch() const;
+  virtual const bool alignFinished() const { return flag_level_finished and flag_yaw_finished; }
   virtual double Update(const RgioeGnssData &gnss) { return 0.0; };
   virtual void Update(const RgioeImuData &imu) {};
  public:
@@ -35,12 +35,19 @@ class AlignBase {
   bool flag_yaw_finished;
 };
 
-class AlignMoving : public AlignBase {
+class AlignMoving {
  public:
+    AlignMoving();
   explicit AlignMoving(const RgioeOption &RgioeOption);
-  double Update(const RgioeGnssData &gnss) override;
-  void Update(const RgioeImuData &imu) override;
+  double Update(const RgioeGnssData &gnss) ;
+  void Update(const RgioeImuData &imu) ;
   int GnssCheck(const RgioeGnssData &gnss);
+  int SetOption(const RgioeOption &RgioeOption);
+  const  bool alignFinished() const;
+public:
+    NavEpoch nav;
+    bool flag_level_finished;
+    bool flag_yaw_finished;
  private:
   RgioeGnssData gnss_pre{};
   IMUSmooth smooth;
@@ -48,6 +55,7 @@ class AlignMoving : public AlignBase {
   Vec3d vn_pre;
   Vec3d acc_pre;
   double gpst_pre{};
+
 };
 
 class AlignStatic : public AlignBase {

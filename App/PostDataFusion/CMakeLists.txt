@@ -6,7 +6,6 @@ file(GLOB_RECURSE SOURCE
         ${CMAKE_HOME_DIRECTORY}/Src/*.*
         )
 
-add_compile_options(-O2)
 
 include_directories(${CMAKE_HOME_DIRECTORY}/Inc)
 include_directories(${CMAKE_HOME_DIRECTORY}/Src)
@@ -24,7 +23,7 @@ option(EST_ACCE_SCALE OFF)
 option(EST_GNSS_LEVEL_ARM OFF)
 option(EST_ODO_SCALE OFF)
 # 2. for recorder
-option(RECORDER OFF)
+option(RECORDER ON)
 # 3. for fast ins
 option(FAST_INS OFF)
 
@@ -65,6 +64,7 @@ find_package(fmt REQUIRED)
 add_executable( PostDataFusion
         ${SOURCE}
         PostDataFusion.cpp
+        DataManager.cpp
         ../AppCommon/FileIO.cpp
         ../AppCommon/NavLog.cpp
         ../AppCommon/Config.cpp
@@ -73,7 +73,7 @@ add_executable( PostDataFusion
 target_link_libraries(PostDataFusion
         yaml-cpp
         glog
-        pthread
+     #   pthread
         fmt
         Eigen3::Eigen
         )
@@ -92,7 +92,7 @@ if(WIN32)
     endfunction()
     set(LIBS yaml-cpp
             glog
-            pthread
+           # pthread
             fmt)
 
     message("target: ${PROJECT_NAME}/plugins/platforms")

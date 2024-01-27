@@ -18,7 +18,6 @@
 
 
 extern RgioeOption default_option;
-extern char CopyRight[];
 
 template<typename T>
 class Singleton {
@@ -171,15 +170,15 @@ public:
     VecX1 kfXd;                             /*state vector for kalman filter*/
     int32_t update_iter;
     NavEpoch first_epoch;
-#if REAL_TIME_MODE != 1
-    /*for RTS */
+/*#if REAL_TIME_MODE != 1
+    *//*for RTS *//*
 
-    std::list<MatXX> matphis;             /* save mat PHI*/
-    std::list<Vec1X> Xds;                 /*save vector xd*/
-    std::list<MatXX> matp_pres;            /*save predicted mat P*/
-    std::list<MatXX> matp_posts;            /*save updated mat P*/
-    std::list<NavEpoch> navs;                /*save status*/
-#endif
+    std::list<MatXX> matphis;             *//* save mat PHI*//*
+    std::list<Vec1X> Xds;                 *//*save vector xd*//*
+    std::list<MatXX> matp_pres;            *//*save predicted mat P*//*
+    std::list<MatXX> matp_posts;            *//*save updated mat P*//*
+    std::list<NavEpoch> navs;                *//*save status*//*
+#endif*/
     uint32_t _timeUpdateIdx;                /*number of time updates*/
 private:
     KalmanFilter<STATE_CNT, RgioeFloatType>::Mat3X _posH() const;                    /* mat H for position update*/

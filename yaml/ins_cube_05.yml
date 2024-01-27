@@ -1,16 +1,16 @@
 #!</media/rebeater/hd_data2/workspace/CLionProjects/RGIOE/yaml/ins_cube.yml>
 IMU-Config:
   enable: false
-  file-path: F:\Data\Navigation\Robot\20220307/ADIS16465_01/04/ADI51_220307_118100.raw.imd.fix.imd
+  file-path: D:/Geek/DemoData/robot/20220307/ADIS16465_01/04/ADI51_220307_118100.raw.imd.fix.imd
   d-rate: 125
   format: 1
-  parameter-path: /home/rebeater/CLionProjects/RGIOE/yaml/adis16465_parameter.yml
+  parameter-path: D:/Geek/DemoData/robot/adis16465_parameter.yml
   frame: 0
 GNSS-Config:
   enable: true
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/Reference/cutecom0307_01482.log.gnsstxt
+  file-path: D:/Geek/DemoData/robot/Reference/cutecom0307_01482.log.gnsstxt
   format: 1
-  std-scale: 0.1
+  std-scale: 0.01
   level-arm:
     - -0.317
     - -0.095
@@ -29,9 +29,9 @@ GNSS-Config:
     - 0
     - 0
 Odometer:
-  enable: false
+  enable: true
   odometer-std: 0.01
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/04/ADI51_220307_118100.raw.veltxt
+  file-path: D:/Geek/DemoData/robot/20220307/ADIS16465_01/04/ADI51_220307_118100.raw.veltxt
   NHC-enable: false
   NHC-std:
     - 0.01
@@ -78,7 +78,7 @@ Outage-Config:
   step: 300
   outage: 60
 Output-Config:
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/04/ADI51_220307_118100.rt_gnss_ins_zupt.nav
+  file-path: D:/Geek/DemoData/robot/20220307/ADIS16465_01/04/ADI51_220307_118100.2023.nav
 #  0: bin, for small size
 # 1: ascii, for easily open with text editors
 # 2: double mat, for easily load by Python or MATLAB
@@ -94,7 +94,7 @@ Output-Config:
     - 0
 Pressure-Config:
   enable: false
-  file-path: /media/rebeater/hd_data2/workspace/raw_data/2022/20220307/ADIS16465_01/06/ADI51_220307_122202.raw.bmptxt
+  file-path: D:/Geek/DemoData/robot/20220307/ADIS16465_01/04/ADI51_220307_122202.raw.bmptxt
   height-std: 0.2
 start-time: 118169
 stop-time: 119299

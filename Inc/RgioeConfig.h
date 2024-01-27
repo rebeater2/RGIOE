@@ -29,14 +29,14 @@
 #define RGIOE_ESTIMATE_ODOMETER_SCALE_FACTOR 0
 #endif
 
-/*使用浮点数类型 FP64: double, FP32:fp32 or float */
+/*使用浮点数类型 FP64: double, FP32: float32 */
 #ifndef RGIOE_CONFIG_PRECISE
 #define RGIOE_CONFIG_PRECISE  FP64
 #endif
 
 /* 带RTS， 涉及到STL和大内存容器引入 */
 #ifndef RGIOE_ENABLE_RTS
-#define RGIOE_ENABLE_RTS  1
+#define RGIOE_ENABLE_RTS  0
 #endif
 
 /* 带双天线观测 */

@@ -4,14 +4,11 @@
 
 #include "DataFusion.h"
 #include "Recorder/RecorderType.h"
-#include "glog/logging.h"
+
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
 #define FLAG_HEIGHT 0b1000000U
 
-char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
-                   "Copyright(c) 2019-2021, by Bao Linfeng, All rights reserved.\n"
-                   "This Version is for Embedded and Real-time Application\n";
 
 DataFusion::DataFusion() : Ins(), smooth{5e-9, 2, 10} {
     Q0.setZero();
@@ -34,7 +31,6 @@ void DataFusion::Initialize(const NavEpoch &ini_nav, const RgioeOption &RgioeOpt
     this->opt = RgioeOption;
     first_epoch = ini_nav;
     InitializePva(ini_nav, opt.d_rate);
-    nav = ini_nav;
     nav.kd = opt.odo_scale;
     Earth::Instance().Update(nav.pos[0], nav.pos[2]);
     MatXX P;
@@ -129,10 +125,9 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 #if ENABLE_FUSION_RECORDER
     recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
     state.timestamp = nav.gpst;
-    for (int i = 0; i < std::max(21,STATE_CNT); ++i) {
+    for (int i = 0; i < std::min(21,STATE_CNT); ++i) {
         state.data.xd[i] = kf.Xd[i];
     }
-    CHECKSUM_RECORDER_CRC32(&state);
     Recorder::GetInstance().Record(&state);
 #endif
 
@@ -194,7 +189,6 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     kalman.data.ak = kf.ak;
     kalman.data.update_iter = update_iter;
     kalman.data.reject_cnt = kf.reject_cnt;
-    CHECKSUM_RECORDER_CRC32(&kalman);
     Recorder::GetInstance().Record(&kalman);
     recorder_msg_imu_t imu_data = CREATE_RECORDER_MSG(imu);
     imu_data.timestamp = nav.gpst;
@@ -202,7 +196,6 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         imu_data.data.gyro[i] = imu.gyro[i];
         imu_data.data.acce[i] = imu.acce[i];
     }
-    CHECKSUM_RECORDER_CRC32(&imu_data);
     Recorder::GetInstance().Record(&imu_data);
 #endif
     monitor.OnTimeUpdate();
@@ -228,7 +221,6 @@ int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
         measPos.data.r[i] = Rk(i, i);
     }
     measPos.data.ak = kf.GetX2();
-    CHECKSUM_RECORDER_CRC32(&measPos);
     Recorder::GetInstance().Record(&measPos);
 #endif
     update_flag |= FLAG_POSITION;
@@ -270,11 +262,10 @@ int DataFusion::MeasureUpdatePos(const RgioeGnssData &gnssData) {
     for (int i = 0; i < 3; ++i) {
         msg.data.pos[i] = dis[i];
     }
-    msg.data.ns = gnssData.ns;
+    msg.data.ns = 0;
     msg.data.mode = gnssData.mode;
-    msg.data.hdop = gnssData.hdop;
-    msg.data.pdop = gnssData.pdop;
-    CHECKSUM_RECORDER_CRC32(&msg);
+    msg.data.hdop = 0;
+    msg.data.pdop = 0;
     Recorder::GetInstance().Record(&msg);
 #endif
     return 0;
@@ -550,7 +541,7 @@ bool DataFusion::RtsUpdate() {
 
 #endif
 
-NavOutput DataFusion::Output() const {
+ NavOutput DataFusion::Output() const {
     Vec3Hp projpos = nav.pos;
     Vec3d projatti = nav.atti;
     if (opt.output_project_enable) {
@@ -588,8 +579,10 @@ NavOutput DataFusion::Output() const {
     }
 #if ENABLE_FUSION_RECORDER
     static Vec3Hp first_pos = nav.pos;
+    static fp64 prev_time = nav.gpst;
     recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
     result.timestamp = nav.gpst;
+
     Vec3d rpos = Earth::Instance().distance(nav.pos[0], nav.pos[1], first_pos[0], first_pos[1], nav.pos[2],
                                             first_pos[2]);
     for (int i = 0; i < 3; ++i) {
@@ -597,7 +590,8 @@ NavOutput DataFusion::Output() const {
         result.data.vn[i] = (float) nav.vn[i];
         result.data.atti[i] = (float) nav.atti[i];
     }
-    CHECKSUM_RECORDER_CRC32(&result);
+    result.data.delta_t = nav.gpst - prev_time;
+    prev_time  = nav.gpst;
     Recorder::GetInstance().Record(&result);
 #endif
     return out;
