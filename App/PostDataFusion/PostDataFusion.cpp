@@ -1,6 +1,10 @@
-//
-// Created by rebeater on 2020/12/17.
-//
+/******************************************************************************
+ * RGIOE:A Real-time GNSS/INS/Odometer Integrated Navigation Algorithm based
+ * on Extend Kalman Filter
+ * Copyright (C) 2024                                                         *
+ * Author : rebeater                                                          *
+ * Contact : rebeater@qq.com                                                  *
+ ******************************************************************************/
 
 #include "rgioe.h"
 #include "FileIO.h"
@@ -10,9 +14,7 @@
 #include "Timer.h"
 
 #if ENABLE_FUSION_RECORDER
-
 #include "Recorder/Recorder.h"
-
 #endif
 
 #include <fmt/format.h>
@@ -51,6 +53,7 @@ int main(int argc, char **argv) {
 
     manager.AddFile(config.gnss_config)
             .AddFile(config.imu_config);
+    manager.MoveToTime(config.start_time);
 
     rgioe_init(rgioe_dev, &opt);
     Timer timer;

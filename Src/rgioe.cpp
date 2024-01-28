@@ -22,7 +22,11 @@ static inline int rgioe_log_impl(const char *fun,int line, const char *format, .
     LOG(INFO) << buffer;
     return retval;
 }
+#ifndef __FILE_NAME__
+#define LOG_INFO(...) rgioe_log_impl(__FILE__,__LINE__,__VA_ARGS__)
+#else
 #define LOG_INFO(...) rgioe_log_impl(__FILE_NAME__,__LINE__,__VA_ARGS__)
+#endif
 
 
 

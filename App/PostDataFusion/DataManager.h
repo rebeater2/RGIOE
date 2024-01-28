@@ -78,6 +78,8 @@ public:
     DataManager &AddFile(const GnssConfig& config);
     DataManager &AddFile(const IMUConfig& config);
     std::shared_ptr<BaseData_t> GetNextData();
+    void MoveToTime(TimeStamp_t target);
+    void Reset();
 private:
     DataSeqCheck checker;
     using data_queue_t = std::vector<std::shared_ptr<BaseData_t>>;

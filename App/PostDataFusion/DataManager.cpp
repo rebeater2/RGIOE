@@ -63,6 +63,20 @@ DataManager::~DataManager() {
 
 }
 
+void DataManager::MoveToTime(TimeStamp_t target) {
+    std::shared_ptr<BaseData_t> data;
+    do{
+        data = GetNextData();
+        if (data == nullptr) break;
+    } while(data->time < target);
+}
+
+void DataManager::Reset() {
+    for(auto &d: position){
+        d = 0;
+    }
+}
+
 
 RgioeGnssData GnssData_t::toRgioeData() const {
     return {.lat=lat,
