@@ -1,0 +1,101 @@
+IMU-Config:
+  enable: true
+  file-path: D:/Geek/DemoData/demo/demo_machanization/Data1.bin
+  d-rate: 200
+  format: 2
+  parameter-path: D:/Geek/DemoData/demo/demo_machanization/pos830_parameter.yml
+  frame: 0
+GNSS-Config:
+  enable: false
+  file-path:
+  format: 0
+  std-scale: 1
+  level-arm:
+    - 0.0
+    - -0.0
+    - -0.0
+  double-antenna-enable: false
+  antenna-pitch: 0
+  antenna-yaw: 0
+  columns:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+Odometer:
+  enable: false
+  odometer-std: 0
+  file-path: ""
+  NHC-enable: false
+  NHC-std:
+    - 0.05
+    - 0.05
+  angle-bv:
+    - 0
+    - -1.7053
+    - 1.28239
+  wheel-level-arm:
+    - 0
+    - 0
+    - 0
+  scale-factor: 0
+  scale-factor-std: 0
+ZUPT-Config:
+  ZUPT-enable: false
+  ZUPTA-enable: false
+  zupt-std: 0
+  zupta-std: 0
+  zupt-window: 0
+  static-wide: 0
+  threshold: 0
+Align-Config:
+  mode: 2
+  velocity-threshold: 1.5
+  init-PVA:
+    week: 0
+    gpst: 91620.005
+    lat: 23.137395000003920
+    lon: 113.371364999992025
+    height: 2.174999376267192
+    vn:
+      - 0.000174232435635
+      - -0.000326994722535
+      - 0.000249493122969
+    atti:
+      - 0.010832866167476
+      - -2.142487214797399
+      - -75.749842669857927
+Outage-Config:
+  enable: false
+  start: 456900
+  stop: 459300
+  step: 120
+  outage: 90
+Output-Config:
+  file-path: D:/Geek/DemoData/demo/demo_machanization/result_of_rgioe_2024_pure_ins.nav
+  #  0: bin, for small size
+  # 1: ascii, for easily open with text editors
+  # 2: double mat, for easily load by Python or MATLAB
+  file-format: 1
+  project-enable: false
+  position-project:
+    - 1
+    - 1
+    - 1
+  attitude-project:
+    - 0
+    - 0
+    - 0
+Pressure-Config:
+  enable: false
+  file-path: ""
+  height-std: 0.2
+enable-rts: false
+start-time: 91620.004
+stop-time: -1
+reference: D:/Geek/DemoData/demo/demo_machanization/Data1_PureINS.nav

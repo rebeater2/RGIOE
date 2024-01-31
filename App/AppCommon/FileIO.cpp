@@ -241,7 +241,7 @@ std::shared_ptr<BaseData_t> IMUReader::ReadNext() {
             break;
         case IMU_FILE_WHU_BIN:
             fp64 data[7];
-            ifs.read((char *) data, sizeof(RgioeImuData));
+            ifs.read((char *) data, sizeof(data));
             for (int i = 0; i < 3; ++i) {
                 imu->acce[i] = data[4 + i];
                 imu->gyro[i] = data[1 + i];

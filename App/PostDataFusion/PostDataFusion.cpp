@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
             .AddFile(config.imu_config);
     manager.MoveToTime(config.start_time);
 
-    rgioe_init(rgioe_dev, &opt);
+    rgioe_init(rgioe_dev, &opt, &config.align_config.init_pva);
     Timer timer;
     timer.reset();
     do {

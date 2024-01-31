@@ -85,6 +85,7 @@ struct RgioeData_t {
     AlignMoving am;
     rgioe_status_t status;
     RgioeOption opt;
+    rgioe_nav_pva_t cur_pva;
     double last_tick;
 #if RGIOE_REALTIME_DEBUG == 1
     int (*trace)(const char *fmt, ...);
@@ -100,13 +101,14 @@ const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
  */
 #include "glog/logging.h"
 
-rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt) {
+rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_pva_t *init_nav) {
     auto rd = reinterpret_cast<RgioeData_t *>(rgioe_dev);
 #if RGIOE_REALTIME_DEBUG == 1
     rd->trace("rgioe: DataFusion created\n");
 #endif
     rd->df = DataFusion();
     rd->am = AlignMoving();
+
     if (opt) {
         rd->opt = *opt;
     } else {
@@ -115,6 +117,14 @@ rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt) {
 #else
         return RGIOE_NULL_INPUT;
 #endif
+    }
+    if (rd->opt.align_mode == ALIGN_USE_GIVEN and (init_nav == nullptr)){
+        memset(&rd->cur_pva,0,sizeof(rd->cur_pva));
+        LOG_INFO("Align mode is USE_GIVEN, initial navigation information should NOT be NULL");
+        return RGIOE_FAULT_CONFIG;
+    }
+    if (init_nav) {
+        rd->cur_pva = *init_nav;
     }
     rd->am.SetOption(*opt);
 #if RGIOE_REALTIME_DEBUG == 1
@@ -139,7 +149,14 @@ rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
     rd->last_tick = timestamp;
     switch (rd->status) {
         case RGIOE_STATUS_INIT:
-            rd->status = RGIOE_STATUS_ALIGN;
+            if (rd->opt.align_mode == ALIGN_USE_GIVEN){
+                auto nav = makeNavEpoch(rd->cur_pva,rd->opt);
+                rd->df.Initialize(nav,rd->opt);
+                rd->df.TimeUpdate(*imu_inc);
+                rd->status = RGIOE_STATUS_NAVIGATION;
+            }else{
+                rd->status = RGIOE_STATUS_ALIGN;
+            }
             break;
         case RGIOE_STATUS_ALIGN:
             rd->am.Update(*imu_inc);

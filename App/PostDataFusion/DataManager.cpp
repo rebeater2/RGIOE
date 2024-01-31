@@ -25,6 +25,7 @@ std::shared_ptr<BaseData_t> DataManager::GetNextData() {
 }
 
 DataManager &DataManager::AddFile(const GnssConfig &config) {
+    if(!config.enable) return *this;
     LOG(INFO) << "add GNSS file:" << config.file_path;
     GnssReader reader{config.file_path, config.format};
     while (reader.IsOk()) {

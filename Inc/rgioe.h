@@ -30,8 +30,9 @@ extern char CopyRight[];
 typedef enum {
     RGIOE_OK = 0,
     RGIOE_NULL_INPUT = 1,
-    RGIOE_IN_INITIALIZE = 2,
-    RGIOE_UNIMPLEMENTED = 0XF,
+    RGIOE_FAULT_CONFIG = 2,
+    RGIOE_IN_INITIALIZE = 3,
+    RGIOE_UNIMPLEMENTED = 4,
 } rgioe_error_t;
 
 typedef enum {
@@ -42,11 +43,12 @@ typedef enum {
 } rgioe_status_t;
 /**
  * initial rgioe fusion lib
- * @param rgioe_dev pointer to rgioe buffer, which should be malloc before and larger than rgioe_buffer_size
+ * @param rgioe_dev pointer to rgioe buffer, which should be malloc before and larger than rgioe_buffer_size, cannot be null
  * @param opt fusion options
+ * @param init_nav initial pos vel and attitude, valid when align mode is USE_GIVEN
  * @return RGIOE_OK
  */
-rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt);
+rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_pva_t *init_nav);
 
 /**
  * time update function, which should be called with imu data
