@@ -3,6 +3,8 @@
 //
 
 #include "DataManager.h"
+#include "FileIO.h"
+
 #if ENABLE_FUSION_RECORDER
 #include <Recorder/RecorderType.h>
 #endif
@@ -89,8 +91,16 @@ RgioeGnssData GnssData_t::toRgioeData() const {
     };
 }
 
+GnssData_t::GnssData_t() {
+    type = DATA_TYPE_GNSS;
+}
+
 RgioeImuData ImuData_t::toRgioeData() const {
     return {time, gyro[0], gyro[1], gyro[2], acce[0], acce[1], acce[2]};
+}
+
+ImuData_t::ImuData_t() {
+    type = DATA_TYPE_IMU;
 }
 
 void DataSeqCheck::Update(const std::shared_ptr<BaseData_t> data) {

@@ -5,8 +5,9 @@
 #define RECORDER_ADD_DATASET(name, config) \
 do{DataItemConfig items[] = config; \
 DataSetConfig dataset_cfg = {\
-        .dataset_name = #name,\
-        .item_cnt = sizeof(items) / sizeof(items[0]),\
+         #name,\
+         sizeof(items) / sizeof(items[0]), \
+         {}\
 };\
 for (auto &item: items) {\
 dataset_cfg.item_config.push_back(item);\
@@ -99,7 +100,6 @@ Recorder &Recorder::GetInstance() {
 }
 
 void Recorder::Initialize(const char *argv0) {
-
     int offset = 0;
     if (!argv0) {
         offset += sprintf(rcd_filename, "recorder");

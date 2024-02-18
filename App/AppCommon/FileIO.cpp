@@ -50,7 +50,7 @@ ifstream &operator>>(ifstream &is, RgioeGnssData &gnss) {
 
 ostream &operator<<(ostream &os, const NavOutput &output) {
     os << fmt::format(
-            "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:8f} {:d} {:d}",
+            "{:4d} {:2f} {:.12f} {:.12f} {:.4f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:10.6f} {:d} {:d}",
             output.week,
             output.gpst,
             output.lat,
@@ -62,18 +62,6 @@ ostream &operator<<(ostream &os, const NavOutput &output) {
             output.atti[0],
             output.atti[1],
             output.atti[2],
-            output.gb[0],
-            output.gb[1],
-            output.gb[2],
-            output.ab[0],
-            output.ab[1],
-            output.ab[2],
-            output.gs[0],
-            output.gs[1],
-            output.gs[2],
-            output.as[0],
-            output.as[1],
-            output.as[2],
             output.info.gnss_mode,
             output.info.sensors
     );
@@ -259,13 +247,6 @@ std::shared_ptr<BaseData_t> IMUReader::ReadNext() {
         std::swap(imu->gyro[0], imu->gyro[1]);
         imu->gyro[2] *= -1;
     }
-    /*非增量模式数据转换为增量模式数据  @warning: 是否使用相邻两个时刻之间的间隔作为dt更科学呢？*/
-/*  if (!increment_) {
-	for (int i = 0; i < 3; i++) {
-	  imu.acce[i] *= dt;  *//*TODO 重力g没有考虑进去 *//*
-	  imu.gyro[i] *= dt;
-	}
-  }*/
     ok_ = !ifs.eof();
     return imu;
 }
@@ -454,4 +435,27 @@ bool ReaderBase::IsOk() const {
 
 ReaderBase::ReaderBase() {
 
+}
+
+PvaWriter::PvaWriter(const string &filename, NavFileFormat fmt) :fmt(fmt){
+    ofs.open(filename);
+}
+
+PvaWriter::~PvaWriter() {
+    if(ofs.good()){
+        ofs.close();
+    }
+}
+
+void PvaWriter::Write(NavOutput &result) {
+    switch (fmt) {
+        case NavAscii:
+            ofs << result << '\n';
+            break;
+        case NavBinary:
+            ofs.write((char *) &result, sizeof(NavOutput));
+            break;
+        default:
+            break;
+    }
 }

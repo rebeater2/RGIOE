@@ -45,8 +45,8 @@ enum IMUFileFormat {
 };
 enum NavFileFormat {
     NavBinary = 0,
-    NavAscii,
-    NavDoubleMatrix,
+    NavAscii = 1,
+    NavDoubleMatrix = 1,/* discard */
 };
 struct NavDoubleList {
     double gpst;
@@ -76,7 +76,22 @@ ostream &operator<<(ostream &os, const RgioeGnssData &gnss);
 
 istream &operator>>(istream &is, AuxiliaryData &aux);
 
+/*
+ * 单线程写入
+ */
+class PvaWriter {
+public:
+    PvaWriter(const std::string &filename, NavFileFormat fmt);
+    ~PvaWriter();
+    void Write(NavOutput &result);
+private:
+    std::ofstream ofs;
+    NavFileFormat fmt;
+};
 
+/**
+ * 子线程写入
+ */
 class NavWriter {
 
 private:
@@ -105,6 +120,7 @@ private:
     string file_path;
     NavFileFormat fmt;
 };
+
 typedef double TimeStamp_t;
 typedef enum {
     DATA_TYPE_IMU = 1,
@@ -114,44 +130,56 @@ typedef enum {
 class BaseData_t {
 public:
     virtual ~BaseData_t() = default;
+
     TimeStamp_t time;
     DataType_t type;
 };
 
 class ImuData_t : public BaseData_t {
 public:
-    ~ImuData_t() override  = default;
-    RgioeFloatType acce[3];
-    RgioeFloatType gyro[3];
-    RgioeImuData toRgioeData()const;
+    ImuData_t();
+
+    ~ImuData_t() override = default;
+
+    RgioeFloatType acce[3]{};
+    RgioeFloatType gyro[3]{};
+
+    RgioeImuData toRgioeData() const;
 };
 
 
 class GnssData_t : public BaseData_t {
 public:
-    ~GnssData_t() override  = default;
-    fp64 lat;
-    fp64 lon;
-    float height;
-    float pos_std[3];
-    float pitch;
-    float yaw;
-    uint32_t mode;
-    uint32_t ns;
-    uint32_t week;
-    fp64 gpst;
+    GnssData_t();
+
+    ~GnssData_t() override = default;
+
+    fp64 lat{};
+    fp64 lon{};
+    float height{};
+    float pos_std[3]{};
+    float pitch{};
+    float yaw{};
+    uint32_t mode{};
+    uint32_t ns{};
+    uint32_t week{};
+    fp64 gpst{};
+
     RgioeGnssData toRgioeData() const;
 };
 
 class ReaderBase {
 public:
     explicit ReaderBase();
+
     ~ReaderBase() = default;
+
     /**exe_20240027_220422exe_20240027_220422
      * 读下一帧数据
      * @return
      */
     virtual std::shared_ptr<BaseData_t> ReadNext() = 0;
+
     /**
      * 读取下一帧数据，直到数据的GetTime函数达到gpst,将最后一帧数据保存在data里面
      * @param gpst 目标时间
@@ -180,8 +208,11 @@ public:
                        IMUFrame frame = IMU_FRAME_FRD,
                        bool increment = true,
                        int rate = 200);
+
     std::shared_ptr<BaseData_t> ReadNext() override;
+
     ~IMUReader();
+
 private:
     IMUFrame frame_;
     IMUFileFormat format_;
@@ -195,8 +226,10 @@ private:
 class GnssReader : public ReaderBase {
 public:
     explicit GnssReader(const std::string &filename, GnssFileFormat format = GNSS_TXT_POS_7);
+
 public:
     std::shared_ptr<BaseData_t> ReadNext() override;
+
 private:
     GnssFileFormat format_;
 };

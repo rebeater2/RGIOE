@@ -2,19 +2,16 @@ cmake_minimum_required(VERSION 3.17)
 PROJECT(RGIOE)
 
 MESSAGE(${CMAKE_HOME_DIRECTORY}/Src/)
-file(GLOB_RECURSE SOURCE
-        ${CMAKE_HOME_DIRECTORY}/Src/*.*
+file(GLOB RGIOE_SOURCE
+        ${CMAKE_HOME_DIRECTORY}/Src/*.cpp
         )
 
 
 include_directories(${CMAKE_HOME_DIRECTORY}/Inc)
-include_directories(${CMAKE_HOME_DIRECTORY}/Src)
+#include_directories(${CMAKE_HOME_DIRECTORY}/Src)
 include_directories(../AppCommon)
 include_directories(.)
 
-
-add_definitions(-DGLOG_OUTPUT)
-add_definitions(-DUSE_YAML=1)
 
 # compiler options definition
 # 1. for sate vector
@@ -51,6 +48,11 @@ endif()
 if(RECORDER)
     message("recorder: ON")
     add_compile_options(-DENABLE_FUSION_RECORDER=1)
+    file(GLOB RECORDER_SOURCE
+            ${CMAKE_HOME_DIRECTORY}/Src/Recorder/*.cpp
+            ${CMAKE_HOME_DIRECTORY}/Src/Recorder/*.c
+    )
+    include_directories(${CMAKE_HOME_DIRECTORY}/Src/Recorder)
 endif()
 
 
@@ -61,19 +63,32 @@ endif()
 
 
 find_package(fmt REQUIRED)
-add_executable( PostDataFusion
-        ${SOURCE}
+
+if (RECORDER)
+    add_executable(PostDataFusion
+            ${RGIOE_SOURCE}
+            ${RECORDER_SOURCE}
+            PostDataFusion.cpp
+            DataManager.cpp
+            ../AppCommon/FileIO.cpp
+            ../AppCommon/NavLog.cpp
+            ../AppCommon/Config.cpp
+    )
+else ()
+add_executable(PostDataFusion
+        ${RGIOE_SOURCE}
         PostDataFusion.cpp
         DataManager.cpp
         ../AppCommon/FileIO.cpp
         ../AppCommon/NavLog.cpp
         ../AppCommon/Config.cpp
         )
+endif ()
 
 target_link_libraries(PostDataFusion
         yaml-cpp
         glog
-     #   pthread
+        pthread
         fmt
         Eigen3::Eigen
         )

@@ -3,7 +3,9 @@
 //
 
 #include "DataFusion.h"
+#if ENABLE_FUSION_RECORDER == 1
 #include "Recorder/RecorderType.h"
+#endif
 
 #define FLAG_POSITION 0b111U
 #define FLAG_VELOCITY 0b111000U
@@ -625,7 +627,7 @@ uint32_t DataFusion::Monitor::GetMaxIntegrateIter() const {
     if (no_update_cnt_min == 0) {
         return 1;
     }
-    return 1;
+    return no_update_cnt_min;
 }
 
 uint32_t DataFusion::Monitor::GetRejectCnt() const {

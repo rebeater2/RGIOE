@@ -6,19 +6,19 @@
  * Contact : rebeater@qq.com                                                  *
  ******************************************************************************/
 
-#include "rgioe.h"
-#include "FileIO.h"
-#include "Config.h"
-#include "DataManager.h"
-#include "Outage.h"
-#include "Timer.h"
+#include "rgioe.h"              /*! Main fusion algorithm */
+#include "FileIO.h"             /*! File read and write */
+#include "Config.h"             /*! Configure file read and write */
+#include "DataManager.h"        /*! Sort and manage data pointer */
+#include "Outage.h"             /*! GNSS outage test */
+#include "Timer.h"              /*! Run time elapse calc */
 
 #if ENABLE_FUSION_RECORDER
-#include "Recorder/Recorder.h"
+#include "Recorder/Recorder.h"  /*! Recorder debug infomation */
 #endif
 
 #include <fmt/format.h>
-#include <glog/logging.h>
+#include <glog/logging.h>       /*! Google glog for log output */
 
 char rgioe_help_info[] = "usage: PostDataFusion config.yml";
 
@@ -45,12 +45,12 @@ int main(int argc, char **argv) {
     std::shared_ptr<BaseData_t> data = nullptr;
     auto *rgioe_dev = new uint8_t[rgioe_buffer_size];
     rgioe_nav_pva_t result;
-    NavWriter writer{config.output_config.file_path, config.output_config.format};
+    PvaWriter writer{config.output_config.file_path, config.output_config.format};
     RgioeOption opt = config.GetOption();
     Outage outage = Outage(config.outage_config.start, config.outage_config.stop, config.outage_config.outage,
                            config.outage_config.step);
-    DataManager manager;
 
+    DataManager manager;
     manager.AddFile(config.gnss_config)
             .AddFile(config.imu_config);
     manager.MoveToTime(config.start_time);
@@ -85,10 +85,9 @@ int main(int argc, char **argv) {
         /*! step3: output the result (TODO configure output rate)*/
         if (rgioe_get_status(rgioe_dev) == RGIOE_STATUS_NAVIGATION) {
             rgioe_get_result(rgioe_dev, &result);
-            writer.update(result);
+            writer.Write(result);
         }
     } while (true);
-    writer.stop();
     LOG(INFO) << "Time usage:" << timer.elapsed() << "ms";
     LOG(INFO) << "Heap size: " << rgioe_buffer_size;
     LOG(INFO) << "Final nav:" << result;
