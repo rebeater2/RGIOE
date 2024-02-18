@@ -224,11 +224,11 @@ std::string DataLoader::GetSummaryString() const {
             offset += sprintf(buff + offset,"|___%-16s\t %x\n",item.name,item.type);
         }
     }//*/
-    offset += sprintf(buff + offset, "\nHeader size %lu\tRecorder version:%.2f \n", header_size, recorder_version);
-    offset += sprintf(buff + offset, "Valid dataset(%.2zu) incuding:\n", data.size());
+    offset += sprintf(buff + offset, "\nHeader size %llu\tRecorder version:%.2f \n", header_size, recorder_version);
+    offset += sprintf(buff + offset, "Valid dataset(%.02llu) incuding:\n", data.size());
     offset += sprintf(buff + offset, "\t%16s %10s %8s %8s\n", "dataset", "ID", "size", "subsets");
     for (const auto &d: data) {
-        offset += sprintf(buff + offset, "\t%16s %10x %8zu %8d\n", d.second.data_set_name.c_str(), d.first,
+        offset += sprintf(buff + offset, "\t%16s %10x %8llu %8d\n", d.second.data_set_name.c_str(), d.first,
                           d.second.time.size(), d.second.sub_data_cnt);
     }
     if (!error_strings.empty()) {

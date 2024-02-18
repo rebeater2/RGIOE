@@ -81,8 +81,8 @@ typedef enum {
 typedef struct {
     double lat;
     double lon;
-    float height; /*32*/
-    float pos_std[3];
+    double height; /*32*/
+    double pos_std[3];
     float vn[3];
     float vn_std[3];
     double gpst;

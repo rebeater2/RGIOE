@@ -9,10 +9,10 @@ GNSS-Config:
   enable: true
   file-path: D:/Geek/DemoData/demo/demo_A15/gnss_rtk.gps
   format: 0
-  std-scale: 0.01
+  std-scale: 1
   level-arm:
-    - 0.136000007
-    - -0.300999999
+    - 0.136
+    - -0.301
     - -0.184
   double-antenna-enable: false
   antenna-pitch: 0

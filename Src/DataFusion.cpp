@@ -625,7 +625,7 @@ uint32_t DataFusion::Monitor::GetMaxIntegrateIter() const {
     if (no_update_cnt_min == 0) {
         return 1;
     }
-    return 1;
+    return no_update_cnt_min;
 }
 
 uint32_t DataFusion::Monitor::GetRejectCnt() const {
