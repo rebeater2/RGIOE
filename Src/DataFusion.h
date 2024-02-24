@@ -9,7 +9,7 @@
 #include "InsCore.h"
 #include "StaticDetect.h"
 #include "DcmEstimator.h"
-
+#include "MacroLib.h"
 
 
 #if ENABLE_FUSION_RECORDER

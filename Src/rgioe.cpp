@@ -11,24 +11,16 @@
 
 // 使用glog输出日志
 #include <glog/logging.h>
-#include <cstdarg>
-static inline int rgioe_log_impl(const char *fun,int line, const char *format, ...) {
-    char buffer[1024];
-    int retval = sprintf(buffer,"=>[%s:%d] ",fun,line);
-    std::va_list ap;
-    va_start(ap,format);
-    retval = vsprintf((char *) buffer+ retval, format, ap);
-    va_end(ap);
-    LOG(INFO) << buffer;
-    return retval;
+extern int rgioe_log_impl(const char *fun,int line, const char *format, ...);
+RGIOE_WEAK_FUNC int rgioe_log_impl(const char *fun,int line, const char *format, ...){
+    return 0;
 }
+
 #ifndef __FILE_NAME__
 #define LOG_INFO(...) rgioe_log_impl(__FILE__,__LINE__,__VA_ARGS__)
 #else
 #define LOG_INFO(...) rgioe_log_impl(__FILE_NAME__,__LINE__,__VA_ARGS__)
 #endif
-
-
 
 const char *rgioe_build_info = "build on " __DATE__ " " __TIME__;
 char CopyRight[] = "GNSS/INS/ODO Loosely-Coupled Program (1.01)\n"
@@ -88,9 +80,6 @@ struct RgioeData_t {
     rgioe_nav_pva_t cur_pva;
     double last_tick;
     double time_delay;
-#if RGIOE_REALTIME_DEBUG == 1
-    int (*trace)(const char *fmt, ...);
-#endif
 };
 const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
 
@@ -100,17 +89,10 @@ const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
  * @param opt pointer to necessary options
  * @return Error Code as defined by rgioe_error_t
  */
-#include "glog/logging.h"
-#include "RecorderType.h"
-
 rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_pva_t *init_nav) {
     auto rd = reinterpret_cast<RgioeData_t *>(rgioe_dev);
-#if RGIOE_REALTIME_DEBUG == 1
-    rd->trace("rgioe: DataFusion created\n");
-#endif
     rd->df = DataFusion();
     rd->am = AlignMoving();
-
     if (opt) {
         rd->opt = *opt;
     } else {
@@ -175,10 +157,6 @@ rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
         default:
             break;
     }
-    recorder_msg_system_t msg = CREATE_RECORDER_MSG(system);
-    msg.timestamp = imu_inc->gpst;
-    msg.data.gnss_time_delay = rd->time_delay;
-    Recorder::GetInstance().Record(&msg);
     return RGIOE_OK;
 }
 

@@ -19,10 +19,12 @@ file(GLOB_RECURSE SOURCE
         )
 
 
-
-#target_link_libraries(test_kalman Eigen3::Eigen)
-
 find_package(Eigen3 REQUIRED)
+
+
+add_library(rgioe ${SOURCE})
+target_link_libraries(rgioe Eigen3::Eigen)
+#target_link_libraries(test_kalman Eigen3::Eigen)
 
 
 #find_package(mklibs REQUIRED)

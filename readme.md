@@ -10,9 +10,8 @@ This is an implementation of GNSS/INS/Odometer multi-sensor fusion algorithm bas
 4. EKF based
 
 # Compile
-The algorithm library (in Inc and Src  directory) is dependent and only relies on Eigen. To compile the library, you should install eigen on your computer by `apt install libeigen` ,or download its source code and tell the compiler where it is by `include_directory` in CMakelist.txt
-
-To compile the executable program, you need to install the following library and all of them can be obtained by package manager :
+The algorithm library (in Inc and Src  directory) and only depends on Eigen, so it can run on different platform, such as x86 or ARM (including cotex-M)
+To compile the executable program demo, you need to install the following library and all of them can be obtained by package manager :
 
 1. [fmt](https://github.com/fmtlib/fmt.git)
 2. [yaml-cpp](https://github.com/jbeder/yaml-cpp.git)
@@ -21,22 +20,13 @@ To compile the executable program, you need to install the following library and
 # Usage
 Both the executable console program and UI program is able to load the configure file in format of YAML. Some demo configure file are provided in directory `yaml` .  In terminal, you can use the following command:
 ```Plain Text
-dataFusion <configure.yml>
+PostDataFusion <configure.yml>
 ```
 The executable program `UiDataFusion` is easy to use. In UiDataFusion, you can use file->load to choose an configure. some of this feature is under development.
 ![avatar](Res/UiDataFusion_20220218225723.png)
 # C style API
 To use this library in C environment such as STM32 and DSP, C style functions are provided.
-
-```cpp
-int navInitialize();
-int navOutput(NavOutput *nav_output);
-double navAlignGnss(const RgioeGnssData *gnss);
-int navAlignLevel(const RgioeImuData *imu);
-void navSetGNSS(const RgioeGnssData *gnss);
-void navSetVel(const RgioeOdometerData *vel);
-void navUpdate(const RgioeImuData *imu);
-```
+![img.png](Res/img.png)
 # Performance
 see Doc/performance.md
 

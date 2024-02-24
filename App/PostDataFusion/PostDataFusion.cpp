@@ -26,6 +26,9 @@ void ShowFusionConfig(const char *argv0);
 
 void InitialLog(const char *argv0);
 
+/* 模块日志打印函数 */
+int rgioe_log_impl(const char *fun,int line, const char *format, ...);
+
 int main(int argc, char **argv) {
     InitialLog(argv[0]);
     ShowFusionConfig(argv[0]);
@@ -121,4 +124,16 @@ void ShowFusionConfig(const char *argv0) {
     LOG(INFO) << "State vector size:" << STATE_CNT;
 #undef SHOW_MACRO
     LOG(INFO) << "-----------------------end of config-----------------------";
+}
+
+#include <cstdarg>
+int rgioe_log_impl(const char *fun,int line, const char *format, ...) {
+    char buffer[1024];
+    int retval = sprintf(buffer,"=>[%s:%d] ",fun,line);
+    std::va_list ap;
+    va_start(ap,format);
+    retval = vsprintf((char *) buffer+ retval, format, ap);
+    va_end(ap);
+    LOG(INFO) << buffer;
+    return retval;
 }
