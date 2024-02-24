@@ -87,7 +87,8 @@ RgioeGnssData GnssData_t::toRgioeData() const {
             .height=height,
             .pos_std= {pos_std[0], pos_std[1], pos_std[2]},
             .gpst = time,
-            .mode = SPP
+            .mode = SPP,
+
     };
 }
 

@@ -87,6 +87,7 @@ struct RgioeData_t {
     RgioeOption opt;
     rgioe_nav_pva_t cur_pva;
     double last_tick;
+    double time_delay;
 #if RGIOE_REALTIME_DEBUG == 1
     int (*trace)(const char *fmt, ...);
 #endif
@@ -100,6 +101,7 @@ const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
  * @return Error Code as defined by rgioe_error_t
  */
 #include "glog/logging.h"
+#include "RecorderType.h"
 
 rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_pva_t *init_nav) {
     auto rd = reinterpret_cast<RgioeData_t *>(rgioe_dev);
@@ -173,6 +175,10 @@ rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
         default:
             break;
     }
+    recorder_msg_system_t msg = CREATE_RECORDER_MSG(system);
+    msg.timestamp = imu_inc->gpst;
+    msg.data.gnss_time_delay = rd->time_delay;
+    Recorder::GetInstance().Record(&msg);
     return RGIOE_OK;
 }
 
@@ -190,6 +196,7 @@ rgioe_error_t rgioe_gnssupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
     if (!gnss) {
         return RGIOE_NULL_INPUT;
     }
+    rd->time_delay = timestamp - gnss->gpst;
     switch (rd->status) {
         case RGIOE_STATUS_INIT:
             //rd->status = RGIOE_STATUS_ALIGN;

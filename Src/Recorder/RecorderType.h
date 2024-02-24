@@ -213,6 +213,16 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x26, time_check,
 {RECORDER_TYPE_float,"gnss_delay_time"},\
 }
 
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x27, system,
+                 {
+                     float gnss_time_delay;
+                 }
+)
+#define RECORDER_system_ITEMS \
+{               \
+{RECORDER_TYPE_float,"gnss_time_delay"},\
+}
+
 #pragma pack()
 
 
@@ -226,6 +236,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x26, time_check,
  RECORDER_ADD_DATASET(state,RECORDER_state_ITEMS); \
  RECORDER_ADD_DATASET(result,RECORDER_result_ITEMS); \
  RECORDER_ADD_DATASET(time_check,RECORDER_time_check_ITEMS); \
+ RECORDER_ADD_DATASET(system,RECORDER_system_ITEMS); \
 }
 
 #endif //RGIOE_RECORDERTYPE_H
