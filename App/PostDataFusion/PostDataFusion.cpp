@@ -113,7 +113,7 @@ void InitialLog(const char *argv0) {
 
 void ShowFusionConfig(const char *argv0) {
     LOG(INFO) << "---------------------start of config---------------------------";
-    (void *) argv0;
+    (void *) &argv0;
     LOG(INFO) << CopyRight;
     LOG(INFO) << "Build information:" << rgioe_build_info;
 #define SHOW_MACRO(macro)   LOG(INFO) << #macro << " = " << (macro?"ON":"OFF")
