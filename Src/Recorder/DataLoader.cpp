@@ -3,9 +3,6 @@
 //
 #include "comm_crc.h"
 #include "DataLoader.h"
-
-#include "glog/logging.h"
-
 #include <fstream>
 #include <utility>
 

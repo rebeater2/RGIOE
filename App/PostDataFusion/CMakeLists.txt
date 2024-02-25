@@ -70,18 +70,16 @@ if (RECORDER)
             ${RECORDER_SOURCE}
             PostDataFusion.cpp
             DataManager.cpp
-            ../AppCommon/FileIO.cpp
-            ../AppCommon/NavLog.cpp
             ../AppCommon/Config.cpp
+            ../AppCommon/FileIO.cpp
     )
 else ()
 add_executable(PostDataFusion
         ${RGIOE_SOURCE}
         PostDataFusion.cpp
         DataManager.cpp
-        ../AppCommon/FileIO.cpp
-        ../AppCommon/NavLog.cpp
         ../AppCommon/Config.cpp
+        ../AppCommon/FileIO.cpp
         )
 endif ()
 

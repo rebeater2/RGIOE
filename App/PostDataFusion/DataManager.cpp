@@ -62,9 +62,7 @@ DataManager::DataManager() {
     }
 }
 
-DataManager::~DataManager() {
-
-}
+DataManager::~DataManager() = default;
 
 void DataManager::MoveToTime(TimeStamp_t target) {
     std::shared_ptr<BaseData_t> data;
@@ -78,6 +76,10 @@ void DataManager::Reset() {
     for(auto &d: position){
         d = 0;
     }
+}
+
+auto DataManager::GetProgress() const -> int {
+    return 100LU * position[imu_que_id] / que[imu_que_id].size();
 }
 
 
@@ -104,7 +106,7 @@ ImuData_t::ImuData_t() {
     type = DATA_TYPE_IMU;
 }
 
-void DataSeqCheck::Update(const std::shared_ptr<BaseData_t> data) {
+void DataSeqCheck::Update(const std::shared_ptr<BaseData_t>& data) {
     if (last_time > 0)
         delta_time = data->time - last_time;
     else

@@ -59,7 +59,7 @@ class DataSeqCheck{
 public:
     DataSeqCheck() = default;
     ~DataSeqCheck() = default;
-    void Update(const std::shared_ptr<BaseData_t> data);
+    void Update(const std::shared_ptr<BaseData_t>& data);
 
 private:
     uint32_t data_cnt = 0;
@@ -78,6 +78,7 @@ public:
     DataManager &AddFile(const GnssConfig& config);
     DataManager &AddFile(const IMUConfig& config);
     std::shared_ptr<BaseData_t> GetNextData();
+    auto GetProgress() const -> int;
     void MoveToTime(TimeStamp_t target);
     void Reset();
 private:
@@ -93,7 +94,7 @@ private:
     static  const int odo_que_id = 2;               /*! 里程计队列索引         */
 
     data_queue_t que[max_que_num];                  /*! 存放数据队列           */
-    int position[max_que_num];                      /*! 当前队列访问到的位置    */
+    int position[max_que_num]{};                      /*! 当前队列访问到的位置    */
     TimeStamp_t t[max_que_num]{};                   /*! 临时变量，时间头部时间  */
     int que_num = 0;                                /*! 当前读入队列数         */
 };

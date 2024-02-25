@@ -13,6 +13,9 @@
 #include <glog/logging.h>
 extern int rgioe_log_impl(const char *fun,int line, const char *format, ...);
 RGIOE_WEAK_FUNC int rgioe_log_impl(const char *fun,int line, const char *format, ...){
+    RGIOE_UNUSED_PARA(fun);
+    RGIOE_UNUSED_PARA(line);
+    RGIOE_UNUSED_PARA(format);
     return 0;
 }
 
@@ -40,7 +43,7 @@ const ImuPara default_imupara{0.15 * _deg / _sqrt_h, 0.25 / _sqrt_h,
                               1000 * _ppm, 1000 * _ppm, 1000 * _ppm,
                               1 * _hour, 1 * _hour
 };
-NavOutput init_pva{0, 0, 0, 0};
+
 RgioeOption default_option{
         .imuPara=default_imupara,
         .d_rate = 125,
@@ -75,11 +78,9 @@ RgioeOption default_option{
 struct RgioeData_t {
     DataFusion df;
     AlignMoving am;
-    rgioe_status_t status;
-    RgioeOption opt;
-    rgioe_nav_pva_t cur_pva;
-    double last_tick;
-    double time_delay;
+    rgioe_status_t status{};
+    RgioeOption opt{};
+    rgioe_nav_pva_t cur_pva{};
 };
 const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
 
@@ -127,10 +128,10 @@ rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_p
 */
 rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const RgioeImuData *imu_inc) {
     auto rd = (RgioeData_t *) (rgioe_dev);
+    RGIOE_UNUSED_PARA(timestamp);
     if (imu_inc == nullptr) {
         return RGIOE_NULL_INPUT;
     }
-    rd->last_tick = timestamp;
     switch (rd->status) {
         case RGIOE_STATUS_INIT:
             if (rd->opt.align_mode == ALIGN_USE_GIVEN){
@@ -138,7 +139,9 @@ rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
                 rd->df.Initialize(nav,rd->opt);
                 rd->df.TimeUpdate(*imu_inc);
                 rd->status = RGIOE_STATUS_NAVIGATION;
+                LOG_INFO("UseGiven mode");
             }else{
+                LOG_INFO("Start motion align");
                 rd->status = RGIOE_STATUS_ALIGN;
             }
             break;
@@ -170,21 +173,18 @@ rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
 
 rgioe_error_t rgioe_gnssupdate(uint8_t *rgioe_dev, double timestamp, const RgioeGnssData *gnss) {
     auto rd = (RgioeData_t *) (rgioe_dev);
-    rd->last_tick = timestamp;
+    RGIOE_UNUSED_PARA(timestamp);
     if (!gnss) {
         return RGIOE_NULL_INPUT;
     }
-    rd->time_delay = timestamp - gnss->gpst;
     switch (rd->status) {
         case RGIOE_STATUS_INIT:
             //rd->status = RGIOE_STATUS_ALIGN;
             break;
         case RGIOE_STATUS_ALIGN: {
-            rd->am.Update(*gnss);
+            auto v  = rd->am.Update(*gnss);
             if (rd->am.alignFinished()) {
-                //     rd->df.Initialize(rd->am.getNavEpoch(), rd->opt);
-                //       rd->status = RGIOE_STATUS_NAVIGATION;
-//                LOG(INFO) << " rd->status change to " << rd->status;
+                LOG_INFO("motion align finished, current speed:%f", v);
             }
         }
             break;
@@ -210,11 +210,11 @@ rgioe_error_t rgioe_get_atti(uint8_t *rgioe_dev, float atti[3], float *std) {
     auto rd = (RgioeData_t *) (rgioe_dev);
     NavOutput result = rd->df.Output();
     for (int i = 0; i < 3; ++i) {
-        atti[i] = result.atti[i];
+        atti[i] = (float)result.atti[i];
     }
     if (std) {
         for (int i = 0; i < 3; ++i) {
-            std[i] = result.atti_std[i];
+            std[i] = (float)result.atti_std[i];
         }
     }
     return RGIOE_OK;
@@ -235,7 +235,7 @@ rgioe_error_t rgioe_get_pos(uint8_t *rgioe_dev, double pos[3], float *std) {
     pos[2] = result.height;
     if (std) {
         for (int i = 0; i < 3; ++i) {
-            std[i] = result.atti_std[i];
+            std[i] = (float)result.atti_std[i];
         }
     }
     return RGIOE_OK;
@@ -252,11 +252,11 @@ rgioe_error_t rgioe_get_vel(uint8_t *rgioe_dev, float vel[3], float *std) {
     auto rd = (RgioeData_t *) (rgioe_dev);
     NavOutput result = rd->df.Output();
     for (int i = 0; i < 3; ++i) {
-        vel[i] = result.vn[i];
+        vel[i] = (float)result.vn[i];
     }
     if (std) {
         for (int i = 0; i < 3; ++i) {
-            std[i] = result.vn_std[i];
+            std[i] =(float)result.vn_std[i];
         }
     }
     return RGIOE_OK;
@@ -271,19 +271,11 @@ rgioe_error_t rgioe_get_result(uint8_t *rgioe_dev, rgioe_nav_pva_t *pva) {
     auto rd = (RgioeData_t *) (rgioe_dev);
     *pva = rd->df.Output();
     return RGIOE_OK;
-};
+}
 
 
 rgioe_error_t rgioe_deinit(uint8_t *rgioe_dev) {
     auto rd = (RgioeData_t *) (rgioe_dev);
-    (void*)(rd);
+    RGIOE_UNUSED_PARA(rd);
     return RGIOE_OK;
 }
-
-#if RGIOE_REALTIME_DEBUG == 1
-rgioe_error_t rgioe_set_trace(uint8_t *rgioe_dev,int (*trace)(const char *fmt, ...)) {
-    auto rd = (RgioeData_t *)(rgioe_dev);
-    rd->trace = trace;
-    return RGIOE_OK;
-}
-#endif

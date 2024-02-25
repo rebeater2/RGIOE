@@ -23,4 +23,6 @@
 #define RGIOE_WEAK_FUNC
 #endif
 
+#define RGIOE_UNUSED_PARA(p) ((void *)&p)
+
 #endif //RGIOE_MACROLIB_H

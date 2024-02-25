@@ -128,7 +128,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
     recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
     state.timestamp = nav.gpst;
     for (int i = 0; i < std::min(21,STATE_CNT); ++i) {
-        state.data.xd[i] = kf.Xd[i];
+        state.data.xd[i] = (float)kf.Xd[i];
     }
     Recorder::GetInstance().Record(&state);
 #endif

@@ -91,6 +91,7 @@ int main(int argc, char **argv) {
         if (rgioe_get_status(rgioe_dev) == RGIOE_STATUS_NAVIGATION) {
             rgioe_get_result(rgioe_dev, &result);
             writer.Write(result);
+            LOG_EVERY_N(INFO,opt.d_rate * 1000) << "forward progress:" <<manager.GetProgress() << "%";
         }
     } while (true);
     LOG(INFO) << "Time usage:" << timer.elapsed() << "ms";

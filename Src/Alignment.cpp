@@ -81,7 +81,7 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
                                                gnss_pre.lon * _deg,
                                                gnss.height,
                                                gnss_pre.height);
-    float v = (float) distance.norm();
+    auto v = (float) distance.norm();
     double dgpst = gnss.gpst - gnss_pre.gpst;
     Vec3d acce = (distance - vn_pre) / dgpst;/* 平均加速度 */
     vn_pre = distance;
