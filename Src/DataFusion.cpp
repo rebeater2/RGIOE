@@ -590,7 +590,7 @@ bool DataFusion::RtsUpdate() {
     for (int i = 0; i < 3; ++i) {
         result.data.pos[i] = (float) rpos[i];
         result.data.vn[i] = (float) nav.vn[i];
-        result.data.atti[i] = (float) nav.atti[i];
+        result.data.atti[i] = (float) nav.atti[i] / _deg;
     }
     result.data.delta_t = nav.gpst - prev_time;
     prev_time  = nav.gpst;
@@ -627,7 +627,7 @@ uint32_t DataFusion::Monitor::GetMaxIntegrateIter() const {
     if (no_update_cnt_min == 0) {
         return 1;
     }
-    return no_update_cnt_min;
+    return 1;
 }
 
 uint32_t DataFusion::Monitor::GetRejectCnt() const {

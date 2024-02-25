@@ -90,6 +90,24 @@ target_link_libraries(PostDataFusion
         fmt
         Eigen3::Eigen
         )
+
+add_executable(PostDataFusion_old
+        ${RGIOE_SOURCE}
+        ${RECORDER_SOURCE}
+        PostDataFusion_old.cpp
+        DataManager.cpp
+        ../AppCommon/Config.cpp
+        ../AppCommon/FileIO.cpp
+        )
+
+target_link_libraries(PostDataFusion_old
+        yaml-cpp
+        glog
+        pthread
+        fmt
+        Eigen3::Eigen
+        )
+
 set(EXECUTABLE_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}../../bin)
 
 if(WIN32)

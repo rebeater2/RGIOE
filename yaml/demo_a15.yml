@@ -37,8 +37,8 @@ Odometer:
     - 0.05
   angle-bv:
     - 0
-    - -1.7053
-    - 1.28239
+    - 0
+    - 0
   wheel-level-arm:
     - 0
     - 0
@@ -55,7 +55,7 @@ ZUPT-Config:
   threshold: 0
 Align-Config:
   mode: 0
-  velocity-threshold: 4
+  velocity-threshold: 5
   init-PVA:
     week: 0
     gpst: 0
