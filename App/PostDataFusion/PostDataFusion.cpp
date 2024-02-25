@@ -17,7 +17,6 @@
 #include "Recorder/Recorder.h"  /*! Recorder debug infomation */
 #endif
 
-#include <fmt/format.h>
 #include <glog/logging.h>       /*! Google glog for log output */
 
 char rgioe_help_info[] = "usage: PostDataFusion config.yml";
