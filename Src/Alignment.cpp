@@ -75,23 +75,23 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
         flag_yaw_finished = true;
     } else {
 #endif
-    auto distance = Earth::Instance().distance(gnss.lat * _deg,
+    auto vn_cur = Earth::Instance().distance(gnss.lat * _deg,
                                                gnss.lon * _deg,
                                                gnss_pre.lat * _deg,
                                                gnss_pre.lon * _deg,
                                                gnss.height,
                                                gnss_pre.height);
-    auto v = (float) distance.norm();
+    auto v = (float) vn_cur.norm();
     double dgpst = gnss.gpst - gnss_pre.gpst;
-    Vec3d acce = (distance - vn_pre) / dgpst;/* 平均加速度 */
-    vn_pre = distance;
+    Vec3d acce = (vn_cur - vn_pre) / dgpst;/* 平均加速度 */
+    vn_pre = vn_cur;
     if (option.align_vel_threshold < v and v < 1e3) {
-        nav.vn = distance + acce * dgpst / 2;
+        nav.vn = vn_cur + acce * dgpst / 2;
         nav.vel_std = {0.3, 0.3, 0.3};
-        nav.atti[2] = rgioe_atan2(distance[1], distance[0]);
-        nav.att_std[0] = 1 * _deg;
-        nav.att_std[1] = 1 * _deg;
-        nav.att_std[2] = 2 * _deg;
+        nav.atti[2] = rgioe_atan2(nav.vn[1], nav.vn[0]);
+        nav.att_std[0] = 5 * _deg;
+        nav.att_std[1] = 5 * _deg;
+        nav.att_std[2] = 5 * _deg;
         nav.Qbn = Convert::euler_to_quaternion(nav.atti);
         nav.Cbn = Convert::euler_to_dcm(nav.atti);
         flag_yaw_finished = true;
