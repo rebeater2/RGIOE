@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
                 break;
         }
         /*! step3: output the result (TODO configure output rate)*/
-        if (rgioe_get_status(rgioe_dev) == RGIOE_STATUS_NAVIGATION) {
+        if (rgioe_get_status(rgioe_dev) == RGIOE_STATUS_NAVIGATION || true) {
             rgioe_get_result(rgioe_dev, &result);
             writer.Write(result);
             LOG_EVERY_N(INFO,opt.d_rate * 1000) << "forward progress:" <<manager.GetProgress() << "%";
@@ -127,7 +127,7 @@ void ShowFusionConfig(const char *argv0) {
 }
 
 #include <cstdarg>
-int rgioe_log_impl(const char *fun,int line, const char *format, ...) {
+extern int rgioe_log_impl(const char *fun,int line, const char *format, ...) {
     char buffer[1024];
     int retval = sprintf(buffer,"=>[%s:%d] ",fun,line);
     std::va_list ap;

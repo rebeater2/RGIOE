@@ -38,8 +38,9 @@ typedef enum {
 typedef enum {
     RGIOE_STATUS_INIT = 0,
     RGIOE_STATUS_ALIGN = 1,
-    RGIOE_STATUS_NAVIGATION = 2,
-    RGIOE_STATUS_ERROR = 3
+    RGIOE_STATUS_ATTITUDE = 2,
+    RGIOE_STATUS_NAVIGATION = 3,
+    RGIOE_STATUS_ERROR = -1,
 } rgioe_status_t;
 /**
  * initial rgioe fusion lib
@@ -72,24 +73,45 @@ rgioe_error_t rgioe_gnssupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
  * get fusion result
  * @param rgioe_dev
  * @param atti
- * @param std
- * @return
+ * @param std pointer to float[3], attitude error in reg, void if null
+ * @return RGIOE_OK
  */
 rgioe_error_t rgioe_get_atti(uint8_t *rgioe_dev, float atti[3], float *std);
 
+/**
+ * get position
+ * @param rgioe_dev
+ * @param pos pointer to double[3], latitude and longitude in deg,  height in m
+ * @param std point to float[3], position error in m
+ * @return RGIOE_OK
+ */
 rgioe_error_t rgioe_get_pos(uint8_t *rgioe_dev, double pos[3], float *std);
 
+/**
+ * get velocity
+ * @param rgioe_dev
+ * @param vel velocity in m/s
+ * @param std velocity error in m/s, void if null
+ * @return RGIOE_OK
+ */
 rgioe_error_t rgioe_get_vel(uint8_t *rgioe_dev, float vel[3], float *std);
 
+/**
+ * get rgioe status
+ * @param rgioe_dev
+ * @return
+ */
 rgioe_status_t rgioe_get_status(uint8_t *rgioe_dev);
 
+/**
+ * get position、velocity and attitude
+ * @param rgioe_dev
+ * @param pva
+ * @return
+ */
 rgioe_error_t rgioe_get_result(uint8_t *rgioe_dev,rgioe_nav_pva_t *pva);
 
 rgioe_error_t rgioe_deinit(uint8_t *rgioe_dev);
-#if RGIOE_REALTIME_DEBUG == 1
-rgioe_error_t rgioe_set_trace(uint8_t *rgioe_dev,int (*trace)(const char *fmt, ...));
-#endif
-
 
 #ifdef __cplusplus
 }

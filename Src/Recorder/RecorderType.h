@@ -178,7 +178,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x24, state,
 }
 RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x25, result,
                  {
-                     float delta_t;
+                     uint32_t status;
                      float pos[3];
                      float vn[3];
                      float atti[3];
@@ -186,7 +186,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x25, result,
 )
 #define RECORDER_result_ITEMS \
 {               \
-{RECORDER_TYPE_float,"delta_t"},\
+{RECORDER_TYPE_uint32_t,"status"},\
 {RECORDER_TYPE_float,"pos_x"},\
 {RECORDER_TYPE_float,"pos_y"},\
 {RECORDER_TYPE_float,"pos_z"},\
@@ -223,6 +223,21 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x27, system,
 {RECORDER_TYPE_float,"gnss_time_delay"},\
 }
 
+
+RECORDER_MSG_DEF(RECORDER_MSG_DEBUG,0x28, ahrs,
+            {
+                float roll;
+                float pitch;
+                float heading;
+            }
+)
+#define RECORDER_ahrs_ITEMS \
+{               \
+{RECORDER_TYPE_float,"roll"},\
+{RECORDER_TYPE_float,"pitch"},\
+{RECORDER_TYPE_float,"heading"},\
+}
+
 #pragma pack()
 
 
@@ -237,6 +252,7 @@ RECORDER_MSG_DEF(RECORDER_MSG_DEBUG, 0x27, system,
  RECORDER_ADD_DATASET(result,RECORDER_result_ITEMS); \
  RECORDER_ADD_DATASET(time_check,RECORDER_time_check_ITEMS); \
  RECORDER_ADD_DATASET(system,RECORDER_system_ITEMS); \
+ RECORDER_ADD_DATASET(ahrs,RECORDER_ahrs_ITEMS); \
 }
 
 #endif //RGIOE_RECORDERTYPE_H

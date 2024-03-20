@@ -579,23 +579,6 @@ bool DataFusion::RtsUpdate() {
         out.vn_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(3 + i, 3 + i));
         out.atti_std[i] = (RgioeFloatType) rgioe_sqrt(kf.P(6 + i, 6 + i));
     }
-#if ENABLE_FUSION_RECORDER
-    static Vec3Hp first_pos = nav.pos;
-    static fp64 prev_time = nav.gpst;
-    recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
-    result.timestamp = nav.gpst;
-
-    Vec3d rpos = Earth::Instance().distance(nav.pos[0], nav.pos[1], first_pos[0], first_pos[1], nav.pos[2],
-                                            first_pos[2]);
-    for (int i = 0; i < 3; ++i) {
-        result.data.pos[i] = (float) rpos[i];
-        result.data.vn[i] = (float) nav.vn[i];
-        result.data.atti[i] = (float) nav.atti[i] / _deg;
-    }
-    result.data.delta_t = nav.gpst - prev_time;
-    prev_time  = nav.gpst;
-    Recorder::GetInstance().Record(&result);
-#endif
     return out;
 }
 

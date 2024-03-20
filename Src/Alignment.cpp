@@ -19,7 +19,12 @@
  */
 void AlignMoving::Update(const RgioeImuData &imu) {
     /*必须在静止时刻对准*/
+    nav.gpst = imu.gpst;
     smooth.Update(imu);
+    if (flag_level_finished) {
+        ahrs.Update(imu);
+        return;
+    }
     if (!smooth.isStatic()) {
         return;
     }
@@ -31,7 +36,7 @@ void AlignMoving::Update(const RgioeImuData &imu) {
     double dt = 1.0 / option.d_rate;
     Mat3d scale_mat = scale.asDiagonal();
     acce = (eye3 - scale_mat) * (acce - bias * dt);
-    nav.gb = Vec3d{smoothed_imu.gyro[0],smoothed_imu.gyro[1],smoothed_imu.gyro[2]} * option.d_rate;
+    nav.gb = Vec3d{smoothed_imu.gyro[0], smoothed_imu.gyro[1], smoothed_imu.gyro[2]} * option.d_rate;
     nav.gpst = imu.gpst;
     Vec3d vm = acce.normalized();
     nav.atti[0] = rgioe_asin(vm[1]) * (vm[2] > 0 ? 1 : -1);
@@ -39,6 +44,7 @@ void AlignMoving::Update(const RgioeImuData &imu) {
     nav.Qbn = Convert::euler_to_quaternion(nav.atti);
     nav.Cbn = Convert::euler_to_dcm(nav.atti);
     flag_level_finished = true;
+    ahrs.SetAtti(nav.Qbn);
     //LOG(INFO) <<"flag_level_finished imu:" << flag_level_finished << "  " << flag_yaw_finished;
     /*if (option.align_mode == ALIGN_USE_GIVEN) {
         nav.pos[0] = 0 * _deg;
@@ -76,11 +82,11 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     } else {
 #endif
     auto vn_cur = Earth::Instance().distance(gnss.lat * _deg,
-                                               gnss.lon * _deg,
-                                               gnss_pre.lat * _deg,
-                                               gnss_pre.lon * _deg,
-                                               gnss.height,
-                                               gnss_pre.height);
+                                             gnss.lon * _deg,
+                                             gnss_pre.lat * _deg,
+                                             gnss_pre.lon * _deg,
+                                             gnss.height,
+                                             gnss_pre.height);
     auto v = (float) vn_cur.norm();
     double dgpst = gnss.gpst - gnss_pre.gpst;
     Vec3d acce = (vn_cur - vn_pre) / dgpst;/* 平均加速度 */
@@ -126,9 +132,9 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     nav.Cne = Convert::lla_to_cne(ll);
     for (int i = 0; i < 3; i++) {
         nav.pos_std[i] = gnss.pos_std[i];
-	nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
+        nav.att_std[i] = nav.vel_std[i] / gnss.pos_std[i];
 
-	nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
+        nav.vel_std[i] = gnss.pos_std[i] + gnss_pre.pos_std[i];
         nav.gb[i] = option.imuPara.gb_ini[i];/*静止时候零偏作为对准之后的零偏 unit: ra */
         nav.ab[i] = option.imuPara.ab_ini[i];
         nav.gs[i] = option.imuPara.gs_ini[i];
@@ -158,7 +164,10 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     return v;
 }
 
-AlignMoving::AlignMoving(const RgioeOption &opt) : option(opt), smooth{1e-3, 200, 30} {
+AlignMoving::AlignMoving(const RgioeOption &opt) :
+        option(opt),
+        smooth{1e-3, 200, 30},
+        ahrs(AttiAhrsMethod_Mahony, 1.0 / opt.d_rate) {
     nav.gpst = 0;
     Vec3d zero = Vec3d::Zero();
     nav.pos = Vec3Hp::Zero();/*n-frame position(lat,lon,alt) :d/d/m*/
@@ -251,13 +260,14 @@ int AlignMoving::GnssCheck(const RgioeGnssData &gnss) {
 
 const bool AlignMoving::alignFinished() const { return flag_level_finished && flag_yaw_finished; }
 
-AlignMoving::AlignMoving() {
-
-}
 
 int AlignMoving::SetOption(const RgioeOption &RgioeOption) {
     this->option = RgioeOption;
     return 0;
+}
+
+bool AlignMoving::levelFinished() const {
+    return flag_level_finished;
 }
 
 void AlignStatic::Update(const RgioeImuData &imu) {

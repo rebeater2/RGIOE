@@ -8,11 +8,12 @@
 #include "rgioe.h"
 #include "DataFusion.h"
 #include "Alignment.h"
+#include "AttiAhrs.h"
+#include "RecorderType.h"
 
-// 使用glog输出日志
-#include <glog/logging.h>
-extern int rgioe_log_impl(const char *fun,int line, const char *format, ...);
-RGIOE_WEAK_FUNC int rgioe_log_impl(const char *fun,int line, const char *format, ...){
+extern int rgioe_log_impl(const char *fun, int line, const char *format, ...);
+
+RGIOE_WEAK_FUNC int rgioe_log_impl(const char *fun, int line, const char *format, ...) {
     RGIOE_UNUSED_PARA(fun);
     RGIOE_UNUSED_PARA(line);
     RGIOE_UNUSED_PARA(format);
@@ -93,7 +94,7 @@ const uint32_t rgioe_buffer_size = sizeof(RgioeData_t);
 rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_pva_t *init_nav) {
     auto rd = reinterpret_cast<RgioeData_t *>(rgioe_dev);
     rd->df = DataFusion();
-    rd->am = AlignMoving();
+    rd->am = AlignMoving(*opt);
     if (opt) {
         rd->opt = *opt;
     } else {
@@ -103,8 +104,8 @@ rgioe_error_t rgioe_init(uint8_t *rgioe_dev, const RgioeOption *opt, rgioe_nav_p
         return RGIOE_NULL_INPUT;
 #endif
     }
-    if (rd->opt.align_mode == ALIGN_USE_GIVEN and (init_nav == nullptr)){
-        memset(&rd->cur_pva,0,sizeof(rd->cur_pva));
+    if (rd->opt.align_mode == ALIGN_USE_GIVEN and (init_nav == nullptr)) {
+        memset(&rd->cur_pva, 0, sizeof(rd->cur_pva));
         LOG_INFO("Align mode is USE_GIVEN, initial navigation information should NOT be NULL");
         return RGIOE_FAULT_CONFIG;
     }
@@ -134,27 +135,36 @@ rgioe_error_t rgioe_timeupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
     }
     switch (rd->status) {
         case RGIOE_STATUS_INIT:
-            if (rd->opt.align_mode == ALIGN_USE_GIVEN){
-                auto nav = makeNavEpoch(rd->cur_pva,rd->opt);
-                rd->df.Initialize(nav,rd->opt);
+            if (rd->opt.align_mode == ALIGN_USE_GIVEN) {
+                auto nav = makeNavEpoch(rd->cur_pva, rd->opt);
+                rd->df.Initialize(nav, rd->opt);
                 rd->df.TimeUpdate(*imu_inc);
                 rd->status = RGIOE_STATUS_NAVIGATION;
                 LOG_INFO("UseGiven mode");
-            }else{
+            } else {
+                rd->am.Update(*imu_inc);
                 LOG_INFO("Start motion align");
                 rd->status = RGIOE_STATUS_ALIGN;
             }
             break;
         case RGIOE_STATUS_ALIGN:
             rd->am.Update(*imu_inc);
+            if (rd->am.levelFinished()) {
+                auto nav = rd->am.nav;
+                rd->status = RGIOE_STATUS_ATTITUDE;
+                LOG_INFO("level align finished,status change to %d", rd->status);
+            }
+            break;
+        case RGIOE_STATUS_ATTITUDE:
+            rd->am.Update(*imu_inc);
             if (rd->am.alignFinished()) {
                 auto nav = rd->am.nav;
                 rd->df.Initialize(nav, rd->opt);
                 rd->status = RGIOE_STATUS_NAVIGATION;
-                LOG_INFO("align finished,status change to %d",rd->status);
+                LOG_INFO("align finished,status change to %d", rd->status);
             }
             break;
-        case RGIOE_STATUS_NAVIGATION:
+        case RGIOE_STATUS_NAVIGATION:;
             rd->df.TimeUpdate(*imu_inc);
             break;
         default:
@@ -181,13 +191,14 @@ rgioe_error_t rgioe_gnssupdate(uint8_t *rgioe_dev, double timestamp, const Rgioe
         case RGIOE_STATUS_INIT:
             //rd->status = RGIOE_STATUS_ALIGN;
             break;
-        case RGIOE_STATUS_ALIGN: {
-            auto v  = rd->am.Update(*gnss);
+        case RGIOE_STATUS_ALIGN:
+        case RGIOE_STATUS_ATTITUDE: {
+            auto v = rd->am.Update(*gnss);
             if (rd->am.alignFinished()) {
                 LOG_INFO("motion align finished, current speed:%f", v);
             }
-        }
             break;
+        }
         case RGIOE_STATUS_NAVIGATION:
             rd->df.MeasureUpdatePos(*gnss);
             break;
@@ -210,11 +221,11 @@ rgioe_error_t rgioe_get_atti(uint8_t *rgioe_dev, float atti[3], float *std) {
     auto rd = (RgioeData_t *) (rgioe_dev);
     NavOutput result = rd->df.Output();
     for (int i = 0; i < 3; ++i) {
-        atti[i] = (float)result.atti[i];
+        atti[i] = (float) result.atti[i];
     }
     if (std) {
         for (int i = 0; i < 3; ++i) {
-            std[i] = (float)result.atti_std[i];
+            std[i] = (float) result.atti_std[i];
         }
     }
     return RGIOE_OK;
@@ -235,7 +246,7 @@ rgioe_error_t rgioe_get_pos(uint8_t *rgioe_dev, double pos[3], float *std) {
     pos[2] = result.height;
     if (std) {
         for (int i = 0; i < 3; ++i) {
-            std[i] = (float)result.atti_std[i];
+            std[i] = (float) result.atti_std[i];
         }
     }
     return RGIOE_OK;
@@ -252,11 +263,11 @@ rgioe_error_t rgioe_get_vel(uint8_t *rgioe_dev, float vel[3], float *std) {
     auto rd = (RgioeData_t *) (rgioe_dev);
     NavOutput result = rd->df.Output();
     for (int i = 0; i < 3; ++i) {
-        vel[i] = (float)result.vn[i];
+        vel[i] = (float) result.vn[i];
     }
     if (std) {
         for (int i = 0; i < 3; ++i) {
-            std[i] =(float)result.vn_std[i];
+            std[i] = (float) result.vn_std[i];
         }
     }
     return RGIOE_OK;
@@ -269,7 +280,40 @@ rgioe_status_t rgioe_get_status(uint8_t *rgioe_dev) {
 
 rgioe_error_t rgioe_get_result(uint8_t *rgioe_dev, rgioe_nav_pva_t *pva) {
     auto rd = (RgioeData_t *) (rgioe_dev);
-    *pva = rd->df.Output();
+    if(rd->status == RGIOE_STATUS_ALIGN){
+        pva->gpst = rd->am.nav.gpst;
+    }
+    if (rd->status == RGIOE_STATUS_ATTITUDE) {
+        pva->gpst = rd->am.nav.gpst;
+        for (int i = 0; i < 3; ++i) {
+            pva->atti[i] = rd->am.nav.atti[i] / _deg;
+            pva->atti_std[i] = rd->am.nav.att_std[i];
+        }
+    }
+    if (rd->status == RGIOE_STATUS_NAVIGATION) {
+        *pva = rd->df.Output();
+    }
+#if ENABLE_FUSION_RECORDER
+    recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
+    result.timestamp = pva->gpst;
+    result.data.status = rd->status;
+    if (rd->status == RGIOE_STATUS_ATTITUDE) {
+        for (int i = 0; i < 3; ++i) {
+            result.data.atti[i] = (float) (pva->atti[i]);
+        }
+    } else if (rd->status == RGIOE_STATUS_NAVIGATION) {
+        static Vec3Hp first_pos = {pva->lat, pva->lon, pva->height};
+        result.timestamp = pva->gpst;
+        Vec3d rpos = Earth::Instance().distance(pva->lat, pva->lon, first_pos[0], first_pos[1], pva->height,
+                                                first_pos[2]);
+        for (int i = 0; i < 3; ++i) {
+            result.data.pos[i] = (float) rpos[i];
+            result.data.vn[i] = (float) pva->vn[i];
+            result.data.atti[i] = (float) (pva->atti[i]);
+        }
+    }
+    Recorder::GetInstance().Record(&result);
+#endif
     return RGIOE_OK;
 }
 
