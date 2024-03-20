@@ -9,8 +9,9 @@
 #include "DataFusion.h"
 #include "Alignment.h"
 #include "AttiAhrs.h"
-#include "RecorderType.h"
-
+#if ENABLE_FUSION_RECORDER
+#include "Recorder/RecorderType.h"
+#endif
 extern int rgioe_log_impl(const char *fun, int line, const char *format, ...);
 
 RGIOE_WEAK_FUNC int rgioe_log_impl(const char *fun, int line, const char *format, ...) {
