@@ -13,7 +13,7 @@
 
 
 #if ENABLE_FUSION_RECORDER
-#include "Recorder/Recorder.h"
+#include "Recorder.h"
 #endif
 
 

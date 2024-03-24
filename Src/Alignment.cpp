@@ -8,9 +8,7 @@
 #include "Convert.h"
 
 #if ENABLE_FUSION_RECORDER
-
-#include "Recorder/RecorderType.h"
-
+#include "Recorder.h"
 #endif
 
 /**
@@ -147,19 +145,19 @@ double AlignMoving::Update(const RgioeGnssData &gnss) {
     nav.info.sensors = SENSOR_GNSS | SENSOR_IMU;
     gnss_pre = gnss;
 #if ENABLE_FUSION_RECORDER
-    recorder_msg_align_t recorder = CREATE_RECORDER_MSG(align);
-    recorder.timestamp = nav.gpst;
+    recorder_msg_align_t msg = CREATE_RECORDER_MSG(align);
+    msg.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
-        recorder.data.atti[i] = nav.atti[i];
-        recorder.data.vn[i] = nav.vn[i];
-        recorder.data.pos[i] = (float) nav.pos[i];
+        RECORDER_V3_2_XYZ(msg.data.pos, nav.pos);
+        RECORDER_V3_2_XYZ(msg.data.vn,nav.vn);
+        RECORDER_V3_2_XYZ(msg.data.atti,nav.atti);
     }
-    recorder.data.level_align_finished = flag_level_finished;
-    recorder.data.yaw_align_finished = flag_yaw_finished;
-    recorder.data.v_norm = v;
-    recorder.data.a_norm = smooth.getStd();
-    recorder.data.is_staic = smooth.isStatic();
-    Recorder::GetInstance().Record(&recorder);
+    msg.data.level_align = flag_level_finished;
+    msg.data.yaw_align = flag_yaw_finished;
+    msg.data.v_norm = v;
+    msg.data.a_norm = smooth.getStd();
+    msg.data.is_static = smooth.isStatic();
+    Recorder::GetInstance().Record(&msg);
 #endif
     return v;
 }

@@ -6,7 +6,7 @@
 #include "FileIO.h"
 
 #if ENABLE_FUSION_RECORDER
-#include <Recorder/RecorderType.h>
+#include <Recorder/Recorder.h>
 #endif
 
 #include <glog/logging.h>
@@ -125,7 +125,7 @@ void DataSeqCheck::Update(const std::shared_ptr<BaseData_t>& data) {
     recorder_msg_time_check_t rcd = CREATE_RECORDER_MSG(time_check);
     rcd.timestamp = data->time;
     rcd.data.delta_time = delta_time;
-    rcd.data.average_delta_time = average_delta_time;
+    rcd.data.average_time = average_delta_time;
     rcd.data.max_delta_time = max_delta_time;
     rcd.data.gnss_delay_time = gnss_delay_time;
     Recorder::GetInstance().Record(&rcd);

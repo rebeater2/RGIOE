@@ -1,5 +1,5 @@
 #include "Recorder.h"
-#include "RecorderType.h"
+#include "comm_crc.h"
 #include <map>
 
 #define RECORDER_ADD_DATASET(name, config) \
@@ -29,6 +29,28 @@ void Recorder::OpenFile(const char *filename) {
 Recorder::Recorder() {
     header_buffer = new uint8_t[RECORDER_HEADER_MAX_LENGTH];
     /*create header config*/
+
+#define RECORDER_TYPE_DEF_START(name,set,id) \
+    do{ DataItemConfig items[] = {
+
+#define RECORDER_ITEM_DEF(type,name) {RECORDER_TYPE_##type,#name},
+
+
+#define RECORDER_TYPE_DEF_END(name) \
+     };         \
+    DataSetConfig config = {\
+            .dataset_name = #name,\
+            .item_cnt = sizeof(items)/sizeof(items[0]),\
+            .item_config = {},\
+    };\
+    for(auto item:items){\
+        config.item_config.push_back(item);\
+    }\
+    header_config.insert(std::make_pair(recorder_msg_##name##_id, config));}while(0);
+
+#include "RecorderDef.h"
+
+
 #ifdef RECORDER_HEADERCONFIG
     RECORDER_HEADERCONFIG
 #endif
@@ -108,7 +130,7 @@ void Recorder::Initialize(const char *argv0) {
     }
     time_t t = time(nullptr);
     struct tm *stime = localtime(&t);
-    sprintf(rcd_filename + offset, "_%04d%02d%02d_%02d%02d%02d.rcd",
+    sprintf(rcd_filename + offset, ".%04d%02d%02d_%02d%02d%02d.rcd",
             stime->tm_year + 1900,
             stime->tm_mon,
             stime->tm_mday,

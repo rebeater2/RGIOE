@@ -9,7 +9,7 @@
 #include "AttiAhrs.h"
 #include "Convert.h"
 #if ENABLE_FUSION_RECORDER
-#include "RecorderType.h"
+#include "Recorder.h"
 #endif
 
 AttiAhrs::AttiAhrs(AttiAhrsMethod_t method, RgioeFloatType dt): ts(dt),method(method){

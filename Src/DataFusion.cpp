@@ -4,7 +4,7 @@
 
 #include "DataFusion.h"
 #if ENABLE_FUSION_RECORDER == 1
-#include "Recorder/RecorderType.h"
+#include "Recorder.h"
 #endif
 
 #define FLAG_POSITION 0b111U
@@ -124,14 +124,7 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
         navs.push_back(nav);
     }
 #endif
-#if ENABLE_FUSION_RECORDER
-    recorder_msg_state_t state = CREATE_RECORDER_MSG(state);
-    state.timestamp = nav.gpst;
-    for (int i = 0; i < std::min(21,STATE_CNT); ++i) {
-        state.data.xd[i] = (float)kf.Xd[i];
-    }
-    Recorder::GetInstance().Record(&state);
-#endif
+
 
 /*    if (update_flag & FLAG_HEIGHT) {
         nav.pos[2] += kf.Xd[2];
@@ -179,25 +172,23 @@ int DataFusion::TimeUpdate(const RgioeImuData &imu) {
 #if ENABLE_FUSION_RECORDER
     recorder_msg_kalman_t kalman = CREATE_RECORDER_MSG(kalman);
     kalman.timestamp = nav.gpst;
-    for (int i = 0; i < 3; ++i) {
-        kalman.data.acce_bias[i] = nav.ab[i] / _mGal;
-        kalman.data.acce_scale[i] = nav.as[i] / _ppm;
-        kalman.data.gyro_bias[i] = nav.gb[i] / _deg * _hour;
-        kalman.data.gyro_scale[i] = nav.gs[i] / _ppm;
-    }
-    for (int i = 0; i < 15; ++i) {
-        kalman.data.matP[i] = (float)kf.P(i, i);
-    }
-    kalman.data.ak = kf.ak;
-    kalman.data.update_iter = update_iter;
-    kalman.data.reject_cnt = kf.reject_cnt;
+    kalman.data.acce_bias_x= nav.ab[0] / _mGal;
+    kalman.data.acce_bias_y= nav.ab[1] / _mGal;
+    kalman.data.acce_bias_z= nav.ab[2] / _mGal;
+
+    kalman.data.gyro_bias_x = nav.gb[0] / _deg * _hour;
+    kalman.data.gyro_bias_y = nav.gb[1] / _deg * _hour;
+    kalman.data.gyro_bias_z = nav.gb[2] / _deg * _hour;
     Recorder::GetInstance().Record(&kalman);
+
     recorder_msg_imu_t imu_data = CREATE_RECORDER_MSG(imu);
     imu_data.timestamp = nav.gpst;
-    for (int i = 0; i < 3; ++i) {
-        imu_data.data.gyro[i] = imu.gyro[i];
-        imu_data.data.acce[i] = imu.acce[i];
-    }
+    imu_data.data.acce_x = imu.acce[0];
+    imu_data.data.acce_y = imu.acce[1];
+    imu_data.data.acce_z = imu.acce[2];
+    imu_data.data.gyro_x = imu.gyro[0];
+    imu_data.data.gyro_y = imu.gyro[1];
+    imu_data.data.gyro_z = imu.gyro[2];
     Recorder::GetInstance().Record(&imu_data);
 #endif
     monitor.OnTimeUpdate();
@@ -219,10 +210,12 @@ int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
     recorder_msg_meas_pos_t measPos = CREATE_RECORDER_MSG(meas_pos);
     measPos.timestamp = nav.gpst;
     for (int i = 0; i < 3; ++i) {
-        measPos.data.z[i] = z[i];
-        measPos.data.r[i] = Rk(i, i);
+        RECORDER_V3_2_XYZ(measPos.data.z,z);
     }
-    measPos.data.ak = kf.GetX2();
+    measPos.data.r_x = Rk(0,0);
+    measPos.data.r_y = Rk(1,1);
+    measPos.data.r_z = Rk(2,2);
+
     Recorder::GetInstance().Record(&measPos);
 #endif
     update_flag |= FLAG_POSITION;
@@ -239,7 +232,7 @@ int DataFusion::MeasureUpdatePos(const Vec3Hp &pos, const Mat3d &Rk) {
 int __attribute__((weak)) GnssCheck(const RgioeGnssData &gnss) {
     return gnss.mode == SPP or gnss.mode == RTK_FIX or gnss.mode == RTK_FLOAT or gnss.mode == RTK_DGPS;
 }
-
+#include "glog/logging.h"
 int DataFusion::MeasureUpdatePos(const RgioeGnssData &gnssData) {
     if (GnssCheck(gnssData) > 0) {
         nav.info.sensors |= RgioeSensorType::SENSOR_GNSS;
@@ -261,9 +254,7 @@ int DataFusion::MeasureUpdatePos(const RgioeGnssData &gnssData) {
     msg.timestamp = nav.gpst;
     auto dis = Earth::Instance().distance(gnssData.lat * _deg, gnssData.lon * _deg,
                                           first_epoch.pos[0], first_epoch.pos[1], gnssData.height, first_epoch.pos[2]);
-    for (int i = 0; i < 3; ++i) {
-        msg.data.pos[i] = dis[i];
-    }
+    RECORDER_V3_2_XYZ(msg.data.pos,dis);
     msg.data.ns = 0;
     msg.data.mode = gnssData.mode;
     msg.data.hdop = 0;

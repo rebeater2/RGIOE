@@ -14,7 +14,7 @@
 #include "Timer.h"              /*! Run time elapse calc */
 
 #if ENABLE_FUSION_RECORDER
-#include "Recorder/Recorder.h"  /*! Recorder debug infomation */
+#include "Recorder.h"  /*! Recorder debug infomation */
 #endif
 
 #include <glog/logging.h>       /*! Google glog for log output */

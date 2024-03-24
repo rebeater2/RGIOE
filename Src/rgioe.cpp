@@ -10,7 +10,7 @@
 #include "Alignment.h"
 #include "AttiAhrs.h"
 #if ENABLE_FUSION_RECORDER
-#include "Recorder/RecorderType.h"
+#include "Recorder.h"
 #endif
 extern int rgioe_log_impl(const char *fun, int line, const char *format, ...);
 
@@ -295,22 +295,22 @@ rgioe_error_t rgioe_get_result(uint8_t *rgioe_dev, rgioe_nav_pva_t *pva) {
         *pva = rd->df.Output();
     }
 #if ENABLE_FUSION_RECORDER
+
+
     recorder_msg_result_t result = CREATE_RECORDER_MSG(result);
     result.timestamp = pva->gpst;
     result.data.status = rd->status;
     if (rd->status == RGIOE_STATUS_ATTITUDE) {
-        for (int i = 0; i < 3; ++i) {
-            result.data.atti[i] = (float) (pva->atti[i]);
-        }
+        RECORDER_V3_2_XYZ(result.data.atti,pva->atti);
     } else if (rd->status == RGIOE_STATUS_NAVIGATION) {
         static Vec3Hp first_pos = {pva->lat, pva->lon, pva->height};
         result.timestamp = pva->gpst;
         Vec3d rpos = Earth::Instance().distance(pva->lat, pva->lon, first_pos[0], first_pos[1], pva->height,
                                                 first_pos[2]);
         for (int i = 0; i < 3; ++i) {
-            result.data.pos[i] = (float) rpos[i];
-            result.data.vn[i] = (float) pva->vn[i];
-            result.data.atti[i] = (float) (pva->atti[i]);
+            RECORDER_V3_2_XYZ(result.data.pos,rpos);
+            RECORDER_V3_2_XYZ(result.data.vn,pva->vn);
+            RECORDER_V3_2_XYZ(result.data.atti,pva->atti);
         }
     }
     Recorder::GetInstance().Record(&result);

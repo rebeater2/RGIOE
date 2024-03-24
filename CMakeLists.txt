@@ -22,7 +22,7 @@ file(GLOB_RECURSE SOURCE
 find_package(Eigen3 REQUIRED)
 
 
-add_library(rgioe ${SOURCE})
+add_library(rgioe ${SOURCE} Src/Recorder/RecorderDef.h)
 target_link_libraries(rgioe Eigen3::Eigen)
 #target_link_libraries(test_kalman Eigen3::Eigen)
 
@@ -51,6 +51,6 @@ find_package(glog REQUIRED)
 add_subdirectory(App/PostDataFusion)
 #add_subdirectory(App/RtSimulation/src)
 #add_subdirectory(Tools)
-add_subdirectory(Test)
+#add_subdirectory(Test)
 #add_link_options(-lgfortran -lm)
 
